@@ -1,5 +1,9 @@
+####IMPORTANT: these functions work on the klayout-0.26.11 version
+####There might be some inconsistencies for later versions 
 import pya 
-####### #MERGE FUNCTION TO ADD TO LIB  
+
+
+####### #MERGE FUNCTION 
 def merge_layer(readfile, cellname, layer_nr, datatype_nr, outputfile): 
     """
     (void) Merges all shapes within gds (only tested gds with single layer)
@@ -24,7 +28,7 @@ def merge_layer(readfile, cellname, layer_nr, datatype_nr, outputfile):
     
     print("Merged layers in " + outputfile)
     
-########IMPORT FUNCTION TO ADD TO LIB  
+########IMPORT FUNCTION 
 def import_gds(fstgds_filename, fst_cellname, fst_layer_nr, fst_datatype_nr, \
                sndgds_filename, snd_cellname, snd_layer_nr, snd_datatype_nr, \
                output_filename):
@@ -68,7 +72,7 @@ def import_gds(fstgds_filename, fst_cellname, fst_layer_nr, fst_datatype_nr, \
     
     print("Imported "+sndgds_filename+" into "+fstgds_filename+". Output file "+output_filename+" .")
 
-######WRITE .DXF FILES from existing 
+######WRITE .DXF FILES 
 def gds_to_dxf(inputfilename_gds, outputfilename_dxf):
     """
     (void) writes to file (it is named to be dxf... other extensions also work)
@@ -127,7 +131,7 @@ def instance_array(cell_name, input_filename, transx, transy, nr_inst_X, nr_inst
     #write to gds
     layout.write(output_filename)
 
-########RESET DATATYPES TO ADD TO LIB  
+########RESET DATATYPES 
 def reset_datatypes(fstgds_filename, fst_cellname, fst_layer_nr, fst_datatype_nr, snd_layer_nr, snd_datatype_nr, output_filename):
     """
     (void) resets datatypes 
@@ -154,7 +158,7 @@ def reset_datatypes(fstgds_filename, fst_cellname, fst_layer_nr, fst_datatype_nr
 
     ly1.write(output_filename)
     
-########CREATES A CELL WITH THE POLYGONS TO ADD TO LIB  
+########CREATES A CELL WITH THE POLYGONS 
 def cell_wpol(cs, cellname):
     """
     Cell made with cut polygons 
@@ -284,7 +288,7 @@ def inspect_gds2layers_gdstk(filename):
     return lib, pol_dict, ldtpsa, ldtps
     
   
-########CREATES A GDSTK CELL WITH THE POLYGONS USING TH
+########CREATES A GDSTK CELL WITH THE POLYGONS 
 def cell_wpol_gdstk(cs, cellname):
     """
     Cell made with cut polygons 
@@ -333,3 +337,56 @@ def cell_wpol_gdstk(cs, cellname):
             #multipoly = np.append(multipoly, poly)
             
     return lib, main_cell
+    
+##########CHANGE LAYERS ON THE GDS, FROM layerspol TO gvts
+###THIS IS USING DATATYPE AS ZERO
+def change_layers(fstgds_filename, fst_cellname, layerspol,\
+                  #fst_layer_nr, fst_datatype_nr, \
+                  gvts, output_filename):
+    """
+    (void) Transforms layers from the source layer into the destination
+    'fstgds_filename'   = string filename of gds to read
+    'fst_cellname'      = string name of cell in the gds 
+    'layerspol'         = array of the layers of the gds file 
+    'gvts'              = array of destination layers - MUST HAVE THE SAME CORRESPONDENCE 
+    'output_filename'   = string filename of output gds
+    """
+    
+    import pya
+    
+    #ly1 with 1st gds file
+    ly1 = pya.Layout()
+    lmap1 = ly1.read(fstgds_filename)
+    cll1 = ly1.cell(fst_cellname)
+    
+    #ly2 with copy of gds file - it will be cleared and written in the correct layers 
+    ly2 = pya.Layout()
+    lmap2 = ly2.read(fstgds_filename)
+    cll2 = ly2.cell(fst_cellname)
+    
+    #clear the layers in the destination cell 
+    for li, lyr in enumerate(layerspol):
+        cll2.layout().clear_layer(int(li))
+    
+    #ntot = np.size(layerspol)
+    
+    for li, lyr in enumerate(layerspol):
+        #select the layer lyr1
+        lyr1 = ly1.layer(int(lyr),int(0))
+        print(lyr)
+        #define region1 as shapes from lyr1
+        region1 = pya.Region(cll1.shapes(lyr1)) 
+
+        #change the shapes from one layer to the other 
+        ly2.insert_layer(pya.LayerInfo(int(gvts[li]), int(0)))
+        #select layer in the destination gds, corresponds to layerspol one to one 
+        lyr12 = ly2.layer(int(gvts[li]), int(0))
+        #insert the region1 in the selected layer in the destination gds
+        cll2.shapes(lyr12).insert(region1)
+        
+        print("Changed the shapes in layer "+str(lyr)+" into "+str(gvts[li]))
+        
+    ly2.write(output_filename)
+    
+    print("Changed layerspol layer to gvts - wrote result to " +str(output_filename))
+    
