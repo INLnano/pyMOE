@@ -390,3 +390,33 @@ def change_layers(fstgds_filename, fst_cellname, layerspol,\
     
     print("Changed layerspol layer to gvts - wrote result to " +str(output_filename))
     
+####FUNCTION USING KLAYOUT PYTHON LIB TO RESCALE THE WHOLE LAYOUT
+def rescale_layout(readfile, cellname, factor, outfile, divfactor=1): 
+    """
+    (void) Rescales the layout
+    'readfile'    = string filename of input gds
+    'cellname'    = string name of cell 
+    'factor'      = int with scaling factor multiply   
+    'outfile'     = string filename of output gds
+    'divfactor'   = int with scaling factor division, defaults to 1   
+    """
+    import pya
+
+    #define layout and read layout from file
+    layoutor = pya.Layout()
+    lmap = layoutor.read(readfile)
+    cell = layoutor.cell(cellname)
+    
+    cell.layout().scale_and_snap(cell, int(1), int(factor), int(divfactor))
+    
+    #https://www.klayout.de/doc/code/class_Layout.html#m_scale_and_snap
+    #void scale_and_snap (Cell cell, int grid, int mult, int div)
+    #This method is useful to scale a layout by a non-integer factor. 
+    #The scale factor is given by the rational number mult / div. 
+    #After scaling, the layout will be snapped to the given grid.
+    
+    layoutor.write(outfile)
+    
+    print("Rescaled "+str(readfile)+  "by a factor of " +str(factor/divfactor))
+    print("Saved the result to "+str(outfile))
+    
