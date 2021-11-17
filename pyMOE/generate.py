@@ -1,6 +1,85 @@
 ####generate.py 
 
-###Code to create gray scale 
+####Function that defines circular aperture mask 
+def circ_mask(npix, pixsize, partial, filename, plotting=False ):
+    """
+    returns 2D circular aperture mask 
+    npix = nr of pixels 
+    pixsize = pixel size 
+    partial = size of circ radius as fraction of npix [0,1]
+    filename = string with image name 'image.png'
+    if plotting=True, shows the mask 
+    
+    """
+    
+    from matplotlib import pyplot as plt
+    import numpy as np 
+
+    xsiz = npix
+    ysiz = npix
+    
+    #by default the aperture is at the center of the mask 
+    xcmm =  0.5* xsiz
+    ycmm =  0.5* ysiz 
+
+    a = partial*npix #radius of the circular aperture 
+    maskcir = np.ones((npix,npix))
+    xc1 = np.linspace(0, xsiz, npix)
+    yc1 = np.linspace(0, ysiz, npix)
+    (xc, yc) = np.meshgrid(xc1,yc1)
+    
+    #definition of the circular aperture 
+    rc = np.sqrt((xc-xcmm)**2 + (yc-ycmm)**2)
+    maskcir[np.where(rc>a)] = 0
+
+    if plotting == True: 
+        fig=plt.figure()
+        plt.imshow(maskcir, vmin=0, vmax=1, cmap=plt.get_cmap("Greys"))
+        plt.show()
+        fig.savefig(filename)
+
+    return maskcir 
+
+
+####Function that defines rectangular aperture mask 
+def rect_mask(npix, pixsize, partial, filename, plotting=False ):
+    """
+    returns 2D rectangular aperture mask 
+    npix = nr of pixels 
+    pixsize = pixel size 
+    partial = size of circ radius as fraction of npix [0,1]
+    filename = string with image name 'image.png'
+    if plotting=True, shows the mask 
+    
+    """
+    import numpy as np 
+    from matplotlib import pyplot as plt 
+    
+    xsiz = npix
+    ysiz = npix
+     
+    #by default the aperture is at the center of the mask 
+    xcmm =  0.5* xsiz
+    ycmm =  0.5* ysiz 
+    
+    maskrect = np.zeros((npix,npix))
+    xc1 = np.linspace(0, xsiz, npix)
+    yc1 = np.linspace(0, ysiz, npix)
+    (xc, yc) = np.meshgrid(xc1,yc1)
+    
+    ##definition of the mask pixels
+    maskrect[np.where((xc>(xcmm-xcmm*partial*2)) & (xc<(xcmm+xcmm*partial*2)) & \
+                      (yc>(ycmm-ycmm*partial*2)) & (yc<(ycmm+ycmm*partial*2)))] = 1
+
+    if plotting == True: 
+        fig=plt.figure()
+        plt.imshow(maskrect, vmin=0, vmax=1, cmap=plt.get_cmap("Greys"))
+        plt.show()
+        fig.savefig(filename)
+    
+    return maskrect 
+
+##Code to create gray scale 
 def create_scale(npixel, nsz, ngs): 
     """
     npixel= nr of pixels 
@@ -49,4 +128,3 @@ def create_scale(npixel, nsz, ngs):
     plt.title("scaled")
  
     return scale_img
-
