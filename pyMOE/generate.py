@@ -77,7 +77,74 @@ def rect_mask(npix, pixsize, partial, filename, plotting=False ):
         plt.show()
         fig.savefig(filename)
     
-    return maskrect 
+    return maskrect
+
+def fzp_mask(npix, foc, lda, xsiz, ysiz, filename, plotting=False ):
+    """
+    returns a fresnel zone plate
+    npix = nr of pixels 
+    foc = focal length in um
+    lda = wavelength in um 
+    xsiz = size in x in um 
+    ysiz = size in y in um 
+    filename = string with mask image name 'image.png'
+    if plotting=True, shows the mask 
+    
+    Example of use: 
+    
+    fzp_mask(npix = 50,\
+         foc = 5000 ,\
+         lda = 0.6328 ,\
+         xsiz = 500, \
+         ysiz = 500, \
+         filename = 'fresnel2.png', \
+         plotting=True )
+         
+    """
+    from matplotlib import pyplot as plt
+    import numpy as np 
+
+    #by default the aperture is at the center of the mask 
+    xcmm =  0.5* xsiz
+    ycmm =  0.5* ysiz 
+
+    a = 0.5 * np.min([xsiz,ysiz])  #radius of the circular aperture 
+    maskfres = np.ones((npix,npix))
+    xc1 = np.linspace(0, xsiz, npix)
+    yc1 = np.linspace(0, ysiz, npix)
+    (xc, yc) = np.meshgrid(xc1,yc1)
+
+    #definition of the circular aperture 
+    rc = np.sqrt((xc-xcmm)**2 + (yc-ycmm)**2)
+    
+    #definition of the phase profile 
+    fzp = np.exp(-1.0j*(foc-np.sqrt(foc**2 + rc**2))*(2*np.pi)/(lda))
+
+    #Define the zones 
+    fzp[np.where((np.angle(fzp)>-np.pi/2 )& (np.angle(fzp)<np.pi/2) )] = 0 
+
+    i,j = fzp.shape 
+
+    #final plate
+    fzp2 = np.zeros((i,j)) 
+
+    for ie in np.arange(0,i):
+        for je in np.arange(0,j):
+            if ((np.angle(fzp[ie][je]) >= -np.pi/2) & (np.angle(fzp[ie][je]) <= np.pi/2)): 
+                fzp2[ie][je] = 0
+            else: 
+                fzp2[ie][je] = 1
+
+    fzp2[np.where(rc>a)] = 1
+
+    if plotting == True: 
+        fig=plt.figure()
+        plt.imshow(fzp2, cmap=plt.get_cmap("Greys"))
+        #plt.colorbar()
+        plt.show()
+        fig.savefig(filename)
+        
+    return fzp2    
 
 ##Code to create gray scale 
 def create_scale(npixel, nsz, ngs): 
