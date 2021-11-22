@@ -419,4 +419,60 @@ def rescale_layout(readfile, cellname, factor, outfile, divfactor=1):
     
     print("Rescaled "+str(readfile)+  "by a factor of " +str(factor/divfactor))
     print("Saved the result to "+str(outfile))
+   
+####FUNCTION TO MAKE THE DIFFS BETWEEN THE LAYERS IN THE LAYERS ARRAY 
+def diffs_layers_arrays(readfile, cellname, layerspol1, datatypes1, layerspol2, datatypes2, outfile): 
+    """
+    (void) Sequentially makes the difference from one layer to the other, from layerspol[1] to layerspol[0]
+    'readfile'    = string filename of input gds
+    'cellname'    = string name of cell 
+    'layerspol1'   = numpy array with all layer that will be substracted
+    'datatypes1'   = numpy array with all datatypes   that will be subtracted 
+    'layerspol2'   = numpy array with all layer where we will subtract
+    'datatypes2'   = numpy array with all datatypes where we will substract
+    'outfile'     = string filename of output gds
+    """
+    import pya
+
+    #define layout and read layout from file
+    layoutor = pya.Layout()
+    lmap = layoutor.read(readfile)
+    cell = layoutor.cell(cellname)
+    cn =1
+
+    #for all the layers in layerspol array 
+    for lyrs1, lyrs2, dtps1,dtps2 in zip(layerspol1, layerspol2, datatypes1, datatypes2):
+        if cn == (len(layerspol1) -1): 
+            break 
+            
+        #print(lyrs)
+        #print(datatypes[lyrs])
+        
+        np = int(lyrs1)
+        dts = int(dtps1)
+        layer1 = layoutor.layer(np,dts)
     
+        #region with all the shapes within the TOP cell
+        region1 = pya.Region(cell.shapes(layer1))
+    
+        np1 = int(lyrs2)
+        dts1 = int(dtps2)
+        layer2 = layoutor.layer(np1,dts1)
+        #region with all the shapes within the TOP cell
+        region2 = pya.Region(cell.shapes(layer2))
+    
+        #make the difference of the layer2 on layer1
+        result = region2-region1 
+    
+        #temp save of the resull layer (to be cleared)
+        resultlay = layer2
+        cell.layout().clear_layer(layer2) #clear the results layer
+    
+        #insert shapes from boolean into the resultslayer 
+        cell.shapes(resultlay).insert(result)
+        cn = cn+1
+    
+    layoutor.write(outfile)
+    
+    print("Substracted "+str(layerspol1)+" in " + str(layerspol2)+" of the file "+str(readfile))
+    print("Saved the result to "+str(outfile))
