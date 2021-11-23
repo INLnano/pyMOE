@@ -468,3 +468,129 @@ def diffs_layers_arrays(readfile, cellname, layerspol1, datatypes1, layerspol2, 
     
     print("Substracted "+str(layerspol1)+" in " + str(layerspol2)+" of the file "+str(readfile))
     print("Saved the result to "+str(outfile))
+
+
+########CREATES A GDSPY CELL WITH THE POLYGONS USING GDSPY
+def cell_wpol_gdspy(cs, cellname, prec=1e-6, mpoints=1e9):
+    """
+    Cell made with cut polygons from the z profile 
+    'cs'       = contours FROM matplotlif contourf function
+    'cellname' = string cellname, e.g. 'TOP' 
+    Returns:[0] gdspy library, [1] cell with polygons  
+    ##By default the levels start at 0 and go to the number of levels in the contourplot 
+    """
+    
+    from shapely import geometry
+    import numpy as np
+    import gdspy
+
+    #get collections from contour 
+    collecs = cs.collections 
+
+    # lib of the gdsii file 
+    lib = gdspy.GdsLibrary()
+    gdspy.current_library = gdspy.GdsLibrary()
+
+    cell = lib.new_cell(cellname)
+
+    ncolec = len(collecs)
+    print("Passing contours into GDS. ")
+
+    #go through all the elements in collections (gray levels)
+    for ncol,col in enumerate(collecs):
+        # Loop through all contours that have the same gray level
+        paths = col.get_paths() 
+        #lenpat = len(paths)
+
+        #go through the paths of the contours 
+        for ec, contour_path in enumerate(paths): 
+            #get the polygons at certain gray level 
+            arr = contour_path.to_polygons()
+            polset = gdspy.PolygonSet(arr, layer=int(ncol),datatype=int(0))
+            #print("pols "+str(len(polset.polygons)))
+            
+            #layers and datatypes of polygon set 
+            layes = polset.layers[0]
+            dts  = polset.datatypes[0]
+
+            #print(polset.polygons)
+            if len(polset.polygons)==1:
+                pols = gdspy.Polygon(polset.polygons[0], layer=int(layes), datatype=int(dts))
+                #print(pols)
+                cell.add(pols)
+
+            for ncp,cp in enumerate(arr):
+                #print(ncp)
+                x = cp[:,0]
+                y = cp[:,1]
+                new_shape = gdspy.Polygon([(i[0], i[1]) for i in zip(x,y)])
+                
+                if ncp == 0:
+                    poly = new_shape
+                elif ncp==1:
+                    de   = gdspy.boolean(poly,new_shape, "not", precision=prec, max_points=mpoints, layer=int(ncol), datatype=int(0)) 
+                    cell.add(de)
+                    
+               
+    return lib, cell 
+    
+    
+########OTHER EXPERIMENTAL APPROACH USING GDSPY , accelerates the calculation by considering just 2 pols  within a layer 
+#CAREFUL, this is better for estimation ONLY as we need enough resolution in the contourplot for this approach to work properly 
+def cell_wpol_gdspy_fast(cs, cellname, prec=1e-6, mpoints=1e9):
+    """
+    Cell made with cut polygons from the z profile 
+    'cs'       = contours FROM matplotlif contourf function
+    'cellname' = string cellname, e.g. 'TOP' 
+    Returns:[0] gdspy library, [1] cell with polygons  
+    ##By default the levels start at 0 and go to the number of levels in the contourplot 
+    """
+    
+    from shapely import geometry
+    import numpy as np
+    import gdspy
+
+    #get collections from contour 
+    collecs = cs.collections 
+
+    # lib of the gdsii file 
+    lib = gdspy.GdsLibrary()
+    gdspy.current_library = gdspy.GdsLibrary()
+
+    cell = lib.new_cell(cellname)
+
+    ncolec = len(collecs)
+    print("Passing contours into GDS. ")
+
+    #go through all the elements in collections (gray levels)
+    for ncol,col in enumerate(collecs):
+        # Loop through all contours that have the same gray level
+        paths = col.get_paths() 
+        lenpat = len(paths)
+
+        #go through the paths of the contours 
+        for ec, contour_path in enumerate(paths): 
+            #get the polygons at certain gray level 
+            arr = contour_path.to_polygons()
+            polset = gdspy.PolygonSet(arr, layer=int(ncol),datatype=int(0))
+            #print("pols "+str(len(polset.polygons)))
+            #layers and datatypes of polygon set 
+            layes = polset.layers[0]
+            dts  = polset.datatypes[0]
+
+            #print(polset.polygons)
+            if len(polset.polygons)==1:
+                pols = gdspy.Polygon(polset.polygons[0], layer=int(layes), datatype=int(dts))
+                #print(pols)
+                cell.add(pols)
+
+            #if there is also another polygons, subtract 
+            if len(polset.polygons)==2: 
+                #print(len(polset.polygons))
+                for ips in np.arange(0,len(polset.polygons)-1):
+                    pol1 = gdspy.Polygon(polset.polygons[ips])
+                    pol2 = gdspy.Polygon(polset.polygons[ips+1])
+                    de   = gdspy.boolean(pol1,pol2, "not", precision=prec, max_points=mpoints, layer=int(layes), datatype=int(dts)) 
+                    cell.add(de)
+            
+    return lib, cell
