@@ -282,8 +282,8 @@ def fresnel_phase_mask(npix, foc, lda, xsiz, ysiz,n, filename=None, plotting=Fal
         plt.figure()
         plt.axis('equal')
         cs = plt.contourf(xc,yc,fresarray_rad, zlevs, cmap=plt.get_cmap("Greys"))
-        plt.xlabel('x (mm)')
-        plt.ylabel('y (mm)')
+        plt.xlabel('x ($\mu$m)')
+        plt.ylabel('y ($\mu$m)')
         plt.colorbar(label='Phase (rad)')
         plt.tight_layout()
     else: 
@@ -354,8 +354,8 @@ def phase_mask(npix, xsiz, ysiz, n, fname,*args,filename=None, plotting=False ,p
         plt.figure()
         plt.axis('equal')
         cs = plt.contourf(xc,yc,farray_rad, zlevs, cmap=plt.get_cmap("Greys"))
-        plt.xlabel('x (mm)')
-        plt.ylabel('y (mm)')
+        plt.xlabel('x ($\mu$m)')
+        plt.ylabel('y ($\mu$m)')
         plt.colorbar(label='Phase (rad)')
         plt.tight_layout()
       
