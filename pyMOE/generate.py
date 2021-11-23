@@ -1,5 +1,9 @@
 ####generate.py 
 
+#import the gds operations from the gds_klops file 
+
+from gds_klops.py import * 
+
 ####Function that defines circular aperture mask 
 def circ_mask(npix, pixsize, partial, filename, plotting=False ):
     """
@@ -211,7 +215,85 @@ def lensfres(x,y,x0,y0,fo,lda):
     
     Note: for angle (in rad), call numpy.angle(...)
     """
+    import numpy as np
+    
     rc = np.sqrt((x-x0)**2 + (y-y0)**2)
     fresn = np.exp(1.0j*(fo-np.sqrt(fo**2 + rc**2))*(2*np.pi)/(lda))
     return fresn 
 
+
+def fresnel_phase_mask(npix, foc, lda, xsiz, ysiz,n, filename=None, plotting=False ,prec = 1e-6, mpoints = 1e9):
+    """
+    returns a Fresnel phase mask (2D array) IN RADIANS 
+    parameters: 
+    npix = nr of pixels , by default the results 2D array is npix by npix 
+    foc = focal length in um
+    lda = wavelength in um 
+    xsiz = size in x in um 
+    ysiz = size in y in um
+    n = number of gray levels 
+    
+    optional: 
+    filename = string with mask output into GDS  (default None)
+    plotting = True, shows the mask  (default False)
+    prec = precision of the gdspy boolean operation  (default 1e-6)
+    mpoints = max_points of the gdspy polygon (default 1e9)
+    
+    Example of use: 
+    fresnel_phase_mask(npix = 5000, \
+                   foc = 5000,\
+                   lda = 0.6328 ,\
+                   xsiz = 500,\
+                   ysiz =500,\
+                   n=10,\
+                   filename='fresnel_phase_mask.gds',\
+                   plotting=True )
+    #Should take around ~30 s 
+         
+    """  
+    import numpy as np
+    
+    #by default the mask is at the center of the mask 
+    xcmm =  0.5* xsiz
+    ycmm =  0.5* ysiz 
+    
+    a = 0.5 * np.min([xsiz,ysiz])  #radius of the circular aperture 
+    maskfres = np.ones((npix,npix))
+    xc1 = np.linspace(0, xsiz, npix)
+    yc1 = np.linspace(0, ysiz, npix)
+    (xc, yc) = np.meshgrid(xc1,yc1)
+    
+    #definition of the circular aperture 
+    rc = np.sqrt((xc-xcmm)**2 + (yc-ycmm)**2)
+
+    #calculate the fresnel complex phase 
+    ###TODO: Generalize the input function for any phase map function, given as argument to the function 
+    fresarray = lensfres(xc,yc,xcmm,ycmm,foc,lda)
+    
+    fresarray[np.where(rc>a)] = np.pi
+    fresarray_rad = np.angle(fresarray)
+    
+    #make array with the z plane intersections  (n gray levels)
+    zlevs = np.linspace(np.min(np.angle(fresarray)), np.max(np.angle(fresarray)), n+1)
+    #print(zlevs)
+
+    if plotting == True: 
+        plt.figure()
+        plt.axis('equal')
+        cs = plt.contourf(xc,yc,np.angle(fresarray), zlevs, cmap=plt.get_cmap("Greys"))
+        plt.xlabel('x (mm)')
+        plt.ylabel('y (mm)')
+        plt.colorbar(label='Phase (rad)')
+        plt.tight_layout()
+      
+    #possible improvement, pass this function as argument
+    #lib1, cell1 = cell_wpol_gdspy_fast(cs, 'TOP', prec, mpoints)
+    lib1, cell1 = cell_wpol_gdspy(cs, 'TOP', prec, mpoints)
+
+    if filename is not None: 
+        lib1.write_gds(filename)
+        print("Saved the phase profile with " + str(n) +  " layers into the file " + filename)
+        
+    return fresarray_rad 
+
+ 
