@@ -78,10 +78,11 @@ def rect_mask(npix, pixsize, partial, filename, plotting=False ):
         fig.savefig(filename)
     
     return maskrect
-
+    
+####Function that defines a Fresnel Zone Plate mask 
 def fzp_mask(npix, foc, lda, xsiz, ysiz, filename, plotting=False ):
     """
-    returns a fresnel zone plate
+    returns a fresnel zone plate (as a numpy 2D array)
     npix = nr of pixels 
     foc = focal length in um
     lda = wavelength in um 
@@ -104,7 +105,7 @@ def fzp_mask(npix, foc, lda, xsiz, ysiz, filename, plotting=False ):
     from matplotlib import pyplot as plt
     import numpy as np 
 
-    #by default the aperture is at the center of the mask 
+    #by default the center of the mask 
     xcmm =  0.5* xsiz
     ycmm =  0.5* ysiz 
 
@@ -146,9 +147,10 @@ def fzp_mask(npix, foc, lda, xsiz, ysiz, filename, plotting=False ):
         
     return fzp2    
 
-##Code to create gray scale 
+##Code to create a gray scale with successive gray levels 
 def create_scale(npixel, nsz, ngs): 
     """
+    returns a 2D array with a scale of successive gray levels 
     npixel= nr of pixels 
     nsz = division in size 
     ngs = nr of gray levels 
@@ -195,3 +197,21 @@ def create_scale(npixel, nsz, ngs):
     plt.title("scaled")
  
     return scale_img
+    
+    
+def lensfres(x,y,x0,y0,fo,lda): 
+    """
+    returns a meshgrid with fresnel lens COMPLEX PHASE with input meshgrid (x,y) with center at (x0,y0)
+    x = x array from meshgrid 
+    y = y array from meshgrid 
+    x0 = coordinate of center of the lens 
+    y0 = coordinate of center of the lens
+    fo = focal distance 
+    lda = wavelength 
+    
+    Note: for angle (in rad), call numpy.angle(...)
+    """
+    rc = np.sqrt((x-x0)**2 + (y-y0)**2)
+    fresn = np.exp(1.0j*(fo-np.sqrt(fo**2 + rc**2))*(2*np.pi)/(lda))
+    return fresn 
+
