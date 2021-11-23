@@ -419,7 +419,7 @@ def rescale_layout(readfile, cellname, factor, outfile, divfactor=1):
     
     print("Rescaled "+str(readfile)+  "by a factor of " +str(factor/divfactor))
     print("Saved the result to "+str(outfile))
-   
+    
 ####FUNCTION TO MAKE THE DIFFS BETWEEN THE LAYERS IN THE LAYERS ARRAY 
 def diffs_layers_arrays(readfile, cellname, layerspol1, datatypes1, layerspol2, datatypes2, outfile): 
     """
@@ -438,13 +438,9 @@ def diffs_layers_arrays(readfile, cellname, layerspol1, datatypes1, layerspol2, 
     layoutor = pya.Layout()
     lmap = layoutor.read(readfile)
     cell = layoutor.cell(cellname)
-    cn =1
 
     #for all the layers in layerspol array 
     for lyrs1, lyrs2, dtps1,dtps2 in zip(layerspol1, layerspol2, datatypes1, datatypes2):
-        if cn == (len(layerspol1) -1): 
-            break 
-            
         #print(lyrs)
         #print(datatypes[lyrs])
         
@@ -470,7 +466,6 @@ def diffs_layers_arrays(readfile, cellname, layerspol1, datatypes1, layerspol2, 
     
         #insert shapes from boolean into the resultslayer 
         cell.shapes(resultlay).insert(result)
-        cn = cn+1
     
     layoutor.write(outfile)
     
