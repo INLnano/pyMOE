@@ -1,4 +1,6 @@
 ####propagate.py   
+´
+#to come from propopt package 
     
 #######FUNCTION THAT CALCULATES THE RS INTEGRAL PROPAGATOR XY
 

@@ -224,7 +224,7 @@ def lensfres(x,y,x0,y0,fo,lda):
 
 def fresnel_phase_mask(npix, foc, lda, xsiz, ysiz,n, filename=None, plotting=False ,prec = 1e-6, mpoints = 1e9):
     """
-    returns a Fresnel phase mask (2D array) IN RADIANS 
+    returns a Fresnel "phase mask" (2D array of the phase IN RADIANS)
     parameters: 
     npix = nr of pixels , by default the results 2D array is npix by npix 
     foc = focal length in um
@@ -252,6 +252,7 @@ def fresnel_phase_mask(npix, foc, lda, xsiz, ysiz,n, filename=None, plotting=Fal
          
     """  
     import numpy as np
+    import matplotlib.pyplot as plt 
     
     #by default the mask is at the center of the mask 
     xcmm =  0.5* xsiz
@@ -274,13 +275,85 @@ def fresnel_phase_mask(npix, foc, lda, xsiz, ysiz,n, filename=None, plotting=Fal
     fresarray_rad = np.angle(fresarray)
     
     #make array with the z plane intersections  (n gray levels)
-    zlevs = np.linspace(np.min(np.angle(fresarray)), np.max(np.angle(fresarray)), n+1)
+    zlevs = np.linspace(np.min(fresarray_rad), np.max(fresarray_rad), n+1)
     #print(zlevs)
 
     if plotting == True: 
         plt.figure()
         plt.axis('equal')
-        cs = plt.contourf(xc,yc,np.angle(fresarray), zlevs, cmap=plt.get_cmap("Greys"))
+        cs = plt.contourf(xc,yc,fresarray_rad, zlevs, cmap=plt.get_cmap("Greys"))
+        plt.xlabel('x (mm)')
+        plt.ylabel('y (mm)')
+        plt.colorbar(label='Phase (rad)')
+        plt.tight_layout()
+    else: 
+        cs = plt.contourf(xc,yc,fresarray_rad, zlevs, cmap=plt.get_cmap("Greys"))
+      
+    #possible improvement, pass this function as argument
+    #lib1, cell1 = cell_wpol_gdspy_fast(cs, 'TOP', prec, mpoints)
+    lib1, cell1 = cell_wpol_gdspy(cs, 'TOP', prec, mpoints)
+
+    if filename is not None: 
+        lib1.write_gds(filename)
+        print("Saved the phase profile with " + str(n) +  " layers into the file " + filename)
+        
+    return fresarray_rad 
+
+###ANY FUNCTION PHASE MASK 
+def phase_mask(npix, xsiz, ysiz, n, fname,*args,filename=None, plotting=False ,prec = 1e-6, mpoints = 1e9 ,**kwargs):
+    """
+    returns a "phase mask" (2D array of the phase IN RADIANS) from COMPLEX PHASE function fname  given as argument
+    
+    parameters: 
+    npix = nr of pixels (or points) , by default the results 2D array is npix by npix 
+    xsiz = size in x in um 
+    ysiz = size in y in um
+    n = number of gray levels
+    fname = function name (e.g. lensfres([x,y,x0,y0], args) , where [x,y,x0,y0] are fixed)
+    *args = arguments fname, e.g. with syntax fo = ..., lda ..., etc 
+    
+    optional: 
+    filename = string with mask output into GDS  (default None)
+    plotting = True, shows the mask  (default False)
+    prec = precision of the gdspy boolean operation  (default 1e-6 um)
+    mpoints = max_points of the gdspy polygon (default 1e9 points)
+    
+    Example of use: 
+    phase_mask(5000, 500,500, 10,\
+           lensfres, fo=5000, lda=0.6328, \
+           filename="fresnel_phase_plate.gds", plotting=True ,prec = 1e-6, mpoints = 1e9 )
+         
+    """  
+    import numpy as np
+    import matplotlib.pyplot as plt
+    
+    #by default the mask is at the center of the mask 
+    xcmm =  0.5* xsiz
+    ycmm =  0.5* ysiz 
+    
+    a = 0.5 * np.min([xsiz,ysiz])  #radius of the circular aperture 
+    maskfres = np.ones((npix,npix))
+    xc1 = np.linspace(0, xsiz, npix)
+    yc1 = np.linspace(0, ysiz, npix)
+    (xc, yc) = np.meshgrid(xc1,yc1)
+    
+    #definition of the circular aperture 
+    rc = np.sqrt((xc-xcmm)**2 + (yc-ycmm)**2)
+
+    #calculate the complex phase  fname function  
+    farray = fname(xc,yc,xcmm,ycmm,*args, **kwargs)
+    
+    #farray[np.where(rc>a)] = np.pi
+    farray_rad = np.angle(farray)
+    
+    #make array with the z plane intersections  (n gray levels)
+    zlevs = np.linspace(np.min(farray_rad), np.max(farray_rad), n+1)
+    #print(zlevs)
+
+    if plotting == True: 
+        plt.figure()
+        plt.axis('equal')
+        cs = plt.contourf(xc,yc,farray_rad, zlevs, cmap=plt.get_cmap("Greys"))
         plt.xlabel('x (mm)')
         plt.ylabel('y (mm)')
         plt.colorbar(label='Phase (rad)')
@@ -294,6 +367,4 @@ def fresnel_phase_mask(npix, foc, lda, xsiz, ysiz,n, filename=None, plotting=Fal
         lib1.write_gds(filename)
         print("Saved the phase profile with " + str(n) +  " layers into the file " + filename)
         
-    return fresarray_rad 
-
- 
+    return farray_rad 
