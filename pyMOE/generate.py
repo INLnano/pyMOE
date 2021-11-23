@@ -22,7 +22,7 @@ def circ_mask(npix, pixsize, partial, filename, plotting=False ):
     xsiz = npix
     ysiz = npix
     
-    #by default the aperture is at the center of the mask 
+    #by default centered  
     xcmm =  0.5* xsiz
     ycmm =  0.5* ysiz 
 
@@ -62,7 +62,7 @@ def rect_mask(npix, pixsize, partial, filename, plotting=False ):
     xsiz = npix
     ysiz = npix
      
-    #by default the aperture is at the center of the mask 
+    #by default centered  
     xcmm =  0.5* xsiz
     ycmm =  0.5* ysiz 
     
@@ -109,7 +109,7 @@ def fzp_mask(npix, foc, lda, xsiz, ysiz, filename, plotting=False ):
     from matplotlib import pyplot as plt
     import numpy as np 
 
-    #by default the center of the mask 
+    #by default centered 
     xcmm =  0.5* xsiz
     ycmm =  0.5* ysiz 
 
@@ -205,7 +205,7 @@ def create_scale(npixel, nsz, ngs):
     
 def lensfres(x,y,x0,y0,fo,lda): 
     """
-    returns a meshgrid with fresnel lens COMPLEX PHASE with input meshgrid (x,y) with center at (x0,y0)
+    returns the COMPLEX PHASE of a fresnel lens ith input meshgrid (x,y) with center at (x0,y0)
     x = x array from meshgrid 
     y = y array from meshgrid 
     x0 = coordinate of center of the lens 
@@ -220,6 +220,22 @@ def lensfres(x,y,x0,y0,fo,lda):
     rc = np.sqrt((x-x0)**2 + (y-y0)**2)
     fresn = np.exp(1.0j*(fo-np.sqrt(fo**2 + rc**2))*(2*np.pi)/(lda))
     return fresn 
+    
+    
+def spiral(x,y,x0,y0,L):
+    """
+    returns a spiral COMPLEX PHASE with input meshgrid (x,y) with center at (x0,y0)
+    x = x array from meshgrid 
+    y = y array from meshgrid 
+    x0 = x-coordinate of center of the lens 
+    y0 = y-coordinate of center of the lens
+    L = topological charge 
+    """
+    import numpy as np 
+
+    theta = np.arctan2((y-y0),(x-x0))
+    sp = np.exp(1.0j*L*theta)
+    return sp
 
 
 def fresnel_phase_mask(npix, foc, lda, xsiz, ysiz,n, filename=None, plotting=False ,prec = 1e-6, mpoints = 1e9):
@@ -247,14 +263,13 @@ def fresnel_phase_mask(npix, foc, lda, xsiz, ysiz,n, filename=None, plotting=Fal
                    ysiz =500,\
                    n=10,\
                    filename='fresnel_phase_mask.gds',\
-                   plotting=True )
-    #Should take around ~30 s 
+                   plotting=True )   #Should take around ~30 s 
          
     """  
     import numpy as np
     import matplotlib.pyplot as plt 
     
-    #by default the mask is at the center of the mask 
+    #by default centered 
     xcmm =  0.5* xsiz
     ycmm =  0.5* ysiz 
     
@@ -310,7 +325,7 @@ def phase_mask(npix, xsiz, ysiz, n, fname,*args,filename=None, plotting=False ,p
     ysiz = size in y in um
     n = number of gray levels
     fname = function name (e.g. lensfres([x,y,x0,y0], args) , where [x,y,x0,y0] are fixed)
-    *args = arguments fname, e.g. with syntax fo = ..., lda ..., etc 
+    *args = arguments fname, excluding the [x,y,x0,y0], e.g. with syntax fo = ..., lda ..., etc 
     
     optional: 
     filename = string with mask output into GDS  (default None)
@@ -318,16 +333,20 @@ def phase_mask(npix, xsiz, ysiz, n, fname,*args,filename=None, plotting=False ,p
     prec = precision of the gdspy boolean operation  (default 1e-6 um)
     mpoints = max_points of the gdspy polygon (default 1e9 points)
     
-    Example of use: 
+    Examples of use: #Should take around ~30 s for any of these 
     phase_mask(5000, 500,500, 10,\
            lensfres, fo=5000, lda=0.6328, \
            filename="fresnel_phase_plate.gds", plotting=True ,prec = 1e-6, mpoints = 1e9 )
+           
+    phase_mask(5000, 500,500, 60,\
+           spiral, L=1, \
+           filename="spiral_phase_plate.gds", plotting=True ,prec = 1e-12, mpoints = 1e9 )
          
     """  
     import numpy as np
     import matplotlib.pyplot as plt
     
-    #by default the mask is at the center of the mask 
+    #by default centered 
     xcmm =  0.5* xsiz
     ycmm =  0.5* ysiz 
     
