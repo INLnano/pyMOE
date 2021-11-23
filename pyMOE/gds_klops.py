@@ -161,9 +161,9 @@ def reset_datatypes(fstgds_filename, fst_cellname, fst_layer_nr, fst_datatype_nr
 ########CREATES A CELL WITH THE POLYGONS 
 def cell_wpol(cs, cellname):
     """
-    Cell made with cut polygons 
-    'cs' = contours FROM matplotlif 'contourf' 
-    'cellname' = cellname 
+    Transforms contourf into GDS2 using gdshelpers 
+    'cs'       = contours FROM matplotlif contourf function 
+    'cellname' = string cellname, e.g. 'TOP' 
     Returns: cell with polygon, multipolygon array  
     """
     
@@ -200,8 +200,8 @@ def cell_wpol(cs, cellname):
                 #NOTE!!! IT LEAVES THE DATATYPE UNDEFINED
                 cell.add_to_layer(ncol+1, poly)
         
-            if cps == 0:
-                poly1 = new_shape
+            #if cps == 0:
+            #    poly1 = new_shape
         
             # Simplify the shapes in the previous layer 
             cell.get_reduced_layer(ncol-1)
@@ -288,13 +288,13 @@ def inspect_gds2layers_gdstk(filename):
     return lib, pol_dict, ldtpsa, ldtps
     
   
-########CREATES A GDSTK CELL WITH THE POLYGONS 
+########CREATES A GDSTK CELL WITH THE POLYGONS USING GDSTK 
 def cell_wpol_gdstk(cs, cellname):
     """
-    Cell made with cut polygons 
-    'cs'       = contours FROM matplotlif 'contourf' 
-    'cellname' = cellname 
-    Returns: cell with polygon, multipolygon array  
+    Transforms contourf into GDS2 using gdstk
+    'cs'       = contours FROM matplotlif contourf function 
+    'cellname' = string cellname, e.g. 'TOP' 
+    Returns:[0] gdstk library, [1] cell with polygons  
     """
     
     from gdshelpers.geometry.chip import Cell
@@ -325,10 +325,7 @@ def cell_wpol_gdstk(cs, cellname):
                 new_shape = gdstk.Polygon([(i[0], i[1]) for i in zip(x,y)], layer=int(ncol+1),datatype= 0)
  
                 #Add the Polygon to the layer (ncol+1)
-                #NOTE!!! IT LEAVES THE DATATYPE UNDEFINED
                 main_cell.add(new_shape)
-                #cell.add_to_layer(ncol+1, poly)
-        
         
             # Simplify the shapes in the previous layer 
             #cell.get_reduced_layer(ncol-1)
@@ -339,7 +336,7 @@ def cell_wpol_gdstk(cs, cellname):
     return lib, main_cell
     
 ##########CHANGE LAYERS ON THE GDS, FROM layerspol TO gvts
-###THIS IS USING DATATYPE AS ZERO
+###THIS IS USING DATATYPE AS ZERO by default, can be changed 
 def change_layers(fstgds_filename, fst_cellname, layerspol,\
                   #fst_layer_nr, fst_datatype_nr, \
                   gvts, output_filename):
