@@ -1,68 +1,73 @@
 ####generate.py 
 
 #import the gds operations from the gds_klops file 
-
-from gds_klops.py import * 
+from gds_klops import * 
 
 ####Function that defines circular aperture mask 
-def circ_mask(npix, pixsize, partial, filename, plotting=False ):
+def circ_mask(npix, xsiz, ysiz, partial=0.5, filename='circ.png', plotting=False ):
     """
     returns 2D circular aperture mask 
-    npix = nr of pixels 
-    pixsize = pixel size 
-    partial = size of circ radius as fraction of npix [0,1]
-    filename = string with image name 'image.png'
+    npix = nr of pixels , by default the results 2D array is npix by npix 
+    xsiz = size in x  
+    ysiz = size in y 
+    partial = size of circ radius as fraction of min([xsiz,ysiz])
+    filename = string with image name, default 'circ.png'
     if plotting=True, shows the mask 
-    
+
     """
-    
     from matplotlib import pyplot as plt
     import numpy as np 
 
-    xsiz = npix
-    ysiz = npix
-    
-    #by default centered  
+    #by default the aperture is at the center of the mask 
     xcmm =  0.5* xsiz
     ycmm =  0.5* ysiz 
 
-    a = partial*npix #radius of the circular aperture 
-    maskcir = np.ones((npix,npix))
+    a = partial*np.min([xsiz,ysiz]) #radius of the circular aperture 
+    maskcir = np.zeros((npix,npix))
     xc1 = np.linspace(0, xsiz, npix)
     yc1 = np.linspace(0, ysiz, npix)
     (xc, yc) = np.meshgrid(xc1,yc1)
     
     #definition of the circular aperture 
     rc = np.sqrt((xc-xcmm)**2 + (yc-ycmm)**2)
-    maskcir[np.where(rc>a)] = 0
+    maskcir[np.where(rc>a)] = 1
 
+    
+    if filename is not None :
+        fig1 = plt.figure()
+        figx = plt.imshow(maskcir, vmin=0, vmax=1,extent =[0,xsiz,0,ysiz], cmap=plt.get_cmap("Greys"))
+        plt.axis('off')
+        figx.axes.get_xaxis().set_visible(False)
+        figx.axes.get_yaxis().set_visible(False)
+        plt.savefig(filename, bbox_inches='tight', pad_inches = 0)
+        plt.close(fig1)
+    
     if plotting == True: 
         fig=plt.figure()
-        plt.imshow(maskcir, vmin=0, vmax=1, cmap=plt.get_cmap("Greys"))
+        plt.imshow(maskcir, vmin=0, vmax=1, extent =[0,xsiz,0,ysiz], cmap=plt.get_cmap("Greys"))
+        plt.xlim([0,xsiz])
+        plt.ylim([0,xsiz])
         plt.show()
-        fig.savefig(filename)
 
     return maskcir 
 
 
 ####Function that defines rectangular aperture mask 
-def rect_mask(npix, pixsize, partial, filename, plotting=False ):
+def rect_mask(npix, xsiz, ysiz, partial =0.5, filename='rect.png', plotting=False ):
     """
     returns 2D rectangular aperture mask 
-    npix = nr of pixels 
-    pixsize = pixel size 
-    partial = size of circ radius as fraction of npix [0,1]
-    filename = string with image name 'image.png'
+    npix = nr of pixels , by default the results 2D array is npix by npix 
+    xsiz = size in x  
+    ysiz = size in y 
+    partial = size of rect size as fraction of xsiz
+    filename = string with image name, default'rect.png'
     if plotting=True, shows the mask 
-    
     """
     import numpy as np 
     from matplotlib import pyplot as plt 
     
-    xsiz = npix
-    ysiz = npix
      
-    #by default centered  
+    #by default the aperture is at the center of the mask 
     xcmm =  0.5* xsiz
     ycmm =  0.5* ysiz 
     
@@ -72,16 +77,29 @@ def rect_mask(npix, pixsize, partial, filename, plotting=False ):
     (xc, yc) = np.meshgrid(xc1,yc1)
     
     ##definition of the mask pixels
-    maskrect[np.where((xc>(xcmm-xcmm*partial*2)) & (xc<(xcmm+xcmm*partial*2)) & \
-                      (yc>(ycmm-ycmm*partial*2)) & (yc<(ycmm+ycmm*partial*2)))] = 1
-
+    maskrect[np.where((xc>(xcmm-xcmm*partial)) & (xc<(xcmm+xcmm*partial)) & \
+                      (yc>(ycmm-ycmm*partial)) & (yc<(ycmm+ycmm*partial)))] = 1
+         
+    #show white 
+    maskrect = 1- maskrect
+    
+    if filename is not None :
+        fig1 = plt.figure()
+        figx = plt.imshow(maskrect, vmin=0, vmax=1,extent =[0,xsiz,0,ysiz], cmap=plt.get_cmap("Greys"));
+        plt.axis('off')
+        figx.axes.get_xaxis().set_visible(False)
+        figx.axes.get_yaxis().set_visible(False)
+        plt.savefig(filename, bbox_inches='tight', pad_inches = 0)
+        plt.close(fig1)
+    
     if plotting == True: 
         fig=plt.figure()
-        plt.imshow(maskrect, vmin=0, vmax=1, cmap=plt.get_cmap("Greys"))
+        plt.imshow(maskrect, vmin=0, vmax=1,extent =[0,xsiz,0,ysiz], cmap=plt.get_cmap("Greys"))
+        plt.xlim([0,xsiz])
+        plt.ylim([0,xsiz])
         plt.show()
-        fig.savefig(filename)
-    
-    return maskrect
+
+    return maskrect 
     
 ####Function that defines a Fresnel Zone Plate mask 
 def fzp_mask(npix, foc, lda, xsiz, ysiz, filename, plotting=False ):
@@ -109,7 +127,7 @@ def fzp_mask(npix, foc, lda, xsiz, ysiz, filename, plotting=False ):
     from matplotlib import pyplot as plt
     import numpy as np 
 
-    #by default centered 
+    #by default centered
     xcmm =  0.5* xsiz
     ycmm =  0.5* ysiz 
 
@@ -141,15 +159,22 @@ def fzp_mask(npix, foc, lda, xsiz, ysiz, filename, plotting=False ):
                 fzp2[ie][je] = 1
 
     fzp2[np.where(rc>a)] = 1
-
+    
+    if filename is not None :
+        fig1 = plt.figure()
+        figx = plt.imshow(fzp2,extent =[0,xsiz,0,ysiz], cmap=plt.get_cmap("Greys"))
+        plt.axis('off')
+        figx.axes.get_xaxis().set_visible(False)
+        figx.axes.get_yaxis().set_visible(False)
+        plt.savefig(filename, bbox_inches='tight', pad_inches = 0)
+        plt.close(fig1)
+    
     if plotting == True: 
         fig=plt.figure()
         plt.imshow(fzp2, cmap=plt.get_cmap("Greys"))
-        #plt.colorbar()
         plt.show()
-        fig.savefig(filename)
         
-    return fzp2    
+    return fzp2 
 
 ##Code to create a gray scale with successive gray levels 
 def create_scale(npixel, nsz, ngs): 
@@ -236,6 +261,13 @@ def spiral(x,y,x0,y0,L):
     theta = np.arctan2((y-y0),(x-x0))
     sp = np.exp(1.0j*L*theta)
     return sp
+    
+    
+    ##OTHER FUNCTIONS: 
+    ## AXICONS 
+    ## ASPHERICAL 
+    ## ASTIGMAGTIC
+    ## ... 
 
 
 def fresnel_phase_mask(npix, foc, lda, xsiz, ysiz,n, filename=None, plotting=False ,prec = 1e-6, mpoints = 1e9):
@@ -324,8 +356,8 @@ def phase_mask(npix, xsiz, ysiz, n, fname,*args,filename=None, plotting=False ,p
     xsiz = size in x in um 
     ysiz = size in y in um
     n = number of gray levels
-    fname = function name (e.g. lensfres([x,y,x0,y0], args) , where [x,y,x0,y0] are fixed)
-    *args = arguments fname, excluding the [x,y,x0,y0], e.g. with syntax fo = ..., lda ..., etc 
+    fname = function name (e.g. lensfres(x,y,x0,y0, args) , where args will be given as *args)
+    *args = arguments fname, excluding the [x,y,x0,y0] params
     
     optional: 
     filename = string with mask output into GDS  (default None)
@@ -387,3 +419,5 @@ def phase_mask(npix, xsiz, ysiz, n, fname,*args,filename=None, plotting=False ,p
         print("Saved the phase profile with " + str(n) +  " layers into the file " + filename)
         
     return farray_rad 
+
+
