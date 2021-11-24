@@ -89,7 +89,7 @@ def grayim2gds_writer(infile, outfile, pixelx, pixely, cellname, level, nm, laye
     
     for hn, hi in enumerate(harray):
         #print(hi)
-        for hw, wi in enumerate(warray)
+        for hw, wi in enumerate(warray):
             #print(wi)
             pols=[]
 
