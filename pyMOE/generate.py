@@ -32,10 +32,12 @@ def circ_mask(npix, xsiz, ysiz, partial=0.5, filename='circ.png', plotting=False
     rc = np.sqrt((xc-xcmm)**2 + (yc-ycmm)**2)
     maskcir[np.where(rc>a)] = 1
 
+    #show white 
+    #maskcirc = 1- maskcir
     
     if filename is not None :
         fig1 = plt.figure()
-        figx = plt.imshow(maskcir, vmin=0, vmax=1,extent =[0,xsiz,0,ysiz], cmap=plt.get_cmap("Greys"))
+        figx = plt.imshow(maskcirc, vmin=0, vmax=1,extent =[0,xsiz,0,ysiz], cmap=plt.get_cmap("Greys"))
         plt.axis('off')
         figx.axes.get_xaxis().set_visible(False)
         figx.axes.get_yaxis().set_visible(False)
