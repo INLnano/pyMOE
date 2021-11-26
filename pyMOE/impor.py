@@ -328,7 +328,7 @@ def inspect_gds2layersplt(filename, norm, verbose = False, **kwargs ):
     
 
 
-def gds2img(infile,outfile,norm, verb=False): 
+def gds2img(infile,outfile,norm, verbose=False): 
     """
     (void) plots the gds for inspection in python matplotlib and saves the figure to image file  
     Note: if plotting different gds file together, please make sure they are aligned (e.g. centered at origin) 
@@ -342,7 +342,7 @@ def gds2img(infile,outfile,norm, verb=False):
     import numpy as np
     
     fig = plt.figure()
-    cell_multipol, pol_dict, xmn, xmx, ymn, ymx = inspect_gds2layersplt(infile,norm,verbose = verb, axes=plt)
+    cell_multipol, pol_dict, xmn, xmx, ymn, ymx = inspect_gds2layersplt(infile,norm,verbose = verbose, axes=plt)
     
     #This dpi was chosen as high enough... but can be changed 
     my_dpi=4000

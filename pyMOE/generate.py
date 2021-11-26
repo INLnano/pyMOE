@@ -348,6 +348,7 @@ def fresnel_phase_mask(npix, foc, lda, xsiz, ysiz,n, filename=None, plotting=Fal
         
     return fresarray_rad 
 
+
 ###ANY FUNCTION PHASE MASK 
 def phase_mask(npix, xsiz, ysiz, n, fname,*args,filename=None, plotting=False ,prec = 1e-6, mpoints = 1e9 ,**kwargs):
     """
@@ -384,14 +385,10 @@ def phase_mask(npix, xsiz, ysiz, n, fname,*args,filename=None, plotting=False ,p
     xcmm =  0.5* xsiz
     ycmm =  0.5* ysiz 
     
-    a = 0.5 * np.min([xsiz,ysiz])  #radius of the circular aperture 
     maskfres = np.ones((npix,npix))
     xc1 = np.linspace(0, xsiz, npix)
     yc1 = np.linspace(0, ysiz, npix)
     (xc, yc) = np.meshgrid(xc1,yc1)
-    
-    #definition of the circular aperture 
-    rc = np.sqrt((xc-xcmm)**2 + (yc-ycmm)**2)
 
     #calculate the complex phase  fname function  
     farray = fname(xc,yc,xcmm,ycmm,*args, **kwargs)
@@ -422,4 +419,4 @@ def phase_mask(npix, xsiz, ysiz, n, fname,*args,filename=None, plotting=False ,p
         
     return farray_rad 
 
-
+#TODO gds mask from sag function, instead of complex phase 
