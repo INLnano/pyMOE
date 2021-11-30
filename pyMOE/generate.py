@@ -37,7 +37,7 @@ def circ_mask(npix, xsiz, ysiz, partial=0.5, filename='circ.png', plotting=False
     
     if filename is not None :
         fig1 = plt.figure()
-        figx = plt.imshow(maskcirc, vmin=0, vmax=1,extent =[0,xsiz,0,ysiz], cmap=plt.get_cmap("Greys"))
+        figx = plt.imshow(maskcir, vmin=0, vmax=1,extent =[0,xsiz,0,ysiz], cmap=plt.get_cmap("Greys"))
         plt.axis('off')
         figx.axes.get_xaxis().set_visible(False)
         figx.axes.get_yaxis().set_visible(False)
