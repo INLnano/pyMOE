@@ -313,7 +313,7 @@ def inspect_gds2layersplt(filename, norm, verbose = False, **kwargs ):
     ymn = np.min(ymins)  
     axess.xlim([xmn,xmx])
     axess.ylim([ymn,ymx])     
-    axess.savefig("special.tiff", bbox_inches=0, pad_inches = 0) 
+    #axess.savefig("special.tiff", bbox_inches=0, pad_inches = 0) 
     
     print("xmax is "+ str(xmx))
     print("ymax is "+ str(ymx))

@@ -1,7 +1,7 @@
 ####generate.py 
 
 #import the gds operations from the gds_klops file 
-from gds_klops import * 
+from pyMOE.gds_klops import * 
 
 ####Function that defines circular aperture mask 
 def circ_mask(npix, xsiz, ysiz, partial=0.5, filename='circ.png', plotting=False ):
