@@ -122,7 +122,7 @@ def fzp_mask(npix, foc, lda, xsiz, ysiz, filename, plotting=False ):
          lda = 0.6328 ,\
          xsiz = 500, \
          ysiz = 500, \
-         filename = 'fresnel2.png', \
+         filename = 'fresnel.png', \
          plotting=True )
          
     """
