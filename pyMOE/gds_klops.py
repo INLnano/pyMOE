@@ -70,7 +70,8 @@ def import_gds(fstgds_filename, fst_cellname, fst_layer_nr, fst_datatype_nr, \
 
     ly1.write(output_filename)
     
-    print("Imported "+sndgds_filename+" into "+fstgds_filename+". Output file "+output_filename+" .")
+    print("Imported "+sndgds_filename+" layer " + str(snd_layer_nr)+ " into "+\
+    fstgds_filename+" layer "+str(fst_layer_nr)+". Output file "+output_filename+" .")
 
 ######WRITE .DXF FILES 
 def gds_to_dxf(inputfilename_gds, outputfilename_dxf):
@@ -94,6 +95,8 @@ def instance_array(cell_name, input_filename, transx, transy, nr_inst_X, nr_inst
     (void) Makes array of existing object(s) in the gds
     'cell_name'       = string name of cell
     'input_filename'  = string name of the input gds 
+    'transx'          = translation vector in x in um 
+    'transy'          = translation vector in y in um
     'nr_inst_X'       = int number of repeated objects in x
     'nr_inst_Y'       = int number of repeated objects in y 
     'pitx'            = int pitch in x in um
@@ -119,14 +122,17 @@ def instance_array(cell_name, input_filename, transx, transy, nr_inst_X, nr_inst
         for top_cll in layout.top_cells():
             if (top_cll.name != cell_name): #Don't insert in the top_cell
                 cell_index = top_cll.cell_index()
+                #print(cell_index)
                 #define new origin point 
-                #newox = -pitx*(nr_inst_X/2-0.5) #-18498*1000
+                #newox = -pitx*(nr_inst_X/2-0.5) 
                 #newoy = -pity*(nr_inst_Y/2-0.5)
                 #print(newox)
                 #print(newoy)
                 
                 new_instance = pya.CellInstArray( cell_index, pya.Trans(pya.Vector(transx*1000,transy*1000)), pya.Vector(pitchx, 0), pya.Vector(0, pitchy), nr_inst_X, nr_inst_Y)
                 top.insert( new_instance ) #insert the cell in the array
+            else: 
+                print("The cell_name needs to be different than the top cell name in "+str(input_filename)+ " .")
 
     #write to gds
     layout.write(output_filename)
@@ -342,6 +348,7 @@ def change_layers(fstgds_filename, fst_cellname, layerspol,\
                   gvts, output_filename):
     """
     (void) Transforms layers from the source layer into the destination
+    #by default considers datatypes are int(0), set datatypes to 0 function can be used before
     'fstgds_filename'   = string filename of gds to read
     'fst_cellname'      = string name of cell in the gds 
     'layerspol'         = array of the layers of the gds file 
@@ -363,7 +370,10 @@ def change_layers(fstgds_filename, fst_cellname, layerspol,\
     
     #clear the layers in the destination cell 
     for li, lyr in enumerate(layerspol):
-        cll2.layout().clear_layer(int(li))
+        try: 
+            cll2.layout().clear_layer(int(li))
+        except: 
+            print("Could not clear layers... check layer names/nrs in gds file.")
     
     #ntot = np.size(layerspol)
     
@@ -386,6 +396,7 @@ def change_layers(fstgds_filename, fst_cellname, layerspol,\
     ly2.write(output_filename)
     
     print("Changed layerspol layer to gvts - wrote result to " +str(output_filename))
+    
     
 ####FUNCTION USING KLAYOUT PYTHON LIB TO RESCALE THE WHOLE LAYOUT
 def rescale_layout(readfile, cellname, factor, outfile, divfactor=1): 
