@@ -286,6 +286,7 @@ def grayim2gds_writer_klops(infile,  output_filename , pixelx, pixely, cellname,
     lib = gdspy.GdsLibrary()
     gdspy.current_library = gdspy.GdsLibrary() 
 
+    #this is a gds file with single square that will be instantiated 
     outfile="image.gds"
     writer = gdspy.GdsWriter(outfile,unit=1.0e-6,precision=1.0e-9)
     cell = lib.new_cell(cellname)
@@ -341,7 +342,7 @@ def grayim2gds_writer_klops(infile,  output_filename , pixelx, pixely, cellname,
                                 #here we can also think of selectin pixels at a certain level only
                                 #and creating a GDS from a grayscale image 
                                 if img[i][j] == int(level):
-                                    new_instance = pya.CellInstArray( cell_index, pya.Trans(pya.Vector(int(j*1000),int(i*1000))), pya.Vector(0, 0), pya.Vector(0, 0), 0, 0)
+                                    new_instance = pya.CellInstArray( cell_index, pya.Trans(pya.Vector(int(j*pixelx*1000),int(i*pixely*1000))), pya.Vector(0, 0), pya.Vector(0, 0), 0, 0)
                                     top.insert( new_instance ) #insert the cell in the array
             else:
                 if cellname==cell_name:
