@@ -31,7 +31,7 @@ def merge_layer(readfile, cellname, layer_nr, datatype_nr, outputfile):
 ########IMPORT FUNCTION 
 def import_gds(fstgds_filename, fst_cellname, fst_layer_nr, fst_datatype_nr, \
                sndgds_filename, snd_cellname, snd_layer_nr, snd_datatype_nr, \
-               output_filename):
+               output_filename, clear_gds = True ):
     """
     (void) Imports shapes from fst gds file INTO snd gds file 
     'Ngds_filename'   = string filename of N(=fst,snd) gds
@@ -39,6 +39,7 @@ def import_gds(fstgds_filename, fst_cellname, fst_layer_nr, fst_datatype_nr, \
     'N_layer_nr'      = int layer number in N(=fst,snd) gds  
     'N_datatype_nr'   = int datatype number in N(=fst,snd) gds  
     'output_filename' = string filename of output gds
+    'clear_gds'       = clear gds, before inserting shapes, defaults to True 
     """
     
     #ly1 with 1st gds file
@@ -47,7 +48,8 @@ def import_gds(fstgds_filename, fst_cellname, fst_layer_nr, fst_datatype_nr, \
     cll1 = ly1.cell(fst_cellname)
     lyr1 = ly1.layer(fst_layer_nr,fst_datatype_nr)
     region1 = pya.Region(cll1.shapes(lyr1)) #define region1 as shapes from ly1-lyr1
-    cll1.layout().clear_layer(lyr1) #clear ly1-lyr1
+    if clear_gds == True: 
+        cll1.layout().clear_layer(lyr1) #clear ly1-lyr1
 
     #define load opt for the next gds file with fst layer map (better to have...)
     load_layout_options = pya.LoadLayoutOptions()
@@ -59,7 +61,8 @@ def import_gds(fstgds_filename, fst_cellname, fst_layer_nr, fst_datatype_nr, \
     cll2 = ly2.cell(snd_cellname)
     lyr2 = ly2.layer(snd_layer_nr,snd_datatype_nr)
     region2 = pya.Region(cll2.shapes(lyr2)) #define region2 as shapes from ly2-lyr2
-    cll2.layout().clear_layer(lyr2) #clear ly2-lyr2
+    if clear_gds == True: 
+        cll2.layout().clear_layer(lyr2) #clear ly2-lyr2
 
     #create new layer in ly1 to receive shapes from ly2-lyr2 
     ly1.insert_layer(pya.LayerInfo(snd_layer_nr, snd_datatype_nr)) #create with same info
@@ -303,9 +306,8 @@ def cell_wpol_gdstk(cs, cellname):
     Returns:[0] gdstk library, [1] cell with polygons  
     """
     
-    from gdshelpers.geometry.chip import Cell
     import gdstk
-    from shapely.geometry import Polygon
+
     import pickle 
     import numpy as np 
     
@@ -380,7 +382,7 @@ def change_layers(fstgds_filename, fst_cellname, layerspol,\
     for li, lyr in enumerate(layerspol):
         #select the layer lyr1
         lyr1 = ly1.layer(int(lyr),int(0))
-        print(lyr)
+        #print(lyr)
         #define region1 as shapes from lyr1
         region1 = pya.Region(cll1.shapes(lyr1)) 
 
@@ -395,7 +397,7 @@ def change_layers(fstgds_filename, fst_cellname, layerspol,\
         
     ly2.write(output_filename)
     
-    print("Changed layerspol layer to gvts - wrote result to " +str(output_filename))
+    print("Changed layers - wrote result to " +str(output_filename))
     
     
 ####FUNCTION USING KLAYOUT PYTHON LIB TO RESCALE THE WHOLE LAYOUT
