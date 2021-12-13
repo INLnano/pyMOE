@@ -16,6 +16,7 @@ def merge_layer(readfile, cellname, layer_nr, datatype_nr, outputfile):
     layoutor = pya.Layout()
     lmap = layoutor.read(readfile)
     cell = layoutor.cell(cellname)
+    cell.flatten(1)
     layer = layoutor.layer(layer_nr,datatype_nr)
 
     region = pya.Region(cell.shapes(layer))
@@ -118,6 +119,7 @@ def instance_array(cell_name, input_filename, transx, transy, nr_inst_X, nr_inst
 
     #gds files to read (could also be a list)
     gds_files = [input_filename]
+    cnt = 0
 
     for file in gds_files:
         layout.read(file) #read the files
@@ -134,8 +136,10 @@ def instance_array(cell_name, input_filename, transx, transy, nr_inst_X, nr_inst
                 
                 new_instance = pya.CellInstArray( cell_index, pya.Trans(pya.Vector(transx*1000,transy*1000)), pya.Vector(pitchx, 0), pya.Vector(0, pitchy), nr_inst_X, nr_inst_Y)
                 top.insert( new_instance ) #insert the cell in the array
-            else: 
-                print("The cell_name needs to be different than the top cell name in "+str(input_filename)+ " .")
+                cnt = cnt +1 
+
+        if cnt==0:
+            print("Instantiation was unsuccessful. The cell_name needs to be different than the top cell name in "+str(input_filename)+ ". ")
 
     #write to gds
     layout.write(output_filename)
