@@ -1,6 +1,6 @@
 ##metas.py 
 
-def metasurface_pillars(xsiz,ysiz, pixelx, pixely, p, dvarx,cellname, outfilen, verbose=False ): 
+def metasurface_pillars(xsiz,ysiz, pixelx, pixely, p, dvarx,cellname, outfilen, tolerance=0.01, verbose=False ): 
     """
     (void) Transform a phase profile in 2D for a pillar based metasurface 
     'xsiz' = size in x in um 
@@ -12,6 +12,7 @@ def metasurface_pillars(xsiz,ysiz, pixelx, pixely, p, dvarx,cellname, outfilen, 
     'cellname' = string with name of cell, e.g. 'TOP'
     'oufilen'  = string filename of output gds
     
+    'tolerance' defaults to 0.01, can be decreased to have better defined circles
     'verbose' if True, prints during execution 
     """    
     import gdspy 
@@ -44,8 +45,8 @@ def metasurface_pillars(xsiz,ysiz, pixelx, pixely, p, dvarx,cellname, outfilen, 
             if diameter < 0.05: 
                 diameter = 0.05 
 
-            #Attention, we are using default tolerance, the tolerance could be increased/ passed as argument 
-            circle = gdspy.Round((pixelx*hn, -pixely*hw), diameter,max_points=1e6)
+            #Attention, we are using default tolerance, the tolerance could be decreased 
+            circle = gdspy.Round((pixelx*hn, -pixely*hw), diameter/2,tolerance = tolerance, max_points=1e6)
             cell.add(circle)
 
         writer.write_cell(cell)

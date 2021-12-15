@@ -257,7 +257,7 @@ def grayim2gds_writer_klops(infile,  output_filename , pixelx, pixely, cellname,
     'level'   = int from 0 to 255 (0 = black, 255=white) , pixels gray value to be passed to GDS 
 
     optional:
-    'layer' = gray level, defaults to 0 
+    'layer' = gds layer, defaults to 0 
     'datatype' = gds datatype, defaults to 0 
     'verbose' defaults to False, if True prints 
 
