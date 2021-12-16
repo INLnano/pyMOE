@@ -350,7 +350,7 @@ def fresnel_phase_mask(npix, foc, lda, xsiz, ysiz,n, filename=None, plotting=Fal
 
 
 ###ANY FUNCTION PHASE MASK 
-def phase_mask(npix, xsiz, ysiz, n, fname,*args,filename=None, plotting=False ,prec = 1e-6, mpoints = 1e9 ,**kwargs):
+def phase_mask(npix, xsiz, ysiz, n, fname,*args,filename=None, plotting=False ,prec = 1e-6, mpoints = 1e9 , zlevs = [], **kwargs):
     """
     returns a "phase mask" (2D array of the phase IN RADIANS) from COMPLEX PHASE function fname  given as argument
     
@@ -367,6 +367,7 @@ def phase_mask(npix, xsiz, ysiz, n, fname,*args,filename=None, plotting=False ,p
     plotting = True, shows the mask  (default False)
     prec = precision of the gdspy boolean operation  (default 1e-6 um)
     mpoints = max_points of the gdspy polygon (default 1e9 points)
+    zlevs   = array of the phase levels 
     
     Examples of use: #Should take around ~30 s for any of these 
     phase_mask(5000, 500,500, 10,\
@@ -397,8 +398,9 @@ def phase_mask(npix, xsiz, ysiz, n, fname,*args,filename=None, plotting=False ,p
     farray_rad = np.angle(farray)
     
     #make array with the z plane intersections  (n gray levels)
-    zlevs = np.linspace(np.min(farray_rad), np.max(farray_rad), n+1)
-    #print(zlevs)
+    if zlevs == []: 
+        zlevs = np.linspace(np.min(farray_rad), np.max(farray_rad), n+1)
+        #print(zlevs)
 
     if plotting == True: 
         plt.figure()
