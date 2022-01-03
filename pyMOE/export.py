@@ -247,7 +247,7 @@ def grayim2gds_writer(infile, outfile, pixelx, pixely, cellname, level, layer=0,
 
 def grayim2gds_writer_klops(infile,  output_filename , pixelx, pixely, cellname, level, layer=0, datatype=0 , verbose=False):
     """
-    (void) Transforms one image (converted to grayscale) into a gds, using cv2 for reading the image
+    (void)  Transforms one image (converted to grayscale) into a gds, using cv2 for reading the image
     by default adds the image to (layer, datatype) = (0,0)
     'infile'  = input IMAGE file (on extension that cv2 can read ), e.g. "image.png"
     'output_filename' = intermediate GDS file
