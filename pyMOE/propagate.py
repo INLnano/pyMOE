@@ -151,8 +151,8 @@ def RS_int(zs, mask, npixmask, pixsizemask, npixscreen, dxscreen, dyscreen, wave
     dmask = pixsizemask * npm
     
     #physical constants 
-    c_const = 3e8 
-    eps0 = 8.854189e-12 
+    c_const = 3e8 #m/s
+    eps0 = 8.85e-12 #F/m
     n = 1 #refractive index of medium  
 
     k = 2* np.pi/wavelength
@@ -260,8 +260,8 @@ def RS_int_XZ2(zs, nzds, mask, npixmask, pixsizemask, npixscreen, dxscreen, dysc
     dmask = pixsizemask * npm
     
     #physical constants 
-    c_const = 3e8 
-    eps0 = 8.854189e-12 
+    c_const = 3e8 #m/s 
+    eps0 = 8.85e-12 #F/m
     n = 1 #refractive index of medium  
 
     k = 2* np.pi/wavelength
@@ -269,7 +269,6 @@ def RS_int_XZ2(zs, nzds, mask, npixmask, pixsizemask, npixscreen, dxscreen, dysc
     ## definitions 
     unit = np.ones((npm,npm), dtype=complex)
     r = np.zeros((npm,npm)) 
-    r3 = np.zeros((npm,npm))
     prop1 = np.zeros((npm,npm))
     prop2 = np.zeros((npm,npm))
     propE = np.zeros((npm,npm))
