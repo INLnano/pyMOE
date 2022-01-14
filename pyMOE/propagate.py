@@ -1,7 +1,9 @@
 ####propagate.py   
 
 ####Thid file is duplicate from the propopt repository on January 2022
+####For more information, examples of use and validation tests, please see
 ####link for repository : https://github.com/cunhaJ/propopt 
+
 
 def fresnel(z, mask, npixmask, pixsizemask, npixscreen, dxscreen, dyscreen, wavelength):
     """
