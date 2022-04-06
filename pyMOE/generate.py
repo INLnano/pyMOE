@@ -325,7 +325,8 @@ def fresnel_phase_mask(npix, foc, lda, xsiz, ysiz,n, filename=None, plotting=Fal
     
     #make array with the z plane intersections  (n gray levels)
     zlevs = np.linspace(np.min(fresarray_rad), np.max(fresarray_rad), n+1)
-    #print(zlevs)
+    
+    print(zlevs)
 
     if plotting == True: 
         plt.figure()
@@ -344,7 +345,7 @@ def fresnel_phase_mask(npix, foc, lda, xsiz, ysiz,n, filename=None, plotting=Fal
 
     if filename is not None: 
         lib1.write_gds(filename)
-        print("Saved the phase profile with " + str(n) +  " layers into the file " + filename)
+        print("Saved the phase profile with " + str(len(zlevs)-1) +  " layers into the file " + filename)
         
     return fresarray_rad 
 

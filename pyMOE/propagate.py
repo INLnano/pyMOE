@@ -186,16 +186,7 @@ def RS_int(zs, mask, npixmask, pixsizemask, npixscreen, dxscreen, dyscreen, wave
     fig=plt.figure()
     plt.imshow(E0m, vmin=0, vmax=1, cmap=plt.get_cmap("jet"))
     plt.title("Efield at mask")
-
-    #intensity at the mask
-    i0m = (c_const*n*eps0/2)*E0m*E0m 
-    I0m = double_Integral(-dmask/2, dmask/2, -dmask/2, dmask/2, npm,npm, i0m)
-
-    print(I0m)
-
-    Utheoreticalmax = I0 * np.pi * dmask**2 
-    print(Utheoreticalmax)
-
+    
     xs1 = np.linspace(-dxscreen, dxscreen, nps)
     ys1 = np.linspace(-dyscreen, dyscreen, nps)
     (xs, ys) = np.meshgrid(xs1,ys1)
@@ -298,20 +289,12 @@ def RS_int_XZ2(zs, nzds, mask, npixmask, pixsizemask, npixscreen, dxscreen, dysc
     plt.imshow(E0m, vmin=0, vmax=1, cmap=plt.get_cmap("jet"))
     plt.title("Efield at mask")
 
-    #intensity at the mask
-    i0m = (c_const*n*eps0/2)*E0m**2
-    I0m = double_Integral(-dmask/2, dmask/2, -dmask/2, dmask/2, npm,npm, i0m)
-
-    print(I0m)
-
-    Utheoreticalmax = I0 * np.pi * dmask**2 
-    print(Utheoreticalmax)
-
+ 
     xs1 = np.linspace(-dxscreen, dxscreen, nps)
     ys1 = np.linspace(-dyscreen, dyscreen, nps)
     (xs, ys) = np.meshgrid(xs1,ys1)
     
-    print(ys[0,:])
+    #print(ys[0,:])
     
     
     #array with the distance in z until the distance zs given as argument 
@@ -344,7 +327,7 @@ def RS_int_XZ2(zs, nzds, mask, npixmask, pixsizemask, npixscreen, dxscreen, dysc
 
         Escreen = rEs + 1.0j*iEs 
         Iscreen = (c_const*n*eps0/2) * np.abs(Escreen)**2
-        iplot = 10*Iscreen**0.3
+        iplot = 10*Iscreen**0.2
         #print(iplot)
         midpoint = int(nps/2)-1
         inten[:,iz] = iplot[:,midpoint]#This is a line cut in y  for each iteration
