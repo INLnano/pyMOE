@@ -3,8 +3,32 @@
 #import the gds operations from the gds_klops file 
 from pyMOE.gds_klops import * 
 
+
+####
+def makegrid(npix, xsiz, ysiz): 
+    """
+    returns the grid where the optical element will be designed, using meshgrid to create it
+    npix = nr of pixels , by default the results 2D array is npix by npix 
+    xsiz = size in x  
+    ysiz = size in y 
+    
+    returns the grid with npix per npix 
+
+    """
+
+    import numpy as np 
+    
+    maskcir = np.zeros((npix,npix))
+    xc1 = np.linspace(0, xsiz, npix)
+    yc1 = np.linspace(0, ysiz, npix)
+    (xc, yc) = np.meshgrid(xc1,yc1)
+    
+    return (xc, yc) 
+    
+    
+
 ####Function that defines circular aperture mask 
-def circ_mask(npix, xsiz, ysiz, partial=0.5, filename='circ.png', plotting=False ):
+def circ_mask(npix, xsiz, ysiz, partial=0.5, filename='circ.png', plotting=False, grid=None):
     """
     returns 2D circular aperture mask 
     npix = nr of pixels , by default the results 2D array is npix by npix 
@@ -23,10 +47,16 @@ def circ_mask(npix, xsiz, ysiz, partial=0.5, filename='circ.png', plotting=False
     ycmm =  0.5* ysiz 
 
     a = partial*np.min([xsiz,ysiz]) #radius of the circular aperture 
+    
     maskcir = np.zeros((npix,npix))
-    xc1 = np.linspace(0, xsiz, npix)
-    yc1 = np.linspace(0, ysiz, npix)
-    (xc, yc) = np.meshgrid(xc1,yc1)
+            
+    if grid is not None: 
+        (xc, yc) = grid
+    else: 
+        xc1 = np.linspace(0, xsiz, npix)
+        yc1 = np.linspace(0, ysiz, npix)
+        (xc, yc) = np.meshgrid(xc1,yc1)
+
     
     #definition of the circular aperture 
     rc = np.sqrt((xc-xcmm)**2 + (yc-ycmm)**2)
@@ -55,7 +85,7 @@ def circ_mask(npix, xsiz, ysiz, partial=0.5, filename='circ.png', plotting=False
 
 
 ####Function that defines rectangular aperture mask 
-def rect_mask(npix, xsiz, ysiz, partial =0.5, filename='rect.png', plotting=False ):
+def rect_mask(npix, xsiz, ysiz, partial =0.5, filename='rect.png', plotting=False, grid=None ):
     """
     returns 2D rectangular aperture mask 
     npix = nr of pixels , by default the results 2D array is npix by npix 
@@ -74,9 +104,15 @@ def rect_mask(npix, xsiz, ysiz, partial =0.5, filename='rect.png', plotting=Fals
     ycmm =  0.5* ysiz 
     
     maskrect = np.zeros((npix,npix))
-    xc1 = np.linspace(0, xsiz, npix)
-    yc1 = np.linspace(0, ysiz, npix)
-    (xc, yc) = np.meshgrid(xc1,yc1)
+            
+    if grid is not None: 
+        (xc, yc) = grid
+    else: 
+        xc1 = np.linspace(0, xsiz, npix)
+        yc1 = np.linspace(0, ysiz, npix)
+        (xc, yc) = np.meshgrid(xc1,yc1)
+
+    
     
     ##definition of the mask pixels
     maskrect[np.where((xc>(xcmm-xcmm*partial)) & (xc<(xcmm+xcmm*partial)) & \
@@ -103,8 +139,10 @@ def rect_mask(npix, xsiz, ysiz, partial =0.5, filename='rect.png', plotting=Fals
 
     return maskrect 
     
+    
+    
 ####Function that defines a Fresnel Zone Plate mask 
-def fzp_mask(npix, foc, lda, xsiz, ysiz, filename, plotting=False ):
+def fzp_mask(npix, foc, lda, xsiz, ysiz, filename, plotting=False, grid=None ):
     """
     returns a fresnel zone plate (as a numpy 2D array)
     npix = nr of pixels 
@@ -135,9 +173,16 @@ def fzp_mask(npix, foc, lda, xsiz, ysiz, filename, plotting=False ):
 
     a = 0.5 * np.min([xsiz,ysiz])  #radius of the circular aperture 
     maskfres = np.ones((npix,npix))
-    xc1 = np.linspace(0, xsiz, npix)
-    yc1 = np.linspace(0, ysiz, npix)
-    (xc, yc) = np.meshgrid(xc1,yc1)
+
+            
+    if grid is not None: 
+        (xc, yc) = grid
+    else: 
+        xc1 = np.linspace(0, xsiz, npix)
+        yc1 = np.linspace(0, ysiz, npix)
+        (xc, yc) = np.meshgrid(xc1,yc1)
+
+    
 
     #definition of the circular aperture 
     rc = np.sqrt((xc-xcmm)**2 + (yc-ycmm)**2)
@@ -272,7 +317,7 @@ def spiral(x,y,x0,y0,L):
     ## ... 
 
 
-def fresnel_phase_mask(npix, foc, lda, xsiz, ysiz,n, filename=None, plotting=False ,prec = 1e-6, mpoints = 1e9):
+def fresnel_phase_mask(npix, foc, lda, xsiz, ysiz,n, filename=None, plotting=False ,prec = 1e-6, mpoints = 1e9, grid=None):
     """
     returns a Fresnel "phase mask" (2D array of the phase IN RADIANS)
     parameters: 
@@ -309,9 +354,16 @@ def fresnel_phase_mask(npix, foc, lda, xsiz, ysiz,n, filename=None, plotting=Fal
     
     a = 0.5 * np.min([xsiz,ysiz])  #radius of the circular aperture 
     maskfres = np.ones((npix,npix))
-    xc1 = np.linspace(0, xsiz, npix)
-    yc1 = np.linspace(0, ysiz, npix)
-    (xc, yc) = np.meshgrid(xc1,yc1)
+
+            
+    if grid is not None: 
+        (xc, yc) = grid
+    else: 
+        xc1 = np.linspace(0, xsiz, npix)
+        yc1 = np.linspace(0, ysiz, npix)
+        (xc, yc) = np.meshgrid(xc1,yc1)
+
+    
     
     #definition of the circular aperture 
     rc = np.sqrt((xc-xcmm)**2 + (yc-ycmm)**2)
@@ -351,11 +403,12 @@ def fresnel_phase_mask(npix, foc, lda, xsiz, ysiz,n, filename=None, plotting=Fal
 
 
 ###ANY FUNCTION PHASE MASK 
-def phase_mask(npix, xsiz, ysiz, n, fname,*args,filename=None, plotting=False ,prec = 1e-6, mpoints = 1e9 , zlevs = [], **kwargs):
+def phase_mask(mode, npix, xsiz, ysiz, n, fname,*args,filename=None, plotting=False ,prec = 1e-6, mpoints = 1e9 , zlevs = [],grid=None, **kwargs):
     """
     returns a "phase mask" (2D array of the phase IN RADIANS) from COMPLEX PHASE function fname  given as argument
     
     parameters: 
+    mode = 'gdspyfast', 'gdspy', 'gdshelper'
     npix = nr of pixels (or points) , by default the results 2D array is npix by npix 
     xsiz = size in x in um 
     ysiz = size in y in um
@@ -386,11 +439,18 @@ def phase_mask(npix, xsiz, ysiz, n, fname,*args,filename=None, plotting=False ,p
     #by default centered 
     xcmm =  0.5* xsiz
     ycmm =  0.5* ysiz 
+    lib1 = 0 
     
     maskfres = np.ones((npix,npix))
-    xc1 = np.linspace(0, xsiz, npix)
-    yc1 = np.linspace(0, ysiz, npix)
-    (xc, yc) = np.meshgrid(xc1,yc1)
+
+            
+    if grid is not None: 
+        (xc, yc) = grid
+    else: 
+        xc1 = np.linspace(0, xsiz, npix)
+        yc1 = np.linspace(0, ysiz, npix)
+        (xc, yc) = np.meshgrid(xc1,yc1)
+
 
     #calculate the complex phase  fname function  
     farray = fname(xc,yc,xcmm,ycmm,*args, **kwargs)
@@ -413,13 +473,124 @@ def phase_mask(npix, xsiz, ysiz, n, fname,*args,filename=None, plotting=False ,p
         plt.tight_layout()
       
     #possible improvement, pass this function as argument
-    #lib1, cell1 = cell_wpol_gdspy_fast(cs, 'TOP', prec, mpoints)
-    lib1, cell1 = cell_wpol_gdspy(cs, 'TOP', prec, mpoints)
+    if mode == 'gdspyfast': 
+        lib1, cell1 = cell_wpol_gdspy_fast(cs, 'TOP', prec, mpoints)
+        cell2 = None 
+        multpol = None 
+        
+    if mode == 'gdspy': 
+        lib1, cell1 = cell_wpol_gdspy(cs, 'TOP', prec, mpoints)
+        cell2 = None 
+        multpol = None 
+        
+    if mode == 'gdshelper': 
+        cell2, multpol = cell_wpol(cs, 'TOP')
 
-    if filename is not None: 
+    #option for gdspy lib use 
+    if lib1 and filename is not None: 
         lib1.write_gds(filename)
         print("Saved the phase profile with " + str(n) +  " layers into the file " + filename)
-        
+    
+    #option for gdshelpers lib use 
+    if cell2 and filename is not None: 
+        cell2.save(filename)
+        print("Saved the phase profile with " + str(n) +  " layers into the file " + filename)
+    
     return farray_rad 
 
-#TODO gds mask from sag function, instead of complex phase 
+
+###ANY FUNCTION PHASE MASK 
+def layer_mask(mode, npix, xsiz, ysiz, n, fname,*args,filename=None, plotting=False ,prec = 1e-6, mpoints = 1e9 , zlevs = [],grid=None, **kwargs):
+    """
+    returns a "phase mask" (2D array of the phase IN RADIANS) from COMPLEX PHASE function fname  given as argument
+    
+    parameters: 
+    mode = 'gdspyfast', 'gdspy', 'gdshelper'
+    npix = nr of pixels (or points) , by default the results 2D array is npix by npix 
+    xsiz = size in x in um 
+    ysiz = size in y in um
+    n = number of gray levels
+    fname = function name (e.g. lensfres(x,y,x0,y0, args) , where args will be given as *args)
+    *args = arguments fname, excluding the [x,y,x0,y0] params
+    
+    optional: 
+    filename = string with mask output into GDS  (default None)
+    plotting = True, shows the mask  (default False)
+    prec = precision of the gdspy boolean operation  (default 1e-6 um)
+    mpoints = max_points of the gdspy polygon (default 1e9 points)
+    zlevs   = array of the phase levels 
+    
+    Examples of use: #Should take around ~30 s for any of these 
+    phase_mask(5000, 500,500, 10,\
+           lensfres, fo=5000, lda=0.6328, \
+           filename="fresnel_phase_plate.gds", plotting=True ,prec = 1e-6, mpoints = 1e9 )
+           
+    phase_mask(5000, 500,500, 60,\
+           spiral, L=1, \
+           filename="spiral_phase_plate.gds", plotting=True ,prec = 1e-12, mpoints = 1e9 )
+         
+    """  
+    import numpy as np
+    import matplotlib.pyplot as plt
+    
+    #by default centered 
+    xcmm =  0.5* xsiz
+    ycmm =  0.5* ysiz 
+    lib1 = 0 
+    
+    maskfres = np.ones((npix,npix))
+
+            
+    if grid is not None: 
+        (xc, yc) = grid
+    else: 
+        xc1 = np.linspace(0, xsiz, npix)
+        yc1 = np.linspace(0, ysiz, npix)
+        (xc, yc) = np.meshgrid(xc1,yc1)
+
+
+    #calculate the complex phase  fname function  
+    farray = fname(xc,yc,xcmm,ycmm,*args, **kwargs)
+    
+    #farray[np.where(rc>a)] = np.pi
+    #farray_rad = np.angle(farray)
+    
+    #make array with the z plane intersections  (n gray levels)
+    if zlevs == []: 
+        zlevs = np.linspace(np.min(farray), np.max(farray), n+1)
+        #print(zlevs)
+
+    if plotting == True: 
+        plt.figure()
+        plt.axis('equal')
+        cs = plt.contourf(xc,yc,farray, zlevs, cmap=plt.get_cmap("Greys"))
+        plt.xlabel('x ($\mu$m)')
+        plt.ylabel('y ($\mu$m)')
+        plt.colorbar(label='Phase (rad)')
+        plt.tight_layout()
+      
+    #possible improvement, pass this function as argument
+    if mode == 'gdspyfast': 
+        lib1, cell1 = cell_wpol_gdspy_fast(cs, 'TOP', prec, mpoints)
+        cell2 = None 
+        multpol = None 
+        
+    if mode == 'gdspy': 
+        lib1, cell1 = cell_wpol_gdspy(cs, 'TOP', prec, mpoints)
+        cell2 = None 
+        multpol = None 
+        
+    if mode == 'gdshelper': 
+        cell2, multpol = cell_wpol(cs, 'TOP')
+
+    #option for gdspy lib use 
+    if lib1 and filename is not None: 
+        lib1.write_gds(filename)
+        print("Saved the phase profile with " + str(n) +  " layers into the file " + filename)
+    
+    #option for gdshelpers lib use 
+    if cell2 and filename is not None: 
+        cell2.save(filename)
+        print("Saved the phase profile with " + str(n) +  " layers into the file " + filename)
+    
+    return farray
