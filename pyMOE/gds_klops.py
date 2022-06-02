@@ -189,10 +189,12 @@ def cell_wpol(cs, cellname):
     multipoly=[]
 
     cell = Cell(cellname)
+    
+    print(len(cs.collections))
 
     #EXTRACT THE CONTOURLEVELS AS POLYGONS, AND ADD POLYGONS TO A GDS CELL 
     for ncol,col in enumerate(cs.collections):
-        #print(ncol)
+        print(ncol)
         # Loop through all polygons that have the same intensity level
         for cps,contour_path in enumerate(col.get_paths()): 
             #print(cps)
@@ -203,15 +205,19 @@ def cell_wpol(cs, cellname):
                 x = cp[:,0]
                 y = cp[:,1]
                 new_shape = Polygon([(i[0], i[1]) for i in zip(x,y)])
+                new_shape = new_shape.buffer(0)
+                print(new_shape.is_valid)
                 if ncp == 0:
                     poly = new_shape
+                    poly = poly.buffer(0)
+                    
                 else:
                     # Remove the holes if there are any
                     poly = poly.difference(new_shape)
                 
                 #Add the Polygon to the layer (ncol+1)
                 #NOTE!!! IT LEAVES THE DATATYPE UNDEFINED
-                cell.add_to_layer(ncol+1, poly)
+                cell.add_to_layer(ncol, poly)
         
             #if cps == 0:
             #    poly1 = new_shape
@@ -347,6 +353,7 @@ def cell_wpol_gdstk(cs, cellname):
             
     return lib, main_cell
     
+
 ##########CHANGE LAYERS ON THE GDS, FROM layerspol TO gvts
 ###THIS IS USING DATATYPE AS ZERO by default, can be changed 
 def change_layers(fstgds_filename, fst_cellname, layerspol,\
@@ -404,6 +411,8 @@ def change_layers(fstgds_filename, fst_cellname, layerspol,\
     print("Changed layers - wrote result to " +str(output_filename))
     
     
+    
+    
 ####FUNCTION USING KLAYOUT PYTHON LIB TO RESCALE THE WHOLE LAYOUT
 def rescale_layout(readfile, cellname, factor, outfile, divfactor=1): 
     """
@@ -437,7 +446,7 @@ def rescale_layout(readfile, cellname, factor, outfile, divfactor=1):
 ####FUNCTION TO MAKE THE DIFFS BETWEEN THE LAYERS IN THE LAYERS ARRAY 
 def diffs_layers_arrays(readfile, cellname, layerspol1, datatypes1, layerspol2, datatypes2, outfile): 
     """
-    (void) Sequentially makes the difference from one layer to the other, from layerspol[1] to layerspol[0]
+    (void) Sequentially makes the difference from one layer to the other, from layerspol1 to layerspol2
     'readfile'    = string filename of input gds
     'cellname'    = string name of cell 
     'layerspol1'   = numpy array with all layer that will be substracted
@@ -447,6 +456,7 @@ def diffs_layers_arrays(readfile, cellname, layerspol1, datatypes1, layerspol2, 
     'outfile'     = string filename of output gds
     """
     import pya
+    import numpy as np 
 
     #define layout and read layout from file
     layoutor = pya.Layout()
@@ -458,12 +468,32 @@ def diffs_layers_arrays(readfile, cellname, layerspol1, datatypes1, layerspol2, 
         #print(lyrs)
         #print(datatypes[lyrs])
         
-        np = int(lyrs1)
+        npd = int(lyrs1)
         dts = int(dtps1)
-        layer1 = layoutor.layer(np,dts)
-    
-        #region with all the shapes within the TOP cell
+        minval = np.min(layerspol1)
+        maxval = np.max(layerspol2)
+        
+        layer1 = layoutor.layer(npd,dts)
         region1 = pya.Region(cell.shapes(layer1))
+        
+        #print(npd)
+        #make the collection from all areas that already have a shape
+        if npd > 0: 
+            #print(npd)
+            nar = np.flip(np.arange(minval,npd))
+            print(nar)
+            dtar = np.zeros(len(nar))
+             
+            for nps, dtps in zip(nar, dtar):
+                print(nps)
+                layer1s = layoutor.layer(int(nps),int(dtps))
+                #region with all the shapes within the TOP cell
+                region1s = pya.Region(cell.shapes(layer1s))
+                region1 = region1 + region1s 
+        
+        #print(npd)
+        #if npd>2: 
+        #    print(np.arange(0,float(npd)))
     
         np1 = int(lyrs2)
         dts1 = int(dtps2)
@@ -485,6 +515,7 @@ def diffs_layers_arrays(readfile, cellname, layerspol1, datatypes1, layerspol2, 
     
     print("Substracted "+str(layerspol1)+" in " + str(layerspol2)+" of the file "+str(readfile))
     print("Saved the result to "+str(outfile))
+    
 
 
 ########CREATES A GDSPY CELL WITH THE POLYGONS USING GDSPY
@@ -515,6 +546,7 @@ def cell_wpol_gdspy(cs, cellname, prec=1e-6, mpoints=1e9):
 
     #go through all the elements in collections (gray levels)
     for ncol,col in enumerate(collecs):
+        print(ncol)
         # Loop through all contours that have the same gray level
         paths = col.get_paths() 
         #lenpat = len(paths)
@@ -552,7 +584,7 @@ def cell_wpol_gdspy(cs, cellname, prec=1e-6, mpoints=1e9):
     return lib, cell 
     
     
-########OTHER EXPERIMENTAL APPROACH USING GDSPY , accelerates the calculation by considering just 2 pols  within a layer 
+########OTHER EXPERIMENTAL APPROACH USING GDSPY , accelerates the calculation by considering just 2 pols  within a layer - but might lose some polygons in some complicated cases... 
 #CAREFUL, this is better for estimation ONLY as we need enough resolution in the contourplot for this approach to work properly 
 def cell_wpol_gdspy_fast(cs, cellname, prec=1e-6, mpoints=1e9):
     """
