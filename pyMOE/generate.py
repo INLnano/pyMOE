@@ -2,7 +2,10 @@
 
 #import the gds operations from the gds_klops file 
 from pyMOE.gds_klops import * 
-
+import numpy as np 
+from matplotlib import pyplot as plt
+import cv2 
+   
 
 ####
 def makegrid(npix, xsiz, ysiz): 
@@ -16,8 +19,6 @@ def makegrid(npix, xsiz, ysiz):
 
     """
 
-    import numpy as np 
-    
     maskcir = np.zeros((npix,npix))
     xc1 = np.linspace(0, xsiz, npix)
     yc1 = np.linspace(0, ysiz, npix)
@@ -36,11 +37,11 @@ def circ_mask(npix, xsiz, ysiz, partial=0.5, filename='circ.png', plotting=False
     ysiz = size in y 
     partial = size of circ radius as fraction of min([xsiz,ysiz])
     filename = string with image name, default 'circ.png'
-    if plotting=True, shows the mask 
+    Optional: 
+    plotting=True, shows the mask
+    grid = 2D array with a meshgrid  
 
     """
-    from matplotlib import pyplot as plt
-    import numpy as np 
 
     #by default the aperture is at the center of the mask 
     xcmm =  0.5* xsiz
@@ -93,12 +94,11 @@ def rect_mask(npix, xsiz, ysiz, partial =0.5, filename='rect.png', plotting=Fals
     ysiz = size in y 
     partial = size of rect size as fraction of xsiz
     filename = string with image name, default'rect.png'
-    if plotting=True, shows the mask 
+    Optional: 
+    plotting=True, shows the mask
+    grid = 2D array with a meshgrid     
     """
-    import numpy as np 
-    from matplotlib import pyplot as plt 
-    
-     
+
     #by default the aperture is at the center of the mask 
     xcmm =  0.5* xsiz
     ycmm =  0.5* ysiz 
@@ -151,7 +151,10 @@ def fzp_mask(npix, foc, lda, xsiz, ysiz, filename, plotting=False, grid=None ):
     xsiz = size in x in um 
     ysiz = size in y in um 
     filename = string with mask image name 'image.png'
-    if plotting=True, shows the mask 
+    
+    Optional: 
+    plotting=True, shows the mask 
+    grid = 2D array with a meshgrid 
     
     Example of use: 
     
@@ -164,8 +167,6 @@ def fzp_mask(npix, foc, lda, xsiz, ysiz, filename, plotting=False, grid=None ):
          plotting=True )
          
     """
-    from matplotlib import pyplot as plt
-    import numpy as np 
 
     #by default centered
     xcmm =  0.5* xsiz
@@ -195,7 +196,7 @@ def fzp_mask(npix, foc, lda, xsiz, ysiz, filename, plotting=False, grid=None ):
 
     i,j = fzp.shape 
 
-    #final plate
+    #final plateCurrent 
     fzp2 = np.zeros((i,j)) 
 
     for ie in np.arange(0,i):
@@ -232,9 +233,7 @@ def create_scale(npixel, nsz, ngs):
     ngs = nr of gray levels 
     
     """
-    import cv2 
-    import numpy as np
-
+    
     scale_img = np.zeros((npixel,npixel,3), np.uint8)
 
     width = npixel 
@@ -287,8 +286,7 @@ def lensfres(x,y,x0,y0,fo,lda):
     
     Note: for angle (in rad), call numpy.angle(...)
     """
-    import numpy as np
-    
+
     rc = np.sqrt((x-x0)**2 + (y-y0)**2)
     fresn = np.exp(1.0j*(fo-np.sqrt(fo**2 + rc**2))*(2*np.pi)/(lda))
     return fresn 
@@ -303,7 +301,6 @@ def spiral(x,y,x0,y0,L):
     y0 = y-coordinate of center of the lens
     L = topological charge 
     """
-    import numpy as np 
 
     theta = np.arctan2((y-y0),(x-x0))
     sp = np.exp(1.0j*L*theta)
@@ -333,6 +330,7 @@ def fresnel_phase_mask(npix, foc, lda, xsiz, ysiz,n, filename=None, plotting=Fal
     plotting = True, shows the mask  (default False)
     prec = precision of the gdspy boolean operation  (default 1e-6)
     mpoints = max_points of the gdspy polygon (default 1e9)
+    grid = 2D array with a meshgrid 
     
     Example of use: 
     fresnel_phase_mask(npix = 5000, \
@@ -345,9 +343,7 @@ def fresnel_phase_mask(npix, foc, lda, xsiz, ysiz,n, filename=None, plotting=Fal
                    plotting=True )   #Should take around ~30 s 
          
     """  
-    import numpy as np
-    import matplotlib.pyplot as plt 
-    
+
     #by default centered 
     xcmm =  0.5* xsiz
     ycmm =  0.5* ysiz 
@@ -403,9 +399,9 @@ def fresnel_phase_mask(npix, foc, lda, xsiz, ysiz,n, filename=None, plotting=Fal
 
 
 ###ANY FUNCTION PHASE MASK 
-def phase_mask(mode, npix, xsiz, ysiz, n, fname,*args,filename=None, plotting=False ,prec = 1e-6, mpoints = 1e9 , zlevs = [],grid=None, **kwargs):
+def arbitrary_phase_mask(mode, npix, xsiz, ysiz, n, fname,*args,filename=None, plotting=False ,prec = 1e-6, mpoints = 1e9 , zlevs = [],grid=None, **kwargs):
     """
-    returns a "phase mask" (2D array of the phase IN RADIANS) from COMPLEX PHASE function fname  given as argument
+    returns a "phase mask" (2D array of the phase IN RADIANS) from arbitrary COMPLEX PHASE function fname  given as argument
     
     parameters: 
     mode = 'gdspyfast', 'gdspy', 'gdshelper'
@@ -422,20 +418,19 @@ def phase_mask(mode, npix, xsiz, ysiz, n, fname,*args,filename=None, plotting=Fa
     prec = precision of the gdspy boolean operation  (default 1e-6 um)
     mpoints = max_points of the gdspy polygon (default 1e9 points)
     zlevs   = array of the phase levels 
+    grid = 2D array with a meshgrid 
     
     Examples of use: #Should take around ~30 s for any of these 
-    phase_mask(5000, 500,500, 10,\
+    arbitrary_phase_mask(5000, 500,500, 10,\
            lensfres, fo=5000, lda=0.6328, \
            filename="fresnel_phase_plate.gds", plotting=True ,prec = 1e-6, mpoints = 1e9 )
            
-    phase_mask(5000, 500,500, 60,\
+    arbitrary_phase_mask(5000, 500,500, 60,\
            spiral, L=1, \
            filename="spiral_phase_plate.gds", plotting=True ,prec = 1e-12, mpoints = 1e9 )
          
     """  
-    import numpy as np
-    import matplotlib.pyplot as plt
-    
+
     #by default centered 
     xcmm =  0.5* xsiz
     ycmm =  0.5* ysiz 
@@ -500,9 +495,9 @@ def phase_mask(mode, npix, xsiz, ysiz, n, fname,*args,filename=None, plotting=Fa
 
 
 ###ANY FUNCTION PHASE MASK 
-def layer_mask(mode, npix, xsiz, ysiz, n, fname,*args,filename=None, plotting=False ,prec = 1e-6, mpoints = 1e9 , zlevs = [],grid=None, **kwargs):
+def arbitrary_multilayer_mask(mode, npix, xsiz, ysiz, n, fname,*args,filename=None, plotting=False ,prec = 1e-6, mpoints = 1e9 , zlevs = [],grid=None, **kwargs):
     """
-    returns a "phase mask" (2D array of the phase IN RADIANS) from COMPLEX PHASE function fname  given as argument
+    returns a "contour" mask of the arbitrary fname function 
     
     parameters: 
     mode = 'gdspyfast', 'gdspy', 'gdshelper'
@@ -519,20 +514,16 @@ def layer_mask(mode, npix, xsiz, ysiz, n, fname,*args,filename=None, plotting=Fa
     prec = precision of the gdspy boolean operation  (default 1e-6 um)
     mpoints = max_points of the gdspy polygon (default 1e9 points)
     zlevs   = array of the phase levels 
+    grid = 2D array with a meshgrid 
     
-    Examples of use: #Should take around ~30 s for any of these 
-    phase_mask(5000, 500,500, 10,\
+    Example of use: 
+    arbitrary_multilayer_mask(5000, 500,500, 10,\
            lensfres, fo=5000, lda=0.6328, \
            filename="fresnel_phase_plate.gds", plotting=True ,prec = 1e-6, mpoints = 1e9 )
-           
-    phase_mask(5000, 500,500, 60,\
-           spiral, L=1, \
-           filename="spiral_phase_plate.gds", plotting=True ,prec = 1e-12, mpoints = 1e9 )
+         
          
     """  
-    import numpy as np
-    import matplotlib.pyplot as plt
-    
+
     #by default centered 
     xcmm =  0.5* xsiz
     ycmm =  0.5* ysiz 
@@ -552,8 +543,6 @@ def layer_mask(mode, npix, xsiz, ysiz, n, fname,*args,filename=None, plotting=Fa
     #calculate the complex phase  fname function  
     farray = fname(xc,yc,xcmm,ycmm,*args, **kwargs)
     
-    #farray[np.where(rc>a)] = np.pi
-    #farray_rad = np.angle(farray)
     
     #make array with the z plane intersections  (n gray levels)
     if zlevs == []: 
