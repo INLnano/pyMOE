@@ -1,0 +1,8 @@
+gdshelpers==1.2.1
+gdspy==1.6.1
+gdstk==0.8.2
+matplotlib==3.5.2
+numpy==1.18.5
+pya==0.4.1
+scipy==1.5.0
+Shapely==1.7.1
