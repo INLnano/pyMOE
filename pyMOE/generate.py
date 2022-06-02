@@ -35,7 +35,7 @@ def circ_mask(npix, xsiz, ysiz, partial=0.5, filename='circ.png', plotting=False
     npix = nr of pixels , by default the results 2D array is npix by npix 
     xsiz = size in x  
     ysiz = size in y 
-    partial = size of circ radius as fraction of min([xsiz,ysiz])
+    partial = size of circ radius as fraction of side length
     filename = string with image name, default 'circ.png'
     Optional: 
     plotting=True, shows the mask
@@ -47,7 +47,7 @@ def circ_mask(npix, xsiz, ysiz, partial=0.5, filename='circ.png', plotting=False
     xcmm =  0.5* xsiz
     ycmm =  0.5* ysiz 
 
-    a = partial*np.min([xsiz,ysiz]) #radius of the circular aperture 
+    a = 0.5*partial*np.min([xsiz,ysiz]) #radius of the circular aperture 
     
     maskcir = np.zeros((npix,npix))
             
@@ -365,7 +365,6 @@ def fresnel_phase_mask(npix, foc, lda, xsiz, ysiz,n, filename=None, plotting=Fal
     rc = np.sqrt((xc-xcmm)**2 + (yc-ycmm)**2)
 
     #calculate the fresnel complex phase 
-    ###TODO: Generalize the input function for any phase map function, given as argument to the function 
     fresarray = lensfres(xc,yc,xcmm,ycmm,foc,lda)
     
     fresarray[np.where(rc>a)] = np.pi
