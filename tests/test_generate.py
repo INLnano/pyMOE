@@ -25,3 +25,9 @@ def test_fresnel_phase():
     milli = 1e-3
     aperture = moe.generate.create_empty_aperture(-5000*micro, 5000*micro, 1001, -5000*micro, 5000*micro, 1001,)
     mask = moe.generate.fresnel_phase(aperture, 2*milli, 532*micro, radius=5000*micro)
+
+def test_fresnel_zone_plate():
+    micro = 1e-6
+    milli = 1e-3
+    aperture = moe.generate.create_empty_aperture(-5000*micro, 5000*micro, 1001, -5000*micro, 5000*micro, 1001,)
+    mask = moe.generate.fresnel_zone_plate_aperture(aperture, 0.5*milli, 532*micro, radius=5000*micro)

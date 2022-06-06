@@ -121,15 +121,16 @@ def calculate_fresnel_lens_phase(XX,YY,x0,y0,focal_length,wavelength):
 
 def fresnel_phase(aperture, focal_length, wavelength, radius=None, center=(0,0)):
     """    
-    Updates aperture and returns 2D circular aperture mask 
+    Updates aperture and returns Fresnel phase mask
     
     Args: 
         aperture: mask of type Aperture
-        radius: radius of the circle aperture
-        center: default (x0=0, y0=0) center of circle
+        focal_length: design focal length
+        wavelength: design wavelength
+        radius: if defined, truncates the fresnel phase to inside this radius
         
     Returns:
-        aperture: aperture with circular amplitude
+        aperture: aperture with fresnel phase
     """
 
     assert type(aperture) is Aperture, "aperture must be of type Aperture"
@@ -153,7 +154,61 @@ def fresnel_phase(aperture, focal_length, wavelength, radius=None, center=(0,0))
     
     return aperture
 
+# Fresnel Zone plate aperture
 
+
+def fresnel_zone_plate_aperture(aperture, focal_length, wavelength, radius=None, center=(0,0)):
+    """    
+    Updates aperture and returns Fresnel zone plate aperture
+    
+    Args: 
+        aperture: mask of type Aperture
+        focal_length: design focal length
+        wavelength: design wavelength
+        radius: if defined, truncates the fresnel phase to inside this radius
+        
+    Returns:
+        aperture: aperture with fresnel zone plate
+    """
+
+    assert type(aperture) is Aperture, "aperture must be of type Aperture"
+    assert focal_length is not None
+    assert wavelength is not None
+
+    x0,y0 = center
+    mask = np.zeros(aperture.shape)
+    
+
+    #definition of the circular aperture 
+    rc = np.sqrt((aperture.XX-x0)**2 + (aperture.YY-y0)**2)
+    
+    #definition of the phase profile 
+    fzp = np.exp(-1.0j*(focal_length-np.sqrt(focal_length**2 + rc**2))*(2*np.pi)/(wavelength))
+
+    #Define the zones 
+    fzp[np.where((np.angle(fzp)>-np.pi/2 )& (np.angle(fzp)<np.pi/2) )] = 0 
+
+    i,j = fzp.shape 
+
+    #final plateCurrent 
+    fzp2 = np.ones((i,j)) 
+    
+    fzp_angle = np.angle(fzp)
+    
+    idx_array = (fzp_angle>=-np.pi/2) & (fzp_angle<=np.pi/2)
+    fzp2[idx_array] = 0
+
+#     for ie in np.arange(0,i):
+#         for je in np.arange(0,j):
+#             if ((np.angle(fzp[ie][je]) >= -np.pi/2) & (np.angle(fzp[ie][je]) <= np.pi/2)): 
+#                 fzp2[ie][je] = 0
+#             else: 
+#                 fzp2[ie][je] = 1
+
+    fzp2[np.where(rc>radius)] = 1
+                 
+    aperture.amplitude = fzp2
+    return aperture
 ####
 def makegrid(npix, xsiz, ysiz): 
     """
