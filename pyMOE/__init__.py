@@ -17,5 +17,8 @@ import pyMOE.propagate as prop
 
 from pyMOE.aperture import Aperture
 
+import pyMOE.generate as generate
+
+
 
 __version__ = 0.1
