@@ -33,15 +33,15 @@ def circular_aperture(aperture, radius, center=(0,0)):
     Updates aperture and returns 2D circular aperture mask 
     
     Args: 
-        mask: mask of type Aperture
+        aperture: mask of type Aperture
         radius: radius of the circle aperture
         center: default (x0=0, y0=0) center of circle
         
     Returns:
-        mask: mask with circular amplitude
+        aperture: aperture with circular amplitude
     """
 
-    assert type(aperture) is Aperture, "mask must be of type Aperture"
+    assert type(aperture) is Aperture, "aperture must be of type Aperture"
     assert radius is not None
 
     x0,y0 = center
@@ -57,7 +57,45 @@ def circular_aperture(aperture, radius, center=(0,0)):
     aperture.amplitude = maskcir
     return aperture
 
+def rectangular_aperture(aperture, width, height, corner=None, center=None):
+    """    
+    Updates aperture and returns 2D rectangular aperture mask 
+    
+    Args: 
+        aperture: aperture of type Aperture
+        width, height:  width and height of the rectangle
+        corner: if given, sets the lower left corner of the rectangle
+        center: if given, sets the center of the rectangle
+        
+    Returns:
+        aperture: aperture with rectangular amplitude
+    """
+    
+    assert type(aperture) is Aperture, "aperture must be of type Aperture"
 
+    
+    if corner is not None:
+        assert (type(corner)==tuple) and (len(corner) == 2)
+        x0,y0 = corner
+    if center is not None:
+        assert (type(center)==tuple) and (len(center) == 2)
+        xc, yc = center
+        x0 = xc-width/2
+        y0 = yc-height/2
+    if (corner is None) and (center is None):
+        xc = np.mean(aperture.x)
+        yc = np.mean(aperture.y)
+        
+        x0 = xc-width/2
+        y0 = yc-height/2
+        
+    mask = np.zeros(aperture.shape)
+    mask[np.where((aperture.XX>=x0)&(aperture.XX<=x0+width)& (aperture.YY>=y0)&(aperture.YY<=y0+height))] = 1
+    
+    aperture.amplitude = mask
+    return aperture
+    
+    
 ####
 def makegrid(npix, xsiz, ysiz): 
     """

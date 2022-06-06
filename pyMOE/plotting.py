@@ -15,7 +15,7 @@ def plot_aperture(aperture, which='both', scale=None, colorbar=True, only_plot=F
         only_plot: if True, only shows image without labels and axes
         filename: if provided, saves figure to filename
     """
-
+    assert type(aperture) is Aperture, "aperture given is not an Aperture object"
     assert which in ["both", "amplitude", "phase"]
     
     if scale is not None:
