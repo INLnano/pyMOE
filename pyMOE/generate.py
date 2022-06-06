@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 import cv2 
    
 
-from pyMOE import Aperture
+from pyMOE.aperture import Aperture
 
 ### Refactoring
 def create_empty_aperture(xmin, xmax, N_x, ymin, ymax, N_y):
