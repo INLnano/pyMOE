@@ -14,3 +14,8 @@ import pyMOE.gds_klops as gdsops
 import pyMOE.impor as imp
 import pyMOE.metas as metas 
 import pyMOE.propagate as prop
+
+from pyMOE.aperture import Aperture
+
+
+__version__ = 0.1
