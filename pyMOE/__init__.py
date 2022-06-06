@@ -16,6 +16,7 @@ import pyMOE.metas as metas
 import pyMOE.propagate as prop
 
 from pyMOE.aperture import Aperture
+import pyMOE.plotting as plotting
 
 import pyMOE.generate as generate
 

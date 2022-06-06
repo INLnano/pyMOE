@@ -7,6 +7,57 @@ from matplotlib import pyplot as plt
 import cv2 
    
 
+from pyMOE import Aperture
+
+### Refactoring
+def create_empty_aperture(xmin, xmax, N_x, ymin, ymax, N_y):
+    """
+    Creates an empty aperture max of the mesh dimensions provided
+    
+    xmin, xmax: range for x 
+    N_x: number of x points
+    ymin, ymax: range for y 
+    N_y: number of y points
+    
+    Returns:
+    mask: empty Aperture
+    """
+    x = np.linspace(xmin, xmax, N_x)
+    y = np.linspace(ymin, ymax, N_y)
+    
+    return Aperture(x,y)
+
+
+def circular_aperture(aperture, radius, center=(0,0)):
+    """    
+    Updates aperture and returns 2D circular aperture mask 
+    
+    Args: 
+        mask: mask of type Aperture
+        radius: radius of the circle aperture
+        center: default (x0=0, y0=0) center of circle
+        
+    Returns:
+        mask: mask with circular amplitude
+    """
+
+    assert type(aperture) is Aperture, "mask must be of type Aperture"
+    assert radius is not None
+
+    x0,y0 = center
+    maskcir = np.zeros(aperture.shape)
+            
+
+    (xc, yc) = aperture.XX, aperture.YY
+    #definition of the circular aperture 
+    rc = np.sqrt((xc-x0)**2 + (yc-y0)**2)
+    maskcir[np.where(rc<radius)] = 1
+
+
+    aperture.amplitude = maskcir
+    return aperture
+
+
 ####
 def makegrid(npix, xsiz, ysiz): 
     """
