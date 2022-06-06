@@ -95,7 +95,65 @@ def rectangular_aperture(aperture, width, height, corner=None, center=None):
     aperture.amplitude = mask
     return aperture
     
+
+
     
+def calculate_fresnel_lens_phase(XX,YY,x0,y0,focal_length,wavelength): 
+    """
+    returns the COMPLEX PHASE of a fresnel lens with input meshgrid (x,y) with center at (x0,y0)
+    Args:
+        XX:  x array from meshgrid 
+        YY: y array from meshgrid 
+        x0: coordinate of center of the lens 
+        y0: coordinate of center of the lens
+        focal_length: focal distance 
+        wavelength: wavelength of design
+    
+    Note: for angle (in rad), call numpy.angle(...)
+    """
+
+    rc = np.sqrt((XX-x0)**2 + (YY-y0)**2)
+    fresn = np.exp(1.0j*(focal_length-np.sqrt(focal_length**2 + rc**2))*(2*np.pi)/(wavelength))
+    return fresn     
+
+
+
+
+def fresnel_phase(aperture, focal_length, wavelength, radius=None, center=(0,0)):
+    """    
+    Updates aperture and returns 2D circular aperture mask 
+    
+    Args: 
+        aperture: mask of type Aperture
+        radius: radius of the circle aperture
+        center: default (x0=0, y0=0) center of circle
+        
+    Returns:
+        aperture: aperture with circular amplitude
+    """
+
+    assert type(aperture) is Aperture, "aperture must be of type Aperture"
+    assert focal_length is not None
+    assert wavelength is not None
+
+    x0,y0 = center
+    mask = np.zeros(aperture.shape)
+    
+    #definition of the circular aperture 
+    rc = np.sqrt((aperture.XX-x0)**2 + (aperture.YY-y0)**2)
+
+    #calculate the fresnel complex phase 
+    fresarray = calculate_fresnel_lens_phase(aperture.XX, aperture.YY, x0, y0, focal_length, wavelength)
+    
+    if radius is not None:
+        fresarray[np.where(rc>radius)] = np.pi
+    fresarray_rad = np.angle(fresarray)
+    
+    aperture.phase = fresarray_rad
+    
+    return aperture
+
+
 ####
 def makegrid(npix, xsiz, ysiz): 
     """
