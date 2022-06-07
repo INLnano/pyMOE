@@ -19,7 +19,7 @@ from pyMOE.aperture import Aperture
 import pyMOE.plotting as plotting
 
 import pyMOE.generate as generate
-
+import pyMOE.sag_functions as sag
 
 
 __version__ = 0.1
