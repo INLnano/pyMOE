@@ -55,7 +55,7 @@ def circular_aperture(aperture, radius, center=(0,0)):
     maskcir[np.where(rc<radius)] = 1
 
 
-    aperture.amplitude = maskcir
+    aperture.aperture = maskcir
     return aperture
 
 def rectangular_aperture(aperture, width, height, corner=None, center=None):
@@ -93,14 +93,14 @@ def rectangular_aperture(aperture, width, height, corner=None, center=None):
     mask = np.zeros(aperture.shape)
     mask[np.where((aperture.XX>=x0)&(aperture.XX<=x0+width)& (aperture.YY>=y0)&(aperture.YY<=y0+height))] = 1
     
-    aperture.amplitude = mask
+    aperture.aperture = mask
     return aperture
     
 
 
 
 
-def arbitrary_function_phase(aperture, function, center=(0,0), **function_args):
+def arbitrary_aperture_function(aperture, function, center=(0,0), **function_args):
     """    
     Updates aperture and returns phase mask calculated based on function
     
@@ -121,11 +121,11 @@ def arbitrary_function_phase(aperture, function, center=(0,0), **function_args):
     #calculate the fresnel complex phase 
     output = function(aperture.XX-x0, aperture.YY-y0, **function_args)
 
-    aperture.phase = np.angle(output)
+    aperture.aperture = output
     
     return aperture
 
-def truncate_radius_phase(aperture, radius, center=(0,0), truncate_value=0):
+def truncate_aperture_radius(aperture, radius, center=(0,0), truncate_value=0):
     """
     Truncates the aperture to inside the circle of radius at center
     
@@ -142,9 +142,9 @@ def truncate_radius_phase(aperture, radius, center=(0,0), truncate_value=0):
     x0,y0 = center
     rc = np.sqrt((aperture.XX-x0)**2 + (aperture.YY-y0)**2)
     
-    phase = aperture.phase
-    phase[rc>radius] = truncate_value
-    aperture.phase = phase
+    array = aperture.aperture
+    array[rc>radius] = truncate_value
+    aperture.aperture = array
     
     return aperture
 
@@ -167,11 +167,11 @@ def fresnel_phase(aperture, focal_length, wavelength, radius=None, center=(0,0))
     assert focal_length is not None
     assert wavelength is not None
 
-    aperture = arbitrary_function_phase(aperture, sag.fresnel_lens_phase, 
+    aperture = arbitrary_aperture_function(aperture, sag.fresnel_lens_phase, 
     center=center, focal_length=focal_length, wavelength=wavelength)
 
     if radius is not None:
-        aperture = truncate_radius_phase(aperture, radius, center=center)
+        aperture = truncate_aperture_radius(aperture, radius, center=center)
 
     # #calculate the fresnel complex phase 
     # fresarray = calculate_fresnel_lens_phase(aperture.XX, aperture.YY, x0, y0, focal_length, wavelength)
@@ -237,7 +237,7 @@ def fresnel_zone_plate_aperture(aperture, focal_length, wavelength, radius=None,
 
     fzp2[np.where(rc>radius)] = 1
                  
-    aperture.amplitude = fzp2
+    aperture.aperture = fzp2
     return aperture
 
 

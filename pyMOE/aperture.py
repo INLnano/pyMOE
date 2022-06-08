@@ -11,6 +11,38 @@ import numpy as np
 class Aperture:
     """
     Class Aperture:
+        Creates an Aperture object that is an homogenous array of values corresponding
+        to the transfer function matrix across the aperture
+    
+    Args:
+        x = Vector for the x axis
+        y = Vector for the y axis
+    
+    Methods:
+        aperture: returns the aperture
+        shape: returns the shape of the aperture
+
+    """
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.XX, self.YY = np.meshgrid(x, y)
+        self.pixel_x = self.x[1]-self.x[0]
+        self.pixel_y = self.y[1]-self.y[0]
+        
+
+        self.aperture = np.zeros(self.XX.shape)
+
+    @property
+    def shape(self):
+        return self.aperture.shape
+
+
+
+
+class ApertureField:
+    """
+    Class Aperture:
         Creates an Aperture object that is an homogenous array of complex values corresponding
         to the transfer function matrix across the aperture
     

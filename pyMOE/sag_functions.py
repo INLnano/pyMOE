@@ -20,6 +20,7 @@ def fresnel_lens_phase(XX,YY,focal_length,wavelength):
 
     rc = np.sqrt((XX)**2 + (YY)**2)
     fresn = np.exp(1.0j*(focal_length-np.sqrt(focal_length**2 + rc**2))*(2*np.pi)/(wavelength))
+    fresn = np.angle(fresn)
     return fresn     
 
 
@@ -39,6 +40,7 @@ def spiral(x,y,L):
 
     theta = np.arctan2(y, x)
     sp = np.exp(1.0j*L*theta)
+    sp = np.angle(sp)
     return sp
 
 
@@ -54,6 +56,7 @@ def saddle(x,y,a,b):
 
     sfunc =  (a * ((x*x - y*y)) -b) 
     func = np.exp(1.0j*sfunc)
+    func = np.angle(func)
 
     return func
 
