@@ -74,7 +74,8 @@ class Aperture:
         self.aperture = np.zeros(self.XX.shape)
         self.aperture_original = None
         self.levels = None
-        self.digitized = None
+        self.aperture_discretized = None
+        self.discretized_flag = False
 
     @property
     def shape(self):
@@ -84,11 +85,12 @@ class Aperture:
         """Discretizes the aperture to the number of levels"""
         if self.aperture_original is None:
             self.aperture_original = np.copy(self.aperture)
-        levels, digitized = digitize_array_to_bins(self.aperture, levels)
+        levels, digitized = digitize_array_to_bins(self.aperture_original, levels)
         
         self.levels = levels
-        self.digitized = digitized
+        self.aperture_discretized = digitized
         self.aperture = levels[digitized]
+        self.discretized_flag=True
 
 
 
