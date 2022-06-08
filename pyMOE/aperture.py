@@ -30,6 +30,9 @@ class Aperture:
         self.x = x
         self.y = y
         self.XX, self.YY = np.meshgrid(x, y)
+        self.pixel_x = self.x[1]-self.x[0]
+        self.pixel_y = self.y[1]-self.y[0]
+        
 
         self.aperture = np.ones(self.XX.shape)*np.exp(1j*np.zeros(self.XX.shape))
 
