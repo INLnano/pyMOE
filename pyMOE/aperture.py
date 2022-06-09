@@ -31,7 +31,6 @@ def digitize_array_to_bins(array, levels):
     else:
         bins = levels
     
-    print(bins)
     dig = np.digitize(array, bins, )
     
     # Everything below the minimum bin level is changed to the minimum level
