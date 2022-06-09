@@ -7,15 +7,13 @@ GDS converter module
 
 
 
-import time
-from datetime import timedelta
 import gdspy
 import numpy as np
 
 
 # import pyMOE as moe
 from pyMOE.aperture import Aperture
-from pyMOE.utils import progress_bar
+from pyMOE.utils import progress_bar, Timer
 
 
 def count_vertices(pols):
@@ -80,22 +78,6 @@ def merge_polygons(polygons, layer=0, assume_non_overlap=True, break_vertices=25
     progress_bar(1)
     
     return list_polygonsets
-
-
-class Timer(object):
-    """
-    Timer helper class to calculated elapsed time of chunk of code, from https://stackoverflow.com/a/5849861/7996766
-    """
-    def __init__(self, name=None):
-        self.name = name
-
-    def __enter__(self):
-        self.tstart = time.time()
-
-    def __exit__(self, type, value, traceback):
-        if self.name:
-            print('[%s]' % self.name,)
-        print('Elapsed: %s' % str(timedelta(seconds=(time.time() - self.tstart))))
 
 
 

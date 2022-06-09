@@ -29,3 +29,12 @@ def test_aperture_set_phase():
 
     assert np.all(mask.phase == phase)
 
+
+
+def test_aperture_create_aperture_from_array():
+    phase_mask = np.random.random((128,128))
+    pixel_size = 1e-6
+    mask = moe.generate.create_aperture_from_array(phase_mask, pixel_size=pixel_size, center=True, )
+    
+
+

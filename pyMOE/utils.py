@@ -49,6 +49,9 @@ class Timer(object):
 
 
 
+def mean_squared_error(new, original):
+    """ Calculates mean squared error between the new array and the original"""
+    return (np.square(new-original)).mean()
 
 
 def create_levels(start, end, levels):

@@ -10,7 +10,8 @@ import pyMOE.sag_functions as sag
 
 from pyMOE.aperture import Aperture
 
-### Refactoring
+
+
 def create_empty_aperture(xmin, xmax, N_x, ymin, ymax, N_y):
     """
     Creates an empty aperture max of the mesh dimensions provided
@@ -27,6 +28,43 @@ def create_empty_aperture(xmin, xmax, N_x, ymin, ymax, N_y):
     y = np.linspace(ymin, ymax, N_y)
     
     return Aperture(x,y)
+
+
+
+def create_aperture_from_array(array, pixel_size, center=False):
+    """
+    Creates an aperture from the given array, where each pixel is of
+    pixel_size
+
+    Args:
+        array: 2D numpy array of a mask
+        pixel_size: absolute value for each pixel
+        center: if True, will center the image at the origin
+            
+    Returns:
+        aperture: aperture with the mask inserted
+    """
+    
+    assert (isinstance(array, np.ndarray)) and (len(array.shape)==2), "Array must be 2D numpy array "
+    assert isinstance(pixel_size, (int, float)), "pixel_size must be a scalar"
+    shape = array.shape
+    N_x, N_y = shape
+    max_x = N_x*pixel_size
+    max_y = N_y*pixel_size
+    x = np.linspace(0, max_x, N_x, endpoint=False)
+    y = np.linspace(0, max_y, N_y, endpoint=False)
+    
+    if center:
+        x = x-np.mean(x)
+        y = x-np.mean(y)
+    aperture = Aperture(x,y)
+    aperture.aperture = array
+      
+    return aperture
+    
+
+
+
 
 
 def circular_aperture(aperture, radius, center=(0,0)):
