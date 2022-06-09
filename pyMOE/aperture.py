@@ -8,41 +8,8 @@ Definition of Class Apertures
 """
 
 import numpy as np
-from sympy import discrete_log
-
-
-def digitize_array_to_bins(array, levels):
-    """Digitizes the given array to within the number of levels provided 
-    
-    Args:
-        array : input array of values
-        levels : integer number of levels to consider or array of levels
-        
-    Returns:
-        bins: bins corresponding to the levels
-        digitized: digitized array
-        
-    To do:
-        Consider the midpoint selection in the future
-    """    
-    assert isinstance(np.array([2,3]), (np.ndarray, int)), "levels must be a scalar or numpy array"
-    if isinstance(levels, int):
-        bins = np.linspace(array.min(), array.max() , levels, endpoint=False)
-    else:
-        bins = levels
-    
-    dig = np.digitize(array, bins, )
-    
-    # Everything below the minimum bin level is changed to the minimum level
-    dig[dig==0] = 1
-    dig = dig-1
-    return bins, dig
-
-
-def discretize_array(array, levels):
-    bins, dig = digitize_array_to_bins(array, levels)
-    
-    return bins[dig]
+from pyMOE.utils import digitize_array_to_bins
+from pyMOE.utils import discretize_array
 
 
 

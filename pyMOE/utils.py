@@ -1,4 +1,8 @@
 
+import time
+from datetime import timedelta
+import numpy as np
+
 def progress_bar(progress, bar_length=20, bar_character='#'):
     """
     Progress bar.
@@ -25,3 +29,61 @@ def progress_bar(progress, bar_length=20, bar_character='#'):
     else:
         end = "\n"
     print(text, end=end) 
+
+
+
+class Timer(object):
+    """
+    Timer helper class to calculated elapsed time of chunk of code, from https://stackoverflow.com/a/5849861/7996766
+    """
+    def __init__(self, name=None):
+        self.name = name
+
+    def __enter__(self):
+        self.tstart = time.time()
+
+    def __exit__(self, type, value, traceback):
+        if self.name:
+            print('[%s]' % self.name,)
+        print('Elapsed: %s' % str(timedelta(seconds=(time.time() - self.tstart))))
+
+
+
+
+
+def create_levels(start, end, levels):
+    """ Creates linear levels list with N"""
+    return np.linspace(start, end, levels, endpoint=False)
+
+def digitize_array_to_bins(array, levels):
+    """Digitizes the given array to within the number of levels provided 
+    
+    Args:
+        array : input array of values
+        levels : integer number of levels to consider or array of levels
+        
+    Returns:
+        bins: bins corresponding to the levels
+        digitized: digitized array
+        
+    To do:
+        Consider the midpoint selection in the future
+    """    
+    assert isinstance(levels, (np.ndarray, int)), "levels must be a scalar or numpy array"
+    if isinstance(levels, int):
+        bins = np.linspace(array.min(), array.max() , levels, endpoint=False)
+    else:
+        bins = levels
+    
+    dig = np.digitize(array, bins, )
+    
+    # Everything below the minimum bin level is changed to the minimum level
+    dig[dig==0] = 1
+    dig = dig-1
+    return bins, dig
+
+
+def discretize_array(array, levels):
+    bins, dig = digitize_array_to_bins(array, levels)
+    
+    return bins[dig]

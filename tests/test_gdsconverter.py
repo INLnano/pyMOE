@@ -14,7 +14,6 @@ def test_GDSMask():
     # f=50mm, lambda=532nm, R=500µm
     mask = moe.generate.fresnel_phase(mask, 50*milli, 532*nano, radius=500*micro)
     mask.discretize(4)
-    moe.plotting.plot_aperture(mask, )
     gdsmask = moe.GDSMask(mask)
 
 
@@ -24,7 +23,6 @@ def test_GDSMask_create_layout():
     # f=50mm, lambda=532nm, R=500µm
     mask = moe.generate.fresnel_phase(mask, 50*milli, 532*nano, radius=500*micro)
     mask.discretize(4)
-    moe.plotting.plot_aperture(mask, )
     gdsmask = moe.GDSMask(mask)
 
     gdsmask.create_layout(merge=True)

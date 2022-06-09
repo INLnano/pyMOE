@@ -18,6 +18,7 @@ import pyMOE.propagate as prop
 from pyMOE.aperture import Aperture
 from pyMOE.gdsconverter import GDSMask
 import pyMOE.plotting as plotting
+import pyMOE.utils as utils
 
 import pyMOE.generate as generate
 import pyMOE.sag_functions as sag
