@@ -44,6 +44,7 @@ def plot_aperture(aperture, scale=None, colorbar=True, only_plot=False, filename
     plt.subplots_adjust(wspace=0.3)
     if filename is not None:
         plt.savefig(filename)
+    plt.show()
 
 
 
