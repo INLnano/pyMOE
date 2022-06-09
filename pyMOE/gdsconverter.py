@@ -85,10 +85,10 @@ class GDSMask():
     """
     Class GDSMask:
         Creates a class to integrate the GDS library and layout corresponding to a mask aperture.
-        Received an aperture and provides methods to calculate the corresponding GDS layout
+        Receives an aperture and provides methods to calculate the corresponding GDS layout
     
     Args:
-        y = Vector for the y axis
+        mask:
     
     Methods:
         mask
