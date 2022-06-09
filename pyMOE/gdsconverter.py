@@ -167,6 +167,11 @@ class GDSMask():
         
         assert self.gdslib is not None, "Must create_layout() from discretized aperture first"
         gdspy.LayoutViewer(self.gdslib)
+    
+    def write_gds(self, filename, cells=None, timestamp=None, binary_cells=None):
+        """ Writes layout to gds file using gdspy library"""
+        self.gdslib.write_gds(filename, cells, timestamp, binary_cells)
+        print("Saved %s"%(filename))
         
         
         
@@ -182,9 +187,6 @@ class GDSMask():
         
         Returns:
             gdslib: library with topcell will update the class internal gdslib
-            
-        
-        
         """
 
         if self.gdslib is None:
