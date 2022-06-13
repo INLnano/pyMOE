@@ -29,6 +29,20 @@ def create_empty_aperture(xmin, xmax, N_x, ymin, ymax, N_y):
     
     return Aperture(x,y)
 
+def create_empty_aperture_from_aperture(aperture):
+    """
+    Creates an empty aperture with the same spatial dimensions of the given aperture
+    
+    Args:
+        aperture: aperture
+    Returns:
+        aperture: empty Aperture of same spatial dimensions
+    """
+    assert type(aperture) is Aperture, "aperture must be of type Aperture"
+
+
+    return Aperture(aperture.x, aperture.y)
+
 
 
 def create_aperture_from_array(array, pixel_size, center=False):
@@ -277,6 +291,48 @@ def fresnel_zone_plate_aperture(aperture, focal_length, wavelength, radius=None,
                  
     aperture.aperture = fzp2
     return aperture
+
+
+# Aperture operations
+
+
+def aperture_operation(aperture1, aperture2, operand):
+    """Executes the operation on the apertures 1 and 2.
+    Both apertures must have the same spatial distribution and shape.
+    
+    Args:
+        aperture1: First Aperture
+        aperture2: Second Aperture
+        operand: numpy operand function to consider
+        
+    Returns:
+        aperture: Aperture with result of operation
+    """
+    assert (type(aperture1) is Aperture) and type(aperture2) is Aperture, "aperture must be of type Aperture"
+    assert type(operand) == np.ufunc, "operand must be a numpy function"
+
+    assert np.all(aperture1.XX == aperture2.XX) and np.all(aperture1.YY == aperture2.YY), "Spatial dimensions of aperture1 and aperture2 must be the same"
+
+
+    aperture3 = create_empty_aperture_from_aperture(aperture1)
+    aperture3.aperture = operand(aperture1.aperture, aperture2.aperture)
+    return aperture3
+
+
+def aperture_add(aperture1, aperture2):
+    """Adds two apertures"""
+    return aperture_operation(aperture1, aperture2, np.add)
+
+
+def aperture_subtract(aperture1, aperture2):
+    """Subtracts two apertures"""
+    return aperture_operation(aperture1, aperture2, np.subtract)
+
+def aperture_multiply(aperture1, aperture2):
+    """Multiply two apertures"""
+    return aperture_operation(aperture1, aperture2, np.multiply)
+
+
 
 
     
