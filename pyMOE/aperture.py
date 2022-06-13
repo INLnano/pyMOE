@@ -36,7 +36,7 @@ class Aperture:
         self.pixel_x = self.x[1]-self.x[0]
         self.pixel_y = self.y[1]-self.y[0]
         
-
+        # XX.shape has the same shape as YY.shape
         self.aperture = np.zeros(self.XX.shape)
         self.aperture_original = None
         self.levels = None
