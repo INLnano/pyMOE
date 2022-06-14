@@ -81,14 +81,15 @@ def merge_polygons(polygons, layer=0, assume_non_overlap=True, break_vertices=25
     
     
     
-def change_layers_gdspy(fstgds_filename, fst_cellname, layerspol, gvts, output_filename):
+def change_layers_gdspy(fstgds_filename, new_cellname, layerspol, gvts, output_filename):
     """
     Transforms layers from the source layer (layerpol) into the destination (gvts) 
     By default considers datatypes are int(0), set datatypes to 0 function can be used before
+    Assumes that we have the polygons in the top level of the input gds 
     
     Args: 
         'fstgds_filename'   : string filename of gds to read
-        'fst_cellname'      : string name of cell in the gds 
+        'new_cellname'      : string name of cell in the gds 
         'layerspol'         : array of the layers of the gds file, if it is not the same, leaves the absent layers untouched 
         'gvts'              : array of destination layers - MUST HAVE THE SAME CORRESPONDENCE 
         'output_filename'   : string filename of output gds
@@ -96,6 +97,7 @@ def change_layers_gdspy(fstgds_filename, fst_cellname, layerspol, gvts, output_f
     Possible 
 
     """
+    
     
     lib = gdspy.GdsLibrary()
     
@@ -118,7 +120,7 @@ def change_layers_gdspy(fstgds_filename, fst_cellname, layerspol, gvts, output_f
 
     #new library with the new cell 
     lib2 = gdspy.GdsLibrary() 
-    newcell = lib2.new_cell('TOP')
+    newcell = lib2.new_cell(fst_cellname)
 
     #Check if given array corresponds to the layers within file 
     comp = np.array_equal(filelayers, layerspol)
@@ -132,16 +134,16 @@ def change_layers_gdspy(fstgds_filename, fst_cellname, layerspol, gvts, output_f
     
     #change the layers
     for ips, ids in zip(layerspol, gvts): 
-        newpols = gdspy.boolean(polygons_dict[(ips, 0)],None, 'or', precision=0.001, max_points=199, layer=ids, datatype=0)
+        newpols = gdspy.PolygonSet(polygons_dict[(ips, 0)],layer=ids, datatype=0)
         currentcell.remove_polygons(lambda pts, layer, datatype: layer == ips)
         newcell.add(newpols)
         
         print("Changed the shapes in layer "+str(ips)+" into "+str(ids)) 
     
-    #layers that are not changed, remain in same layer 
+    #layers that are not within the layers list, remain the same 
     for ips in filelayers:
         if ips not in layerspol:
-            newpols = gdspy.boolean(polygons_dict[(ips, 0)],None, 'or', precision=0.001, max_points=199, layer=ips, datatype=0)
+            newpols = gdspy.PolygonSet(polygons_dict[(ips, 0)],layer=ids, datatype=0)
             currentcell.remove_polygons(lambda pts, layer, datatype: layer == ips)
             newcell.add(newpols)
 
@@ -149,8 +151,6 @@ def change_layers_gdspy(fstgds_filename, fst_cellname, layerspol, gvts, output_f
     lib.write_gds(output_filename)
     
     print("Changed layers - wrote result to " +str(output_filename))
-    
-
 
 
 
