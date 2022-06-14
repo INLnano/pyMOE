@@ -120,7 +120,7 @@ def change_layers_gdspy(fstgds_filename, new_cellname, layerspol, gvts, output_f
 
     #new library with the new cell 
     lib2 = gdspy.GdsLibrary() 
-    newcell = lib2.new_cell(fst_cellname)
+    newcell = lib2.new_cell(new_cellname)
 
     #Check if given array corresponds to the layers within file 
     comp = np.array_equal(filelayers, layerspol)
