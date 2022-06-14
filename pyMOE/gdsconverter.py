@@ -2,14 +2,8 @@
 GDS converter module
 
 """
-
-
-
-
-
 import gdspy
 import numpy as np
-
 
 # import pyMOE as moe
 from pyMOE.aperture import Aperture
@@ -18,6 +12,12 @@ from pyMOE.utils import progress_bar, Timer
 
 def count_vertices(pols):
     """ Counts vertices of polygons
+    
+    Args: 
+        polygon or polygon set 
+    
+    Returns: 
+        number of vertices 
     """
     sum = 0 
     for p in pols:
@@ -78,6 +78,79 @@ def merge_polygons(polygons, layer=0, assume_non_overlap=True, break_vertices=25
     progress_bar(1)
     
     return list_polygonsets
+    
+    
+    
+def change_layers_gdspy(fstgds_filename, fst_cellname, layerspol, gvts, output_filename):
+    """
+    Transforms layers from the source layer (layerpol) into the destination (gvts) 
+    By default considers datatypes are int(0), set datatypes to 0 function can be used before
+    
+    Args: 
+        'fstgds_filename'   : string filename of gds to read
+        'fst_cellname'      : string name of cell in the gds 
+        'layerspol'         : array of the layers of the gds file, if it is not the same, leaves the absent layers untouched 
+        'gvts'              : array of destination layers - MUST HAVE THE SAME CORRESPONDENCE 
+        'output_filename'   : string filename of output gds
+        
+    Possible 
+
+    """
+    
+    lib = gdspy.GdsLibrary()
+    
+    #open the inout gds file
+    lib.read_gds(fstgds_filename)
+    gdspy.current_library = lib
+
+    #get the top cell of the  input gds file 
+    currentcell = lib.top_level()[0]
+
+    #get all polygons within the input gds file 
+    polygons_dict= currentcell.get_polygons(by_spec=True)
+    
+    #for info get the layers in the current file 
+    listlayers = currentcell.get_layers() 
+    
+    #make sure the arrays are both int 
+    filelayers = np.array(list(listlayers), dtype = int)
+    layerpols = np.array(layerspol, dtype=int)
+
+    #new library with the new cell 
+    lib2 = gdspy.GdsLibrary() 
+    newcell = lib2.new_cell('TOP')
+
+    #Check if given array corresponds to the layers within file 
+    comp = np.array_equal(filelayers, layerspol)
+    if comp is False:
+        print("Attention: The layers given " + str(layerspol) + " are NOT the same as the layers in the file " + str(filelayers))
+
+
+    #by default the datatypes are zero 
+    datatypesarray = np.zeros(len(polygonarray))
+    
+    
+    #change the layers
+    for ips, ids in zip(layerspol, gvts): 
+        newpols = gdspy.boolean(polygons_dict[(ips, 0)],None, 'or', precision=0.001, max_points=199, layer=ids, datatype=0)
+        currentcell.remove_polygons(lambda pts, layer, datatype: layer == ips)
+        newcell.add(newpols)
+        
+        print("Changed the shapes in layer "+str(ips)+" into "+str(ids)) 
+    
+    #layers that are not changed, remain in same layer 
+    for ips in filelayers:
+        if ips not in layerspol:
+            newpols = gdspy.boolean(polygons_dict[(ips, 0)],None, 'or', precision=0.001, max_points=199, layer=ips, datatype=0)
+            currentcell.remove_polygons(lambda pts, layer, datatype: layer == ips)
+            newcell.add(newpols)
+
+    lib.remove(currentcell)    
+    lib.write_gds(output_filename)
+    
+    print("Changed layers - wrote result to " +str(output_filename))
+    
+
 
 
 
@@ -88,7 +161,7 @@ class GDSMask():
         Receives an aperture and provides methods to calculate the corresponding GDS layout
     
     Args:
-        mask:
+        mask: aperture object 
     
     Methods:
         mask
