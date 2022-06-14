@@ -9,6 +9,8 @@ import numpy as np
 from pyMOE.aperture import Aperture
 from pyMOE.utils import progress_bar, Timer
 
+import matplotlib.pyplot as plt 
+
 
 def count_vertices(pols):
     """ Counts vertices of polygons
@@ -79,7 +81,7 @@ def merge_polygons(polygons, layer=0, assume_non_overlap=True, break_vertices=25
     
     return list_polygonsets
     
-    
+##############################################################################################################################
     
 def change_layers_gdspy(fstgds_filename, new_cellname, layerspol, gvts, output_filename):
     """
@@ -148,6 +150,70 @@ def change_layers_gdspy(fstgds_filename, new_cellname, layerspol, gvts, output_f
     print("Changed layers - wrote result to " +str(output_filename))
 
 
+
+
+########CREATES A GDSPY CELL WITH THE POLYGONS USING GDSPY
+def cell_wpol_gdspy(cs, cellname, prec=1e-6, mpoints=1e9):
+    """
+    Cell made with cut polygons from the z profile 
+    'cs'       = contours FROM matplotlif contourf function
+    'cellname' = string cellname, e.g. 'TOP' 
+    Returns:[0] gdspy library, [1] cell with polygons  
+    ##By default the levels start at 0 and go to the number of levels in the contourplot 
+    """
+
+    #get collections from contour 
+    collecs = cs.collections 
+
+    # lib of the gdsii file 
+    lib = gdspy.GdsLibrary()
+    gdspy.current_library = gdspy.GdsLibrary()
+
+    cell = lib.new_cell(cellname)
+
+    ncolec = len(collecs)
+    print("Passing contours into GDS. ")
+
+    #go through all the elements in collections (gray levels)
+    for ncol,col in enumerate(collecs):
+        print(ncol)
+        # Loop through all contours that have the same gray level
+        paths = col.get_paths() 
+        #lenpat = len(paths)
+
+        #go through the paths of the contours 
+        for ec, contour_path in enumerate(paths): 
+            #get the polygons at certain gray level 
+            arr = contour_path.to_polygons()
+            polset = gdspy.PolygonSet(arr, layer=int(ncol),datatype=int(0))
+            #print("pols "+str(len(polset.polygons)))
+            
+            #layers and datatypes of polygon set 
+            layes = polset.layers[0]
+            dts  = polset.datatypes[0]
+
+            #print(polset.polygons)
+            if len(polset.polygons)==1:
+                pols = gdspy.Polygon(polset.polygons[0], layer=int(layes), datatype=int(dts))
+                #print(pols)
+                cell.add(pols)
+
+            for ncp,cp in enumerate(arr):
+                #print(ncp)
+                x = cp[:,0]
+                y = cp[:,1]
+                new_shape = gdspy.Polygon([(i[0], i[1]) for i in zip(x,y)])
+                
+                if ncp == 0:
+                    poly = new_shape
+                elif ncp==1:
+                    de   = gdspy.boolean(poly,new_shape, "not", precision=prec, max_points=mpoints, layer=int(ncol), datatype=int(0)) 
+                    cell.add(de)
+                    
+               
+    return lib, cell 
+    
+################################################################################################################################3
 
 class GDSMask():
     """
@@ -225,7 +291,7 @@ class GDSMask():
         
         
         
-    def create_layout(self, mode="raster", cellname='mask', merge=True, break_vertices=250):
+    def create_layout(self, mode="raster", cellname='TOP', merge=True, break_vertices=250):
         """
         Creates GDS layout of the discretized aperture
         
@@ -246,8 +312,13 @@ class GDSMask():
         
         if mode is "raster":
             return self._create_layout_raster(cellname=cellname, merge=merge, break_vertices=break_vertices)
-        else:
-            raise ValueError('Supported modes are "raster"')
+        #else:
+        #    raise ValueError('Supported modes are "raster"')
+        elif mode is "contour": 
+            return self._create_layout_contour(cellname = cellname)
+        else: 
+            raise ValueError("Unsuported option!")
+        
         
         
     def _create_layout_raster(self, cellname='mask', merge=True, break_vertices=250):
@@ -346,5 +417,51 @@ class GDSMask():
             topcell.add(list_merged_polygons)
             # add topcell to library
             self.gdslib.add(topcell)
+
+            return self.gdslib
+            
+            
+    def _create_layout_contour(self, cellname='TOP'):
+        """
+        Creates the gds layout using contour mode via matplotlib library 
+        """
+        self.gdslib = gdspy.GdsLibrary()
+        
+        cell = gdspy.Cell(cellname,exclude_from_current=True)
+        
+        self.layers = np.arange(len(self.levels))
+        total_layers = len(self.layers)
+        total_points = self.mask.shape[0]*self.mask.shape[1]
+        
+        size_x, size_y = self.mask.shape
+        XX = self.mask.XX
+        YY = self.mask.YY
+
+        half_pixel_x = self.mask.pixel_x/2
+        half_pixel_y = self.mask.pixel_y/2
+
+        # normalize to units:
+        XX = XX/self.units
+        YY = YY/self.units
+        half_pixel_x = half_pixel_x/self.units
+        half_pixel_y = half_pixel_y/self.units
+        datatype = 0
+        
+        # Creates top cell that will reference the remaining cells
+        topcell = gdspy.Cell(cellname, exclude_from_current=True)
+    
+
+        with Timer("Total time converting to GDS"):
+
+            # Iterates to create a layout in each layer corresponding to one discretized level
+            if self.verbose:
+                print("Creating contours ")
+            with Timer("Create Contours"):
+            ## consider to make the discretization as for the raster, to have fixed number of levels 
+            ###TODO: change for the actual position of in zlevs 
+                cs = plt.contourf(XX,YY,self.mask.aperture_discretized, len(self.levels))
+
+            self.gdslib, cell1 = cell_wpol_gdspy(cs, 'TOP', prec = self.precision, mpoints=1e9)
+           
 
             return self.gdslib
