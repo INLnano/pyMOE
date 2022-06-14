@@ -126,11 +126,6 @@ def change_layers_gdspy(fstgds_filename, new_cellname, layerspol, gvts, output_f
     comp = np.array_equal(filelayers, layerspol)
     if comp is False:
         print("Attention: The layers given " + str(layerspol) + " are NOT the same as the layers in the file " + str(filelayers))
-
-
-    #by default the datatypes are zero 
-    datatypesarray = np.zeros(len(polygonarray))
-    
     
     #change the layers
     for ips, ids in zip(layerspol, gvts): 
@@ -143,7 +138,7 @@ def change_layers_gdspy(fstgds_filename, new_cellname, layerspol, gvts, output_f
     #layers that are not within the layers list, remain the same 
     for ips in filelayers:
         if ips not in layerspol:
-            newpols = gdspy.PolygonSet(polygons_dict[(ips, 0)],layer=ids, datatype=0)
+            newpols = gdspy.PolygonSet(polygons_dict[(ips, 0)],layer=ips, datatype=0)
             currentcell.remove_polygons(lambda pts, layer, datatype: layer == ips)
             newcell.add(newpols)
 
