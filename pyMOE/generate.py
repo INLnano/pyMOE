@@ -185,6 +185,7 @@ def truncate_aperture_radius(aperture, radius, center=(0,0), truncate_value=0):
         aperture: mask to be truncated
         radius: radius to select the region
         center: center points tuple of the circle
+        truncate_value: value to truncate the mask, by default 0 
     
     Returns:
         aperture
@@ -225,18 +226,9 @@ def fresnel_phase(aperture, focal_length, wavelength, radius=None, center=(0,0))
     if radius is not None:
         aperture = truncate_aperture_radius(aperture, radius, center=center)
 
-    # #calculate the fresnel complex phase 
-    # fresarray = calculate_fresnel_lens_phase(aperture.XX, aperture.YY, x0, y0, focal_length, wavelength)
-    
-    # if radius is not None:
-    #     fresarray[np.where(rc>radius)] = np.pi
-    # fresarray_rad = np.angle(fresarray)
-    
-    # aperture.phase = fresarray_rad
-    
+
     return aperture
 
-# Fresnel Zone plate aperture
 
 
 def fresnel_zone_plate_aperture(aperture, focal_length, wavelength, radius=None, center=(0,0)):
@@ -281,7 +273,7 @@ def fresnel_zone_plate_aperture(aperture, focal_length, wavelength, radius=None,
     fzp2[idx_array] = 0
 
     if radius is not None:
-        fzp2[np.where(rc>radius)] = 1
+        fzp2[np.where(rc>radius)] = 1  
                  
     aperture.aperture = fzp2
     return aperture
@@ -772,18 +764,16 @@ def arbitrary_phase_mask(mode, npix, xsiz, ysiz, n, fname,*args,filename=None, p
     #calculate the complex phase  fname function  
     farray = fname(xc,yc,xcmm,ycmm,*args, **kwargs)
     
-    #farray[np.where(rc>a)] = np.pi
-    farray_rad = np.angle(farray)
     
     #make array with the z plane intersections  (n gray levels)
     if zlevs == []: 
-        zlevs = np.linspace(np.min(farray_rad), np.max(farray_rad), n+1)
+        zlevs = np.linspace(np.min(farray), np.max(farray), n+1)
         #print(zlevs)
 
     if plotting == True: 
         plt.figure()
         plt.axis('equal')
-        cs = plt.contourf(xc,yc,farray_rad, zlevs, cmap=plt.get_cmap("Greys"))
+        cs = plt.contourf(xc,yc,farray, zlevs, cmap=plt.get_cmap("Greys"))
         plt.xlabel('x ($\mu$m)')
         plt.ylabel('y ($\mu$m)')
         plt.colorbar(label='Phase (rad)')
@@ -819,11 +809,10 @@ def arbitrary_phase_mask(mode, npix, xsiz, ysiz, n, fname,*args,filename=None, p
 
 
 
-
 ###ANY FUNCTION PHASE MASK 
-def arbitrary_phase_mask_old(mode, npix, xsiz, ysiz, n, fname,*args,filename=None, plotting=False ,prec = 1e-6, mpoints = 1e9 , zlevs = [],grid=None, **kwargs):
+def arbitrary_multilayer_mask(mode, npix, xsiz, ysiz, n, fname,*args,filename=None, plotting=False ,prec = 1e-6, mpoints = 1e9 , zlevs = [],grid=None, **kwargs):
     """
-    returns a "phase mask" (2D array of the phase IN RADIANS) from arbitrary COMPLEX PHASE function fname  given as argument
+    returns a "contour" mask of the arbitrary fname function 
     
     parameters: 
     mode = 'gdspyfast', 'gdspy', 'gdshelper'
@@ -872,18 +861,16 @@ def arbitrary_phase_mask_old(mode, npix, xsiz, ysiz, n, fname,*args,filename=Non
     #calculate the complex phase  fname function  
     farray = fname(xc,yc,xcmm,ycmm,*args, **kwargs)
     
-    #farray[np.where(rc>a)] = np.pi
-    farray_rad = np.angle(farray)
     
     #make array with the z plane intersections  (n gray levels)
     if zlevs == []: 
-        zlevs = np.linspace(np.min(farray_rad), np.max(farray_rad), n+1)
+        zlevs = np.linspace(np.min(farray), np.max(farray), n+1)
         #print(zlevs)
 
     if plotting == True: 
         plt.figure()
         plt.axis('equal')
-        cs = plt.contourf(xc,yc,farray_rad, zlevs, cmap=plt.get_cmap("Greys"))
+        cs = plt.contourf(xc,yc,farray, zlevs, cmap=plt.get_cmap("Greys"))
         plt.xlabel('x ($\mu$m)')
         plt.ylabel('y ($\mu$m)')
         plt.colorbar(label='Phase (rad)')
@@ -913,44 +900,42 @@ def arbitrary_phase_mask_old(mode, npix, xsiz, ysiz, n, fname,*args,filename=Non
         cell2.save(filename)
         print("Saved the phase profile with " + str(n) +  " layers into the file " + filename)
     
-    return farray_rad 
-
-
-###ANY FUNCTION PHASE MASK 
-def arbitrary_multilayer_mask(mode, npix, xsiz, ysiz, n, fname,*args,filename=None, plotting=False ,prec = 1e-6, mpoints = 1e9 , zlevs = [],grid=None, **kwargs):
+    return farray
+    
+    
+  
+####Function that defines a Fresnel Zone Plate mask 
+def fzp_mask(npix, foc, lda, xsiz, ysiz, filename, plotting=False, grid=None ):
     """
-    returns a "contour" mask of the arbitrary fname function 
-    
-    parameters: 
-    mode = 'gdspyfast', 'gdspy', 'gdshelper'
-    npix = nr of pixels (or points) , by default the results 2D array is npix by npix 
+    returns a fresnel zone plate (as a numpy 2D array)
+    npix = nr of pixels 
+    foc = focal length in um
+    lda = wavelength in um 
     xsiz = size in x in um 
-    ysiz = size in y in um
-    n = number of gray levels
-    fname = function name (e.g. lensfres(x,y,x0,y0, args) , where args will be given as *args)
-    *args = arguments fname, excluding the [x,y,x0,y0] params
+    ysiz = size in y in um 
+    filename = string with mask image name 'image.png'
     
-    optional: 
-    filename = string with mask output into GDS  (default None)
-    plotting = True, shows the mask  (default False)
-    prec = precision of the gdspy boolean operation  (default 1e-6 um)
-    mpoints = max_points of the gdspy polygon (default 1e9 points)
-    zlevs   = array of the phase levels 
+    Optional: 
+    plotting=True, shows the mask 
     grid = 2D array with a meshgrid 
     
     Example of use: 
-    arbitrary_multilayer_mask(5000, 500,500, 10,\
-           lensfres, fo=5000, lda=0.6328, \
-           filename="fresnel_phase_plate.gds", plotting=True ,prec = 1e-6, mpoints = 1e9 )
+    
+    fzp_mask(npix = 50,\
+         foc = 5000 ,\
+         lda = 0.6328 ,\
+         xsiz = 500, \
+         ysiz = 500, \
+         filename = 'fresnel.png', \
+         plotting=True )
          
-         
-    """  
+    """
 
-    #by default centered 
+    #by default centered
     xcmm =  0.5* xsiz
     ycmm =  0.5* ysiz 
-    lib1 = 0 
-    
+
+    a = 0.5 * np.min([xsiz,ysiz])  #radius of the circular aperture 
     maskfres = np.ones((npix,npix))
 
             
