@@ -336,24 +336,26 @@ def aperture_multiply(aperture1, aperture2):
 
 
     
-####
 def makegrid(npix, xsiz, ysiz): 
     """
-    returns the grid where the optical element will be designed, using meshgrid to create it
-    npix = nr of pixels , by default the results 2D array is npix by npix 
-    xsiz = size in x  
-    ysiz = size in y 
+    Creates a meshgrid of npix by npix in with arrays till xsiz and ysiz 
+
+    Args: 
+        npix = nr of pixels , by default the results 2D array is npix by npix 
+        xsiz = size in x  
+        ysiz = size in y 
     
-    returns the grid with npix per npix 
+    Returns:     
+        Meshgrid (XX, YY) 
 
     """
 
     maskcir = np.zeros((npix,npix))
     xc1 = np.linspace(0, xsiz, npix)
     yc1 = np.linspace(0, ysiz, npix)
-    (xc, yc) = np.meshgrid(xc1,yc1)
+    (XX, YY ) = np.meshgrid(xc1,yc1)
     
-    return (xc, yc) 
+    return (XX, YY )
     
 
 
