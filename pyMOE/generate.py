@@ -280,14 +280,8 @@ def fresnel_zone_plate_aperture(aperture, focal_length, wavelength, radius=None,
     idx_array = (fzp_angle>=-np.pi/2) & (fzp_angle<=np.pi/2)
     fzp2[idx_array] = 0
 
-#     for ie in np.arange(0,i):
-#         for je in np.arange(0,j):
-#             if ((np.angle(fzp[ie][je]) >= -np.pi/2) & (np.angle(fzp[ie][je]) <= np.pi/2)): 
-#                 fzp2[ie][je] = 0
-#             else: 
-#                 fzp2[ie][je] = 1
-
-    fzp2[np.where(rc>radius)] = 1
+    if radius is not None:
+        fzp2[np.where(rc>radius)] = 1
                  
     aperture.aperture = fzp2
     return aperture
