@@ -7,13 +7,12 @@
 #from pyMOE.propagate import* 
 
 ###second way of import each 
-import pyMOE.dither as dith
-import pyMOE.export as exp
-import pyMOE.generate as gen
+import pyMOE.dither as dither
+import pyMOE.export as export
 import pyMOE.gds_klops as gdsops 
-import pyMOE.impor as imp
+import pyMOE.impor as impor
 import pyMOE.metas as metas 
-import pyMOE.propagate as prop
+import pyMOE.propagate as propagate
 
 from pyMOE.aperture import Aperture
 from pyMOE.gdsconverter import GDSMask
