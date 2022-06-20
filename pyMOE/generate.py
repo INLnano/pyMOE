@@ -540,16 +540,18 @@ def arbitrary_phase_mask(mode, npix, xsiz, ysiz, n, fname,*args,filename=None, p
     #calculate the complex phase  fname function  
     farray = fname(xc,yc,xcmm,ycmm,*args, **kwargs)
     
+    #farray[np.where(rc>a)] = np.pi
+    farray_rad = np.angle(farray)
     
     #make array with the z plane intersections  (n gray levels)
     if zlevs == []: 
-        zlevs = np.linspace(np.min(farray), np.max(farray), n+1)
+        zlevs = np.linspace(np.min(farray_rad), np.max(farray_rad), n+1)
         #print(zlevs)
 
     if plotting == True: 
         plt.figure()
         plt.axis('equal')
-        cs = plt.contourf(xc,yc,farray, zlevs, cmap=plt.get_cmap("Greys"))
+        cs = plt.contourf(xc,yc,farray_rad, zlevs, cmap=plt.get_cmap("Greys"))
         plt.xlabel('x ($\mu$m)')
         plt.ylabel('y ($\mu$m)')
         plt.colorbar(label='Phase (rad)')
@@ -607,14 +609,11 @@ def arbitrary_multilayer_mask(mode, npix, xsiz, ysiz, n, fname,*args,filename=No
     zlevs   = array of the phase levels 
     grid = 2D array with a meshgrid 
     
-    Examples of use: #Should take around ~30 s for any of these 
-    arbitrary_phase_mask(5000, 500,500, 10,\
+    Example of use: 
+    arbitrary_multilayer_mask(5000, 500,500, 10,\
            lensfres, fo=5000, lda=0.6328, \
            filename="fresnel_phase_plate.gds", plotting=True ,prec = 1e-6, mpoints = 1e9 )
-           
-    arbitrary_phase_mask(5000, 500,500, 60,\
-           spiral, L=1, \
-           filename="spiral_phase_plate.gds", plotting=True ,prec = 1e-12, mpoints = 1e9 )
+         
          
     """  
 
@@ -722,47 +721,45 @@ def fzp_mask(npix, foc, lda, xsiz, ysiz, filename, plotting=False, grid=None ):
         yc1 = np.linspace(0, ysiz, npix)
         (xc, yc) = np.meshgrid(xc1,yc1)
 
+    
 
-    #calculate the complex phase  fname function  
-    farray = fname(xc,yc,xcmm,ycmm,*args, **kwargs)
+    #definition of the circular aperture 
+    rc = np.sqrt((xc-xcmm)**2 + (yc-ycmm)**2)
     
+    #definition of the phase profile 
+    fzp = np.exp(-1.0j*(foc-np.sqrt(foc**2 + rc**2))*(2*np.pi)/(lda))
+
+    #Define the zones 
+    fzp[np.where((np.angle(fzp)>-np.pi/2 )& (np.angle(fzp)<np.pi/2) )] = 0 
+
+    i,j = fzp.shape 
+
+    #final plateCurrent 
+    fzp2 = np.zeros((i,j)) 
+
+    for ie in np.arange(0,i):
+        for je in np.arange(0,j):
+            if ((np.angle(fzp[ie][je]) >= -np.pi/2) & (np.angle(fzp[ie][je]) <= np.pi/2)): 
+                fzp2[ie][je] = 0
+            else: 
+                fzp2[ie][je] = 1
+
+    fzp2[np.where(rc>a)] = 1
     
-    #make array with the z plane intersections  (n gray levels)
-    if zlevs == []: 
-        zlevs = np.linspace(np.min(farray), np.max(farray), n+1)
-        #print(zlevs)
+
+    if filename is not None :
+        save_mask_plot(fzp2, xsiz, ysiz, filename)
 
     if plotting == True: 
-        plt.figure()
-        plt.axis('equal')
-        cs = plt.contourf(xc,yc,farray, zlevs, cmap=plt.get_cmap("Greys"))
-        plt.xlabel('x ($\mu$m)')
-        plt.ylabel('y ($\mu$m)')
-        plt.colorbar(label='Phase (rad)')
-        plt.tight_layout()
-      
-    #possible improvement, pass this function as argument
-    if mode == 'gdspyfast': 
-        lib1, cell1 = cell_wpol_gdspy_fast(cs, 'TOP', prec, mpoints)
-        cell2 = None 
-        multpol = None 
+        fig=plt.figure()
+        plt.imshow(fzp2, cmap=plt.get_cmap("Greys"))
+        plt.show()
         
-    if mode == 'gdspy': 
-        lib1, cell1 = cell_wpol_gdspy(cs, 'TOP', prec, mpoints)
-        cell2 = None 
-        multpol = None 
-        
-    if mode == 'gdshelper': 
-        cell2, multpol = cell_wpol(cs, 'TOP')
+    return fzp2 
 
-    #option for gdspy lib use 
-    if lib1 and filename is not None: 
-        lib1.write_gds(filename)
-        print("Saved the phase profile with " + str(n) +  " layers into the file " + filename)
-    
-    #option for gdshelpers lib use 
-    if cell2 and filename is not None: 
-        cell2.save(filename)
-        print("Saved the phase profile with " + str(n) +  " layers into the file " + filename)
-    
-    return farray
+
+
+def boundary_from_function(): 
+    ##TODO - exact calculation of the function boundary (or contour) from numerically solving 
+    ##      the equation defined_function == given_phase_value 
+    return
