@@ -16,13 +16,14 @@ def create_empty_aperture(xmin, xmax, N_x, ymin, ymax, N_y):
     """
     Creates an empty aperture max of the mesh dimensions provided
     
-    xmin, xmax: range for x 
-    N_x: number of x points
-    ymin, ymax: range for y 
-    N_y: number of y points
+    Args: 
+        xmin, xmax: range for x 
+        N_x: number of x points
+        ymin, ymax: range for y 
+        N_y: number of y points
     
     Returns:
-    mask: empty Aperture
+        mask: empty Aperture
     """
     x = np.linspace(xmin, xmax, N_x)
     y = np.linspace(ymin, ymax, N_y)
@@ -76,9 +77,6 @@ def create_aperture_from_array(array, pixel_size, center=False):
       
     return aperture
     
-
-
-
 
 
 def circular_aperture(aperture, radius, center=(0,0)):
@@ -148,9 +146,6 @@ def rectangular_aperture(aperture, width, height, corner=None, center=None):
     aperture.aperture = mask
     return aperture
     
-
-
-
 
 def arbitrary_aperture_function(aperture, function, center=(0,0), **function_args):
     """    
@@ -487,8 +482,6 @@ def fresnel_phase_mask(npix, foc, lda, xsiz, ysiz,n, filename=None, plotting=Fal
 
 
 
-
-###ANY FUNCTION PHASE MASK 
 def arbitrary_phase_mask(mode, npix, xsiz, ysiz, n, fname,*args,filename=None, plotting=False ,prec = 1e-6, mpoints = 1e9 , zlevs = [],grid=None, **kwargs):
     """
     returns a "phase mask" (2D array of the phase IN RADIANS) from arbitrary COMPLEX PHASE function fname  given as argument
@@ -585,9 +578,6 @@ def arbitrary_phase_mask(mode, npix, xsiz, ysiz, n, fname,*args,filename=None, p
 
 
 
-
-
-###ANY FUNCTION PHASE MASK 
 def arbitrary_multilayer_mask(mode, npix, xsiz, ysiz, n, fname,*args,filename=None, plotting=False ,prec = 1e-6, mpoints = 1e9 , zlevs = [],grid=None, **kwargs):
     """
     returns a "contour" mask of the arbitrary fname function 
@@ -648,7 +638,7 @@ def arbitrary_multilayer_mask(mode, npix, xsiz, ysiz, n, fname,*args,filename=No
         cs = plt.contourf(xc,yc,farray, zlevs, cmap=plt.get_cmap("Greys"))
         plt.xlabel('x ($\mu$m)')
         plt.ylabel('y ($\mu$m)')
-        plt.colorbar(label='Phase (rad)')
+        plt.colorbar(label='z [a.u.]')
         plt.tight_layout()
       
     #possible improvement, pass this function as argument
