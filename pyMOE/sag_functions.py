@@ -5,6 +5,8 @@ Module containing several sag or phase functions for various optical elements
 """
 
 import numpy as np
+from zernike import RZern
+
 
 def fresnel_lens_phase(XX,YY,focal_length,wavelength): 
     """
@@ -46,7 +48,7 @@ def spiral(x,y,L):
 
 def saddle(x,y,a,b):
     """
-    returns a COMPLEX function (the function to implement NEEDS to be complex to extract the phase!)
+    returns a COMPLEX PHASE saddle function 
     Args:
         x = x array from meshgrid 
         y = y array from meshgrid 
@@ -61,5 +63,19 @@ def saddle(x,y,a,b):
     return func
 
 
+def msaddle(x,y,a,b):
+    """
+    returns a COMPLEX PHASE monkey saddle function 
+    Args:
+        x = x array from meshgrid 
+        y = y array from meshgrid 
+        a = arbitrary parameter
+        b  = arbitrary parameter 
+    """
+    
+    sfunc =  (a * ((x*x*x- 3*x*y*y)*1e6) -b) 
+    func = np.exp(1.0j*sfunc)
+    func = np.angle(func)
 
+    return func
 
