@@ -96,7 +96,6 @@ def change_layers_gdspy(fstgds_filename, new_cellname, layerspol, gvts, output_f
         'gvts'              : array of destination layers - MUST HAVE THE SAME CORRESPONDENCE 
         'output_filename'   : string filename of output gds
         
-    Possible 
 
     """
     
