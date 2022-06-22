@@ -205,7 +205,7 @@ def RS_int(zs, mask, npixmask, pixsizemask, npixscreen, dxscreen, dyscreen, wave
             prop1= np.exp(-r*1.0j*k)/r2
             prop2 = zs * (1.0j * k  + unit/r)
             propE = E0m * prop1 * prop2
-            #here npm*400, is a guess for the number of points to calc the int
+            #here npm*400, is a guess for the number of points to calc the int, can be changed 
             rEs[isc,jsc] = double_Integral(-dmask/2, dmask/2, -dmask/2, dmask/2, npm*400,npm*400,np.real(propE))/(2*np.pi)
             iEs[isc,jsc] = double_Integral(-dmask/2, dmask/2, -dmask/2, dmask/2, npm*400,npm*400,np.imag(propE))/(2*np.pi)
 

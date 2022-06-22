@@ -8,7 +8,6 @@ import numpy as np
 # import pyMOE as moe
 from pyMOE.aperture import Aperture
 from pyMOE.utils import progress_bar, Timer
-from pyMOE.
 
 import matplotlib.pyplot as plt 
 

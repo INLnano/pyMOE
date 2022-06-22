@@ -1,4 +1,5 @@
 ####imports gds and transforms into gray image 
+import numpy as np 
 import matplotlib.pyplot as plt 
 import gdspy 
 from gdspy import FlexPath
@@ -7,6 +8,7 @@ import pickle
 import cv2 
 
 from gdshelpers.geometry.chip import Cell
+
  
  
 def makesubplot(x,y, *argv, **kwargs):
