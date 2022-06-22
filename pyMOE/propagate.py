@@ -1,9 +1,15 @@
 ####propagate.py   
 
-####Thid file is duplicate from the propopt repository on January 2022
+####This file is "duplicate" from the propopt repository on January 2022
 ####For more information, examples of use and validation tests, please see
 ####link for repository : https://github.com/cunhaJ/propopt 
 
+import numpy as np
+import scipy.fftpack as sfft 
+
+import decimal
+
+import numpy as np  
 
 def fresnel(z, mask, npixmask, pixsizemask, npixscreen, dxscreen, dyscreen, wavelength):
     """
@@ -21,8 +27,6 @@ def fresnel(z, mask, npixmask, pixsizemask, npixscreen, dxscreen, dyscreen, wave
     returns 2D map (x-y plane) with abs of Electric field at distance z
     
     """
-    import numpy as np
-    import scipy.fftpack as sfft  
     
     k = 2* np.pi/wavelength
     
@@ -70,8 +74,6 @@ def fraunhofer(z, mask, npixmask, pixsizemask, npixscreen, dxscreen, dyscreen, w
     returns 2D map (x-y plane) with abs of Electric field at distance z 
     
     """
-    import numpy as np
-    import scipy.fftpack as sfft    
     
     k = 2* np.pi/wavelength
     #number of pixels 
@@ -214,8 +216,7 @@ def RS_int(zs, mask, npixmask, pixsizemask, npixscreen, dxscreen, dyscreen, wave
     
     return Escreen, Iscreen, iplot 
     
-    
-###Second version is the one to be used 
+
 def RS_int_XZ2(zs, nzds, mask, npixmask, pixsizemask, npixscreen, dxscreen, dyscreen, wavelength, I0, verbose=False, logscale = False): 
     """
     Calculates the RS_int in the  of the first kind, taking information about mask, distance to screen, and screen information
@@ -234,7 +235,7 @@ def RS_int_XZ2(zs, nzds, mask, npixmask, pixsizemask, npixscreen, dxscreen, dysc
     
     logscale makes the calculation of the points in a log scale 
     """
-    import decimal
+
     # set the precision to double that of float64
     decimal.setcontext(decimal.Context(prec=34))
 
@@ -344,7 +345,6 @@ def double_Integral(xmin, xmax, ymin, ymax, nx, ny, A):
     """
     #rudimentary 2D integral, following https://stackoverflow.com/questions/20668689/integrating-2d-samples-on-a-rectangular-grid-using-scipy 
     """
-    import numpy as np 
 
     dS = ((xmax-xmin)/(nx-1)) * ((ymax-ymin)/(ny-1))
 
@@ -375,7 +375,7 @@ def circ_fraun(aperture_rad, rcoord, zdist, wavelength):
     
     returns intensity 2D array (x-y)
     """
-    import numpy as np
+
     from scipy.special import j1
     ###use like jv(v,z) where v is the order and z the dist in z 
     
@@ -403,7 +403,6 @@ def circ_zz(aperture_rad, zdist, wavelength):
     returns intensity 2D array (x-y)
     
     """
-    import numpy as np 
     
     k = 2*np.pi /wavelength 
     
@@ -427,7 +426,6 @@ def circ_zz24(aperture_rad, zdist, wavelength):
     returns intensity 2D array (x-y)
     
     """
-    import numpy as np 
     
     k = 2*np.pi /wavelength 
     
@@ -453,8 +451,6 @@ def rect_fraun(sizex, sizey, xcoord, ycoord, zd, wl):
     returns intensity 2D array (x-y)
     """
     from scipy.special import sinc 
-    import numpy as np 
-    
     #sinc uses sin(pi*x)/(pi*x) with x as the argument 
     
     area = sizex*sizey

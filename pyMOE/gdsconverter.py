@@ -8,6 +8,7 @@ import numpy as np
 # import pyMOE as moe
 from pyMOE.aperture import Aperture
 from pyMOE.utils import progress_bar, Timer
+from pyMOE.
 
 import matplotlib.pyplot as plt 
 
@@ -150,10 +151,11 @@ def change_layers_gdspy(fstgds_filename, new_cellname, layerspol, gvts, output_f
 
 
 
-
-########CREATES A GDSPY CELL WITH THE POLYGONS USING GDSPY
 def cell_wpol_gdspy(cs, cellname, prec=1e-6, mpoints=1e9):
     """
+    ###Initially coming from gds_klops 
+    ###TODO: migrate functions from the gds_klops (implemented with various libraries) to gdsp y 
+    
     Cell made with cut polygons from the z profile 
     'cs'       = contours FROM matplotlif contourf function
     'cellname' = string cellname, e.g. 'TOP' 

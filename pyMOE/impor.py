@@ -1,16 +1,26 @@
 ####imports gds and transforms into gray image 
+import matplotlib.pyplot as plt 
+import gdspy 
+from gdspy import FlexPath
+from shapely.geometry import MultiPolygon, Polygon
+import pickle 
+import cv2 
 
-#plot in subplot
+from gdshelpers.geometry.chip import Cell
+ 
+ 
 def makesubplot(x,y, *argv, **kwargs):
-    import matplotlib.pyplot as plt 
-    
+    """
+    Makes a subplot object for plotting 
+    """
+    #plot in subplot
     axes = kwargs.pop("axes", None)
     if not axes:
         fig, axes = plt.subplot()
 
     return axes.plot(x,y, *argv, **kwargs)
 
-##### INSPECT GDS IN MATPLOTLIB 
+
 def inspect_gds2(filename, colors, rescale=0, **kwargs): 
     """
     (void) plots the gds for inspection in python matplotlib, only with the borders of the features 
@@ -20,13 +30,7 @@ def inspect_gds2(filename, colors, rescale=0, **kwargs):
     rescale    = int rescaling factor for all points in mask, by default is 0 
     
     """
-    import gdspy 
-    from gdspy import FlexPath
-    import matplotlib.pyplot as plt 
-    from shapely.geometry import Polygon
-    import pickle 
-    import numpy as np
-    
+
     lib = gdspy.GdsLibrary(infile=filename)
     main_cell = lib.top_level()[0]
     
@@ -94,7 +98,6 @@ def inspect_gds2(filename, colors, rescale=0, **kwargs):
     print("Done.")
     
 
-##########FUNCTION TO INSPECT ALL LAYERS OF GDS (not only shapes)
 def inspect_gds2layers(filename, norm,verbose = False, **kwargs ): 
     """
     Returns cell, polygon dictionary, (xmin,xmax) and (ymin,ymax) for representation of the gds layers into a grayscale image  
@@ -104,10 +107,7 @@ def inspect_gds2layers(filename, norm,verbose = False, **kwargs ):
     for **kwargs, add 'axes = subplot', where subplot has been previously defined as subplot = fig.add_subplot(111) 
     with 'import matplotlib.pyplot as plt' and 'fig = plt.figure()'
     """
-    from gdshelpers.geometry.chip import Cell
-    import gdspy
-    from shapely.geometry import MultiPolygon, Polygon 
-    import numpy as np 
+
     
     #create cell to store the layers 
     cell_multipol = Cell('top')
@@ -204,22 +204,16 @@ def inspect_gds2layers(filename, norm,verbose = False, **kwargs ):
     
     return cell_multipol, pol_dict, xmn, xmx, ymn, ymx
     
-    
-##########FUNCTION TO INSPECT ALL LAYERS OF GDS (not only shapes)
+
 def inspect_gds2layersplt(filename, norm, verbose = False, **kwargs ):  
     """
-    Returns cell, polygon dictionary, (xmin,xmax) and (ymin,ymax) for representation of the gds layers into a grayscale image  
+    Returns cell, polygon dictionary, (xmin,xmax) and (ymin,ymax) for representation of ALL gds layers into a grayscale image  
     'filename' = string gds filename (e.g. 'yolo.gds')
     'norm' = maximum level of gray (e.g. 128)  
     'verbose' = show some information while doing the operations 
     for **kwargs, add 'axes = plt' where we have previously 
     'import matplotlib.pyplot as plt' and 'fig = plt.figure()'
     """
-    from gdshelpers.geometry.chip import Cell
-    import gdspy
-    from shapely.geometry import MultiPolygon, Polygon 
-    import numpy as np 
-    import matplotlib.pyplot as plt 
     
     #create cell to store the layers 
     cell_multipol = Cell('top')
@@ -333,10 +327,7 @@ def gds2img(infile,outfile,norm, verbose=False):
     'norm' = maximum level of gray (e.g. 128)  
     'verb' if True, shows verbose, defaults to False 
     """
-    import cv2 
-    from matplotlib import pyplot as plt 
-    import numpy as np
-    
+
     fig = plt.figure()
     cell_multipol, pol_dict, xmn, xmx, ymn, ymx = inspect_gds2layersplt(infile,norm,verbose = verbose, axes=plt)
     
