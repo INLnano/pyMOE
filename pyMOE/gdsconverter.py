@@ -157,14 +157,14 @@ class GDSMask():
         
         
         
-    def create_layout(self, mode="raster", cellname='mask', merge=True, break_vertices=250):
+    def create_layout(self, mode="raster", cellname='TOP', merge=False, break_vertices=250):
         """
         Creates GDS layout of the discretized aperture
         
         Args:
             mode: default Raster. TO DO
             cellname: name of the topcell to include all the merged polygons
-            merge: default True. If True, will merge the individual pixel polygons 
+            merge: default False. If True, will merge the individual pixel polygons 
             break_vertices: threshold value to speed up the merging of polygons
         
         Returns:
