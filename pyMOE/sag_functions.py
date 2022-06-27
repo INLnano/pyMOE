@@ -63,7 +63,7 @@ def saddle(x,y,a,b):
     return func
 
 
-def msaddle(x,y,a,b):
+def monkey_saddle(x,y,a,b):
     """
     returns a COMPLEX PHASE monkey saddle function 
     Args:
