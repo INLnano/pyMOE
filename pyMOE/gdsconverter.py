@@ -83,9 +83,9 @@ def merge_polygons(polygons, layer=0, assume_non_overlap=True, break_vertices=25
     
 ##############################################################################################################################
     
-def change_layers_gdspy(fstgds_filename, new_cellname, layerspol, gvts, output_filename):
+def change_layers_gdspy(fstgds_filename, new_cellname, layerspol, new_layers, output_filename):
     """
-    Transforms layers from the source layer (layerpol) into the destination (gvts) 
+    Transforms layers from the source layer (layerpol) into the destination (new_layers) 
     By default considers datatypes are int(0), set datatypes to 0 function can be used before
     Assumes that we have the polygons in the top level of the input gds 
     
@@ -93,7 +93,7 @@ def change_layers_gdspy(fstgds_filename, new_cellname, layerspol, gvts, output_f
         'fstgds_filename'   : string filename of gds to read
         'new_cellname'      : string name of cell in the gds 
         'layerspol'         : array of the layers of the gds file, if it is not the same, leaves the absent layers untouched 
-        'gvts'              : array of destination layers - MUST HAVE THE SAME CORRESPONDENCE 
+        'new_layers'              : array of destination layers - MUST HAVE THE SAME CORRESPONDENCE 
         'output_filename'   : string filename of output gds
         
 
@@ -129,7 +129,7 @@ def change_layers_gdspy(fstgds_filename, new_cellname, layerspol, gvts, output_f
         print("Attention: The layers given " + str(layerspol) + " are NOT the same as the layers in the file " + str(filelayers))
     
     #change the layers
-    for ips, ids in zip(layerspol, gvts): 
+    for ips, ids in zip(layerspol, new_layers): 
         newpols = gdspy.PolygonSet(polygons_dict[(ips, 0)],layer=ids, datatype=0)
         currentcell.remove_polygons(lambda pts, layer, datatype: layer == ips)
         newcell.add(newpols)
