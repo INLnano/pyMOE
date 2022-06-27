@@ -314,23 +314,23 @@ def aperture_multiply(aperture1, aperture2):
     return aperture_operation(aperture1, aperture2, np.multiply)
 
     
-def makegrid(npix, xsiz, ysiz): 
+def makegrid(N_pixels, xsize, ysize): 
     """
-    Creates a meshgrid of npix by npix in with arrays till xsiz and ysiz 
+    Creates a meshgrid of N_pixels by N_pixels in with arrays till xsize and ysize 
 
     Args: 
-        npix = nr of pixels , by default the results 2D array is npix by npix 
-        xsiz = size in x  
-        ysiz = size in y 
+        N_pixels = nr of pixels , by default the results 2D array is N_pixels by N_pixels 
+        xsize = size in x  
+        ysize = size in y 
     
     Returns:     
         Meshgrid (XX, YY) 
 
     """
 
-    maskcir = np.zeros((npix,npix))
-    xc1 = np.linspace(0, xsiz, npix)
-    yc1 = np.linspace(0, ysiz, npix)
+    maskcir = np.zeros((N_pixels,N_pixels))
+    xc1 = np.linspace(0, xsize, N_pixels)
+    yc1 = np.linspace(0, ysize, N_pixels)
     (XX, YY ) = np.meshgrid(xc1,yc1)
     
     return (XX, YY )
@@ -338,9 +338,9 @@ def makegrid(npix, xsiz, ysiz):
 
 
 
-def save_mask_plot(maskcir, xsiz, ysiz, filename):
+def save_mask_plot(maskcir, xsize, ysize, filename):
     fig1 = plt.figure()
-    figx = plt.imshow(maskcir, vmin=0, vmax=1,extent =[0,xsiz,0,ysiz], cmap=plt.get_cmap("Greys"))
+    figx = plt.imshow(maskcir, vmin=0, vmax=1,extent =[0,xsize,0,ysize], cmap=plt.get_cmap("Greys"))
     plt.axis('off')
     figx.axes.get_xaxis().set_visible(False)
     figx.axes.get_yaxis().set_visible(False)
@@ -349,21 +349,21 @@ def save_mask_plot(maskcir, xsiz, ysiz, filename):
     
 
 ##Code to create a gray scale with successive gray levels 
-def create_scale(npixel, nsz, ngs): 
+def create_scale(N_pixels, nsz, ngs): 
     """
     returns a 2D array with a scale of successive gray levels 
-    npixel= nr of pixels 
+    N_pixels= nr of pixels 
     nsz = division in size 
     ngs = nr of gray levels 
     
     """
     
-    scale_img = np.zeros((npixel,npixel,3), np.uint8)
+    scale_img = np.zeros((N_pixels,N_pixels,3), np.uint8)
 
-    width = npixel 
-    height = npixel 
+    width = N_pixels 
+    height = N_pixels 
     
-    nsz = npixel/ngs 
+    nsz = N_pixels/ngs 
     
     xdims = np.arange(0,width, nsz)
     
@@ -398,15 +398,15 @@ def create_scale(npixel, nsz, ngs):
     return scale_img
     
 
-def fresnel_phase_mask(npix, foc, lda, xsiz, ysiz,n, filename=None, plotting=False ,prec = 1e-6, mpoints = 1e9, grid=None):
+def fresnel_phase_mask(N_pixels, foc, wavelength, xsize, ysize,n, filename=None, plotting=False ,prec = 1e-6, mpoints = 1e9, grid=None):
     """
     returns a Fresnel "phase mask" (2D array of the phase IN RADIANS)
     parameters: 
-    npix = nr of pixels , by default the results 2D array is npix by npix 
+    N_pixels = nr of pixels , by default the results 2D array is N_pixels by N_pixels 
     foc = focal length in um
-    lda = wavelength in um 
-    xsiz = size in x in um 
-    ysiz = size in y in um
+    wavelength = wavelength in um 
+    xsize = size in x in um 
+    ysize = size in y in um
     n = number of gray levels 
     
     optional: 
@@ -417,11 +417,11 @@ def fresnel_phase_mask(npix, foc, lda, xsiz, ysiz,n, filename=None, plotting=Fal
     grid = 2D array with a meshgrid 
     
     Example of use: 
-    fresnel_phase_mask(npix = 5000, \
+    fresnel_phase_mask(N_pixels = 5000, \
                    foc = 5000,\
-                   lda = 0.6328 ,\
-                   xsiz = 500,\
-                   ysiz =500,\
+                   wavelength = 0.6328 ,\
+                   xsize = 500,\
+                   ysize =500,\
                    n=10,\
                    filename='fresnel_phase_mask.gds',\
                    plotting=True )   #Should take around ~30 s 
@@ -429,18 +429,18 @@ def fresnel_phase_mask(npix, foc, lda, xsiz, ysiz,n, filename=None, plotting=Fal
     """  
 
     #by default centered 
-    xcmm =  0.5* xsiz
-    ycmm =  0.5* ysiz 
+    xcmm =  0.5* xsize
+    ycmm =  0.5* ysize 
     
-    a = 0.5 * np.min([xsiz,ysiz])  #radius of the circular aperture 
-    maskfres = np.ones((npix,npix))
+    a = 0.5 * np.min([xsize,ysize])  #radius of the circular aperture 
+    maskfres = np.ones((N_pixels,N_pixels))
 
             
     if grid is not None: 
         (xc, yc) = grid
     else: 
-        xc1 = np.linspace(0, xsiz, npix)
-        yc1 = np.linspace(0, ysiz, npix)
+        xc1 = np.linspace(0, xsize, N_pixels)
+        yc1 = np.linspace(0, ysize, N_pixels)
         (xc, yc) = np.meshgrid(xc1,yc1)
 
     
@@ -449,7 +449,7 @@ def fresnel_phase_mask(npix, foc, lda, xsiz, ysiz,n, filename=None, plotting=Fal
     rc = np.sqrt((xc-xcmm)**2 + (yc-ycmm)**2)
 
     #calculate the fresnel complex phase 
-    fresarray = lensfres(xc,yc,xcmm,ycmm,foc,lda)
+    fresarray = lensfres(xc,yc,xcmm,ycmm,foc,wavelength)
     
     fresarray[np.where(rc>a)] = np.pi
     fresarray_rad = np.angle(fresarray)
@@ -482,15 +482,15 @@ def fresnel_phase_mask(npix, foc, lda, xsiz, ysiz,n, filename=None, plotting=Fal
 
 
 
-def arbitrary_phase_mask(mode, npix, xsiz, ysiz, n, fname,*args,filename=None, plotting=False ,prec = 1e-6, mpoints = 1e9 , zlevs = [],grid=None, **kwargs):
+def arbitrary_phase_mask(mode, N_pixels, xsize, ysize, n, fname,*args,filename=None, plotting=False ,prec = 1e-6, mpoints = 1e9 , zlevs = [],grid=None, **kwargs):
     """
     returns a "phase mask" (2D array of the phase IN RADIANS) from arbitrary COMPLEX PHASE function fname  given as argument
     
     parameters: 
     mode = 'gdspyfast', 'gdspy', 'gdshelper'
-    npix = nr of pixels (or points) , by default the results 2D array is npix by npix 
-    xsiz = size in x in um 
-    ysiz = size in y in um
+    N_pixels = nr of pixels (or points) , by default the results 2D array is N_pixels by N_pixels 
+    xsize = size in x in um 
+    ysize = size in y in um
     n = number of gray levels
     fname = function name (e.g. lensfres(x,y,x0,y0, args) , where args will be given as *args)
     *args = arguments fname, excluding the [x,y,x0,y0] params
@@ -505,7 +505,7 @@ def arbitrary_phase_mask(mode, npix, xsiz, ysiz, n, fname,*args,filename=None, p
     
     Examples of use: #Should take around ~30 s for any of these 
     arbitrary_phase_mask(5000, 500,500, 10,\
-           lensfres, fo=5000, lda=0.6328, \
+           lensfres, fo=5000, wavelength=0.6328, \
            filename="fresnel_phase_plate.gds", plotting=True ,prec = 1e-6, mpoints = 1e9 )
            
     arbitrary_phase_mask(5000, 500,500, 60,\
@@ -515,18 +515,18 @@ def arbitrary_phase_mask(mode, npix, xsiz, ysiz, n, fname,*args,filename=None, p
     """  
 
     #by default centered 
-    xcmm =  0.5* xsiz
-    ycmm =  0.5* ysiz 
+    xcmm =  0.5* xsize
+    ycmm =  0.5* ysize 
     lib1 = 0 
     
-    maskfres = np.ones((npix,npix))
+    maskfres = np.ones((N_pixels,N_pixels))
 
             
     if grid is not None: 
         (xc, yc) = grid
     else: 
-        xc1 = np.linspace(0, xsiz, npix)
-        yc1 = np.linspace(0, ysiz, npix)
+        xc1 = np.linspace(0, xsize, N_pixels)
+        yc1 = np.linspace(0, ysize, N_pixels)
         (xc, yc) = np.meshgrid(xc1,yc1)
 
 
@@ -578,15 +578,15 @@ def arbitrary_phase_mask(mode, npix, xsiz, ysiz, n, fname,*args,filename=None, p
 
 
 
-def arbitrary_multilayer_mask(mode, npix, xsiz, ysiz, n, fname,*args,filename=None, plotting=False ,prec = 1e-6, mpoints = 1e9 , zlevs = [],grid=None, **kwargs):
+def arbitrary_multilayer_mask(mode, N_pixels, xsize, ysize, n, fname,*args,filename=None, plotting=False ,prec = 1e-6, mpoints = 1e9 , zlevs = [],grid=None, **kwargs):
     """
     returns a "contour" mask of the arbitrary fname function 
     
     parameters: 
     mode = 'gdspyfast', 'gdspy', 'gdshelper'
-    npix = nr of pixels (or points) , by default the results 2D array is npix by npix 
-    xsiz = size in x in um 
-    ysiz = size in y in um
+    N_pixels = nr of pixels (or points) , by default the results 2D array is N_pixels by N_pixels 
+    xsize = size in x in um 
+    ysize = size in y in um
     n = number of gray levels
     fname = function name (e.g. lensfres(x,y,x0,y0, args) , where args will be given as *args)
     *args = arguments fname, excluding the [x,y,x0,y0] params
@@ -601,25 +601,25 @@ def arbitrary_multilayer_mask(mode, npix, xsiz, ysiz, n, fname,*args,filename=No
     
     Example of use: 
     arbitrary_multilayer_mask(5000, 500,500, 10,\
-           lensfres, fo=5000, lda=0.6328, \
+           lensfres, fo=5000, wavelength=0.6328, \
            filename="fresnel_phase_plate.gds", plotting=True ,prec = 1e-6, mpoints = 1e9 )
          
          
     """  
 
     #by default centered 
-    xcmm =  0.5* xsiz
-    ycmm =  0.5* ysiz 
+    xcmm =  0.5* xsize
+    ycmm =  0.5* ysize 
     lib1 = 0 
     
-    maskfres = np.ones((npix,npix))
+    maskfres = np.ones((N_pixels,N_pixels))
 
             
     if grid is not None: 
         (xc, yc) = grid
     else: 
-        xc1 = np.linspace(0, xsiz, npix)
-        yc1 = np.linspace(0, ysiz, npix)
+        xc1 = np.linspace(0, xsize, N_pixels)
+        yc1 = np.linspace(0, ysize, N_pixels)
         (xc, yc) = np.meshgrid(xc1,yc1)
 
 
@@ -670,14 +670,14 @@ def arbitrary_multilayer_mask(mode, npix, xsiz, ysiz, n, fname,*args,filename=No
     
   
 ####Function that defines a Fresnel Zone Plate mask 
-def fzp_mask(npix, foc, lda, xsiz, ysiz, filename, plotting=False, grid=None ):
+def fzp_mask(N_pixels, foc, wavelength, xsize, ysize, filename, plotting=False, grid=None ):
     """
     returns a fresnel zone plate (as a numpy 2D array)
-    npix = nr of pixels 
+    N_pixels = nr of pixels 
     foc = focal length in um
-    lda = wavelength in um 
-    xsiz = size in x in um 
-    ysiz = size in y in um 
+    wavelength = wavelength in um 
+    xsize = size in x in um 
+    ysize = size in y in um 
     filename = string with mask image name 'image.png'
     
     Optional: 
@@ -686,29 +686,29 @@ def fzp_mask(npix, foc, lda, xsiz, ysiz, filename, plotting=False, grid=None ):
     
     Example of use: 
     
-    fzp_mask(npix = 50,\
+    fzp_mask(N_pixels = 50,\
          foc = 5000 ,\
-         lda = 0.6328 ,\
-         xsiz = 500, \
-         ysiz = 500, \
+         wavelength = 0.6328 ,\
+         xsize = 500, \
+         ysize = 500, \
          filename = 'fresnel.png', \
          plotting=True )
          
     """
 
     #by default centered
-    xcmm =  0.5* xsiz
-    ycmm =  0.5* ysiz 
+    xcmm =  0.5* xsize
+    ycmm =  0.5* ysize 
 
-    a = 0.5 * np.min([xsiz,ysiz])  #radius of the circular aperture 
-    maskfres = np.ones((npix,npix))
+    a = 0.5 * np.min([xsize,ysize])  #radius of the circular aperture 
+    maskfres = np.ones((N_pixels,N_pixels))
 
             
     if grid is not None: 
         (xc, yc) = grid
     else: 
-        xc1 = np.linspace(0, xsiz, npix)
-        yc1 = np.linspace(0, ysiz, npix)
+        xc1 = np.linspace(0, xsize, N_pixels)
+        yc1 = np.linspace(0, ysize, N_pixels)
         (xc, yc) = np.meshgrid(xc1,yc1)
 
     
@@ -717,7 +717,7 @@ def fzp_mask(npix, foc, lda, xsiz, ysiz, filename, plotting=False, grid=None ):
     rc = np.sqrt((xc-xcmm)**2 + (yc-ycmm)**2)
     
     #definition of the phase profile 
-    fzp = np.exp(-1.0j*(foc-np.sqrt(foc**2 + rc**2))*(2*np.pi)/(lda))
+    fzp = np.exp(-1.0j*(foc-np.sqrt(foc**2 + rc**2))*(2*np.pi)/(wavelength))
 
     #Define the zones 
     fzp[np.where((np.angle(fzp)>-np.pi/2 )& (np.angle(fzp)<np.pi/2) )] = 0 
@@ -738,7 +738,7 @@ def fzp_mask(npix, foc, lda, xsiz, ysiz, filename, plotting=False, grid=None ):
     
 
     if filename is not None :
-        save_mask_plot(fzp2, xsiz, ysiz, filename)
+        save_mask_plot(fzp2, xsize, ysize, filename)
 
     if plotting == True: 
         fig=plt.figure()
