@@ -10,7 +10,7 @@
 import pyMOE.dither as dither
 import pyMOE.export as export
 import pyMOE.gds_klops as gdsops 
-import pyMOE.impor as impor
+import pyMOE.importing as importing
 import pyMOE.metas as metas 
 import pyMOE.propagate as propagate
 
