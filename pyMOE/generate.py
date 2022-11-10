@@ -316,7 +316,7 @@ def aperture_multiply(aperture1, aperture2):
     
 def makegrid(N_pixels, xsize, ysize): 
     """
-    Creates a meshgrid of N_pixels by N_pixels in with arrays till xsize and ysize 
+    Creates a square meshgrid of N_pixels by N_pixels in with arrays till xsize and ysize
 
     Args: 
         N_pixels = nr of pixels , by default the results 2D array is N_pixels by N_pixels 
