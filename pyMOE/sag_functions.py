@@ -5,7 +5,7 @@ Module containing several sag or phase functions for various optical elements
 """
 
 import numpy as np
-from zernike import RZern
+# from zernike import RZern
 
 
 def fresnel_lens_phase(XX,YY,focal_length,wavelength): 
