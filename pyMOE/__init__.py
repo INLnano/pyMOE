@@ -15,6 +15,7 @@ import pyMOE.metas as metas
 import pyMOE.propagate as propagate
 
 from pyMOE.aperture import Aperture
+from pyMOE.aperture import ApertureField
 from pyMOE.gdsconverter import GDSMask
 
 import pyMOE.plotting as plotting
