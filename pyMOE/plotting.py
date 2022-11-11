@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 
 
 from pyMOE import Aperture
+from pyMOE import ApertureField
+
 
 
 def plot_aperture(aperture, scale=None, colorbar=True, only_plot=False, filename=None, **kwargs):

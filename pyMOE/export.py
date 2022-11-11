@@ -1,5 +1,11 @@
 ####export.py 
 
+
+import cv2
+import gdspy 
+import numpy as np 
+    
+    
 ###Function exports an image file (converted to gray) into a gds file 
 def grayim2gds(infile, outfile, pixelx, pixely, cellname, level, layer=0, datatype=0, verbose=False):
     """
@@ -25,10 +31,6 @@ def grayim2gds(infile, outfile, pixelx, pixely, cellname, level, layer=0, dataty
     pixely = 1 #um 
     grayim2gds(infilxe, outfilxe, pixelx, pixely,"TOP", 0)
     """
-    import cv2
-    import gdspy 
-    import numpy as np 
-
     img = cv2.imread(infile, cv2.IMREAD_GRAYSCALE)
     
     h,w = img.shape 
@@ -93,9 +95,6 @@ def grayim2gds_writer_frac(infile, outfile, pixelx, pixely, cellname, level, nm=
 
     grayim2gds_writer_frac(infilxe, outfilxe, pixelx, pixely, cellname, graycolor, frac, verbose=True) 
     """
-    import cv2
-    import gdspy 
-    import numpy as np 
 
     img = cv2.imread(infile, cv2.IMREAD_GRAYSCALE)
     
@@ -187,9 +186,7 @@ def grayim2gds_writer(infile, outfile, pixelx, pixely, cellname, level, layer=0,
     pixely = 1 #um 
 
     grayim2gds_writer(infilxe, outfilxe, pixelx, pixely,cellname, graycolor, verbose=True)"""
-    import cv2
-    import gdspy 
-    import numpy as np 
+
 
     img = cv2.imread(infile, cv2.IMREAD_GRAYSCALE)
     
@@ -262,10 +259,6 @@ def grayim2gds_writer_klops(infile,  output_filename , pixelx, pixely, cellname,
     'verbose' defaults to False, if True prints 
 
     """
-    
-    import cv2
-    import gdspy 
-    import numpy as np
     
     img = cv2.imread(infile, cv2.IMREAD_GRAYSCALE)
     
