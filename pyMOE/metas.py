@@ -1,5 +1,8 @@
 ##metas.py 
 
+import gdspy 
+import numpy as np 
+    
 def metasurface_pillars(xsiz,ysiz, pixelx, pixely, p, dvarx,cellname, outfilen, tolerance=0.01, verbose=False ): 
     """
     (void) Transform a phase profile in 2D for a pillar based metasurface 
@@ -15,8 +18,6 @@ def metasurface_pillars(xsiz,ysiz, pixelx, pixely, p, dvarx,cellname, outfilen, 
     'tolerance' defaults to 0.01, can be decreased to have better defined circles
     'verbose' if True, prints during execution 
     """    
-    import gdspy 
-    import numpy as np 
 
     harray = np.arange(0, ysiz, p)
     warray = np.arange(0, xsiz, p)

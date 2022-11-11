@@ -354,18 +354,18 @@ def cell_wpol_gdstk(cs, cellname):
     return lib, main_cell
     
 
-##########CHANGE LAYERS ON THE GDS, FROM layerspol TO gvts
+##########CHANGE LAYERS ON THE GDS, FROM layerspol TO new_layers
 ###THIS IS USING DATATYPE AS ZERO by default, can be changed 
 def change_layers(fstgds_filename, fst_cellname, layerspol,\
                   #fst_layer_nr, fst_datatype_nr, \
-                  gvts, output_filename):
+                  new_layers, output_filename):
     """
     (void) Transforms layers from the source layer into the destination
     #by default considers datatypes are int(0), set datatypes to 0 function can be used before
     'fstgds_filename'   = string filename of gds to read
     'fst_cellname'      = string name of cell in the gds 
     'layerspol'         = array of the layers of the gds file 
-    'gvts'              = array of destination layers - MUST HAVE THE SAME CORRESPONDENCE 
+    'new_layers'              = array of destination layers - MUST HAVE THE SAME CORRESPONDENCE 
     'output_filename'   = string filename of output gds
     """
     
@@ -398,13 +398,13 @@ def change_layers(fstgds_filename, fst_cellname, layerspol,\
         region1 = pya.Region(cll1.shapes(lyr1)) 
 
         #change the shapes from one layer to the other 
-        ly2.insert_layer(pya.LayerInfo(int(gvts[li]), int(0)))
+        ly2.insert_layer(pya.LayerInfo(int(new_layers[li]), int(0)))
         #select layer in the destination gds, corresponds to layerspol one to one 
-        lyr12 = ly2.layer(int(gvts[li]), int(0))
+        lyr12 = ly2.layer(int(new_layers[li]), int(0))
         #insert the region1 in the selected layer in the destination gds
         cll2.shapes(lyr12).insert(region1)
         
-        print("Changed the shapes in layer "+str(lyr)+" into "+str(gvts[li]))
+        print("Changed the shapes in layer "+str(lyr)+" into "+str(new_layers[li]))
         
     ly2.write(output_filename)
     

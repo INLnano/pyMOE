@@ -1,3 +1,6 @@
+import cv2 
+import numpy as np 
+
 def floyd_steinberg(input_img , plot = False ): 
     """
     make dithered image 
@@ -6,8 +9,7 @@ def floyd_steinberg(input_img , plot = False ):
     plotting if True, shows the plot, deafults to False 
     """
     ###NOTE: considers the same pixel as in the image, possible improvement, change of pixel size 
-    import numpy as np 
-    
+
     #input image as provided 
     img_gray_eq = input_img
     
@@ -59,8 +61,7 @@ def dither_img(input_img, output_filename, plotting = False):
     'output_filename' = filename of image to be written 
     'pl' = plotting parameter, defaults to False 
     """
-    import cv2 
-    
+
     img_gray0 = cv2.imread(input_img, cv2.IMREAD_GRAYSCALE)
     img_gray0 = 255 - img_gray0
     
