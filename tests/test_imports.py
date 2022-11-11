@@ -7,4 +7,4 @@ import pyMOE as moe
 
 
 def test_version():
-    assert moe.__version__ == 0.1
+    assert moe.__version__ == 1.0
