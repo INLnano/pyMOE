@@ -452,7 +452,7 @@ class GDSMask():
         datatype = 0
         
         # Creates top cell that will reference the remaining cells
-        topcell = gdspy.Cell(cellname, exclude_from_current=True)
+        #topcell = gdspy.Cell(cellname, exclude_from_current=True)
     
 
         with Timer("Total time converting to GDS"):
@@ -465,7 +465,7 @@ class GDSMask():
             ###TODO: change for the actual position of in zlevs 
                 cs = plt.contourf(XX,YY,self.mask.aperture_discretized, len(self.levels))
 
-            self.gdslib, cell1 = cell_wpol_gdspy(cs, 'TOP', prec = self.precision, mpoints=1e9)
+            self.gdslib, cell1 = cell_wpol_gdspy(cs, cellname, prec = self.precision, mpoints=1e9)
            
 
             return self.gdslib
