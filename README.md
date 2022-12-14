@@ -22,4 +22,5 @@ Follow the notebooks inside `notebooks\` directory
 From root folder run
 ```
 pytest
-```
+```    
+
