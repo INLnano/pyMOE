@@ -314,6 +314,231 @@ def aperture_multiply(aperture1, aperture2):
     return aperture_operation(aperture1, aperture2, np.multiply)
 
     
+def resize_linear(image_matrix, new_height:int, new_width:int):
+    """
+    Perform a pure-numpy linear-resampled resize of an image.
+    https://stackoverflow.com/questions/48121916/numpy-resize-rescale-image
+    
+    Args: 
+        image_matrix : input 2D array (image)
+        new_height : integer, height of the image 
+        new_width : integer, width of the image
+
+    Returns: 
+        output_image: resized 2D array (image)
+    """
+    output_image = np.zeros((new_height, new_width), dtype=image_matrix.dtype)
+    original_height, original_width = image_matrix.shape
+    inv_scale_factor_y = original_height/new_height
+    inv_scale_factor_x = original_width/new_width
+
+    # This is an ugly serial operation.
+    for new_y in range(new_height):
+        for new_x in range(new_width):
+            # If you had a color image, you could repeat this with all channels here.
+            # Find sub-pixels data:
+            old_x = new_x * inv_scale_factor_x
+            old_y = new_y * inv_scale_factor_y
+            x_fraction = old_x - math.floor(old_x)
+            y_fraction = old_y - math.floor(old_y)
+
+            # Sample four neighboring pixels:
+            left_upper = image_matrix[math.floor(old_y), math.floor(old_x)]
+            right_upper = image_matrix[math.floor(old_y), min(image_matrix.shape[1] - 1, math.ceil(old_x))]
+            left_lower = image_matrix[min(image_matrix.shape[0] - 1, math.ceil(old_y)), math.floor(old_x)]
+            right_lower = image_matrix[min(image_matrix.shape[0] - 1, math.ceil(old_y)), min(image_matrix.shape[1] - 1, math.ceil(old_x))]
+
+            # Interpolate horizontally:
+            blend_top = (right_upper * x_fraction) + (left_upper * (1.0 - x_fraction))
+            blend_bottom = (right_lower * x_fraction) + (left_lower * (1.0 - x_fraction))
+            # Interpolate vertically:
+            final_blend = (blend_top * y_fraction) + (blend_bottom * (1.0 - y_fraction))
+            output_image[new_y, new_x] = final_blend
+
+    return output_image
+
+
+
+def aperture_rotate(aperture_in, angle, pivot=None, background =0):
+    """
+    Rotates image around the pivot point, using the scipy ndimage (default applies spline interpolation + rotation of 2D array)
+    https://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.rotate.html
+
+    Args: 
+        aperture_in : input aperture object 
+        angle : rotation angle in degrees 
+        pivot : coordinates of pivot point (center of rotation) in the img 2D array, defaults to center of aperture
+        background: background value where rotation is done, by default 0 
+        
+    Returns: 
+        Rotated 2D array, with padding 
+        
+    """
+    assert (type(aperture_in) is Aperture), "aperture must be of type Aperture" 
+        
+    #get limits of input aperture
+    dx0_1, dx0_2 = aperture_in.x[0], aperture_in.x[-1]
+    dy0_1, dy0_2 = aperture_in.y[0], aperture_in.y[-1]
+
+    #width and height of input aperture
+    dx0 = dx0_2 - dx0_1 
+    dy0 = dy0_2 - dy0_1
+    
+    #x and y pixels in input aperture 
+    pix_x, pix_y = aperture_in.pixel_x, aperture_in.pixel_y
+
+    #if the pixel_x != pixel_y we need to resize the image for ndimage.rotate
+    # to get pixel_x = pixel_y, always choosing the larger pixel 
+    if pix_x > pix_y: 
+        new_pix_y = pix_x
+        new_pix_x = new_pix_y
+    else: 
+        new_pix_x = pix_y
+        new_pix_y = new_pix_x
+    
+    #number of pixels in the resized aperture 
+    new_Nx, new_Ny = int(np.round(dx0/new_pix_x)), int(np.round(dy0/new_pix_y))
+    
+    #resize the input aperture to have pixel_x = pixel_y 
+    aperture_temp = create_empty_aperture(dx0_1, dx0_2, new_Nx, dy0_1, dy0_2, new_Ny,)
+    aperture_temp.aperture = resize_linear(aperture_in.aperture, new_Ny, new_Nx)
+
+    #center point of the resized aperture 
+    midpoint = np.mean(aperture_temp.x), np.mean(aperture_temp.y)
+    
+    #rotation center
+    drotx, droty = midpoint
+        
+    #rotate the resized aperture 
+    rotated_aperture = ndimage.rotate(aperture_temp.aperture, angle, reshape=True, order=5, cval = background)
+
+    #number of pixels of the rotated aperture 
+    new_dimx, new_dimy = rotated_aperture.shape
+ 
+    #width and height of the rotated aperture 
+    dx = dx0 * np.cos(np.radians(angle)) + dy0 * np.sin(np.radians(angle))
+    dy = dx0 * np.sin(np.radians(angle)) + dy0 * np.cos(np.radians(angle))
+    
+    #limits of the rotated aperture 
+    dmin_x, dmax_x = -dx/2 + drotx, dx/2 + drotx
+    dmin_y, dmax_y = -dy/2 + droty, dy/2 + droty
+    
+    #if a pivot was given 
+    if pivot is not None: 
+        #translate to center 
+        ptransx = pivot[0] - midpoint[0]
+        ptransy = pivot[1] - midpoint[1]
+    
+        #rotate the translated center 
+        x2 = ptransx * np.cos(np.radians(-angle)) - ptransy * np.sin(np.radians(-angle))
+        y2 = ptransx * np.sin(np.radians(-angle)) + ptransy * np.cos(np.radians(-angle))
+        
+        #translate back to pivot 
+        pfinalx = x2 + midpoint[0]
+        pfinaly = y2 + midpoint[1]
+        
+        #translation vector from the rotated and the original pivot 
+        drotx, droty = pivot[0] - pfinalx, pivot[1] - pfinaly
+
+        #translation operation in the limits of the rotated aperture 
+        dmin_x, dmax_x = dmin_x + drotx, dmax_x + drotx
+        dmin_y, dmax_y = dmin_y + droty, dmax_y + droty
+
+   
+    #output aperture after rotation 
+    aperture_out = create_empty_aperture(dmin_x, dmax_x, new_dimx, dmin_y, dmax_y, new_dimy,)
+    aperture_out.aperture = rotated_aperture     
+
+    return aperture_out
+
+
+
+    
+def clip_aperture(aperture_in, new_dx0_1,new_dx0_2, new_dy0_1, new_dy0_2):
+    """
+    Clips the aperture between [new_dx0_1, new_dx0_2] and [new_dy0_1, new_dy0_2] limits
+
+    Args: 
+        aperture_in : input aperture object  
+        new_dx0_1, new_dx0_2 : limits in x 
+        new_dy0_1, new_dy0_2 : limits in y 
+        
+    Returns: 
+        Clipped aperture with limits [new_dx0_1, new_dx0_2] and [new_dy0_1, new_dy0_2]
+        
+    """    
+    #get limits of input aperture
+    dx0_1, dx0_2 = aperture_in.x[0], aperture_in.x[-1]
+    dy0_1, dy0_2 = aperture_in.y[0], aperture_in.y[-1]
+
+    aperture_in_values = aperture_in.aperture
+
+    #clipping selection, from given limits 
+    selection = np.where((aperture_in.XX > new_dx0_1 ) & (aperture_in.XX < new_dx0_2 )& (aperture_in.YY < new_dy0_2 ) & (aperture_in.YY > new_dy0_1 ) ) 
+    
+    #coordinates of limits 
+    xmin, xmax = np.min(selection[0]), np.max(selection[0]) 
+    ymin, ymax = np.min(selection[1]), np.max(selection[1]) 
+    
+    #aperture values within the clipping range 
+    aperture_clipped = aperture_in_values[xmin:xmax, ymin:ymax] 
+    
+    #number of pixels in the clipping window - careful to the x,y order they are correct like this
+    new_dimy, new_dimx = aperture_clipped.shape
+    
+    #output aperture 
+    aperture_out =  create_empty_aperture(new_dx0_1, new_dx0_2, new_dimx, new_dy0_1, new_dy0_2, new_dimy,)
+    aperture_out.aperture = aperture_clipped
+
+    return aperture_out
+
+
+
+def clip_aperture_within(aperture_in, new_dx0_1, new_dx0_2, new_dy0_1, new_dy0_2):
+    """
+    Clips the aperture by a rectangular aperture 
+
+    Args: 
+        aperture_in : input aperture object 
+        new_dx0_1, new_dx0_2 : limits in x 
+        new_dy0_1, new_dy0_2 : limits in y 
+        
+    Returns: 
+        Clipped aperture_in with the rectangle
+        
+    """  
+    #get limits of input aperture
+    dx0_1, dx0_2 = aperture_in.x[0], aperture_in.x[-1]
+    dy0_1, dy0_2 = aperture_in.y[0], aperture_in.y[-1]
+    
+    #x and y pixels in input aperture 
+    pix_x, pix_y = aperture_in.pixel_x, aperture_in.pixel_y
+
+    aperture_in_values = aperture_in.aperture
+    
+    #width and height of the clipping rectangular window
+    new_dx0 = new_dx0_2 - new_dx0_1
+    new_dy0 = new_dy0_2 - new_dy0_1
+    
+    #calculate center of rectangular window 
+    centerx = (new_dx0_1 + new_dx0_2)/2 
+    centery = (new_dy0_1 + new_dy0_2)/2 
+    
+    #number of pixels in rectangular window
+    new_dimx = int(np.round(new_dx0/pix_x))
+    new_dimy = int(np.round(new_dy0/pix_y))
+
+    #aperture defining th rectangular window 
+    aperture_temp = create_empty_aperture_from_aperture(aperture_in)
+    rectangle_mask = rectangular_aperture(aperture_temp, new_dx0, new_dy0, center=(centerx, centery),) 
+  
+    #output aperture, with clipping window 
+    aperture_out = aperture_multiply(aperture_in, rectangle_mask)
+
+    return aperture_out
+
+
+    
 def makegrid(N_pixels, xsize, ysize): 
     """
     Creates a square meshgrid of N_pixels by N_pixels in with arrays till xsize and ysize
