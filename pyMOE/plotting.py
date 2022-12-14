@@ -36,7 +36,7 @@ def plot_aperture(aperture, scale=None, colorbar=True, only_plot=False, filename
         plt.xlabel("x [%sm]"%scale)
         plt.ylabel("y [%sm]"%scale)
         if colorbar:
-            fig.colorbar(pcm, ax=ax, label='z [a.u.]', shrink=0.6)
+            fig.colorbar(pcm, ax=ax, shrink=0.6)
 
     else:
         plt.axis('off')
