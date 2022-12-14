@@ -409,26 +409,29 @@ def change_layers(fstgds_filename, fst_cellname, layerspol,\
     ly2.write(output_filename)
     
     print("Changed layers - wrote result to " +str(output_filename))
-    
-    
-    
+     
     
 ####FUNCTION USING KLAYOUT PYTHON LIB TO RESCALE THE WHOLE LAYOUT
-def rescale_layout(readfile, cellname, factor, outfile, divfactor=1): 
+def rescale_layout(readfile, cellname, factor, outfile, divfactor=1, newcellname=None, verbose=True): 
     """
     (void) Rescales the layout
     'readfile'    = string filename of input gds
-    'cellname'    = string name of cell 
+    'cellname'    = string name of cell in the readfile
     'factor'      = int with scaling factor multiply   
     'outfile'     = string filename of output gds
     'divfactor'   = int with scaling factor division, defaults to 1   
+    'newcellname' = string name of the cell in the outfile, defaults to cellname 
     """
     import pya
-
+    
     #define layout and read layout from file
     layoutor = pya.Layout()
     lmap = layoutor.read(readfile)
     cell = layoutor.cell(cellname)
+    cell_index = layoutor.cell(cellname).cell_index()
+    
+    if newcellname is not None: 
+        newcell = layoutor.rename_cell(cell_index, newcellname)
     
     cell.layout().scale_and_snap(cell, int(1), int(factor), int(divfactor))
     
