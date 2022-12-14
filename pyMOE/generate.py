@@ -3,7 +3,9 @@
 #import the gds operations from the gds_klops file 
 from pyMOE.gds_klops import * 
 import numpy as np 
+from scipy import ndimage
 from matplotlib import pyplot as plt
+import math 
 import cv2 
 
 import pyMOE.sag_functions as sag
@@ -53,7 +55,7 @@ def create_aperture_from_array(array, pixel_size, center=False):
 
     Args:
         array: 2D numpy array of a mask
-        pixel_size: absolute value for each pixel
+        pixel_size: absolute value for each pixel, as a tuple (x,y) 
         center: if True, will center the image at the origin
             
     Returns:
@@ -61,11 +63,12 @@ def create_aperture_from_array(array, pixel_size, center=False):
     """
     
     assert (isinstance(array, np.ndarray)) and (len(array.shape)==2), "Array must be 2D numpy array "
-    assert isinstance(pixel_size, (int, float)), "pixel_size must be a scalar"
+    #assert isinstance(pixel_size, (int, float)), "pixel_size must be a scalar"
     shape = array.shape
     N_x, N_y = shape
-    max_x = N_x*pixel_size
-    max_y = N_y*pixel_size
+    pixel_x, pixel_y = pixel_size
+    max_x = N_x*pixel_x
+    max_y = N_y*pixel_y
     x = np.linspace(0, max_x, N_x, endpoint=False)
     y = np.linspace(0, max_y, N_y, endpoint=False)
     
@@ -163,9 +166,7 @@ def arbitrary_aperture_function(aperture, function, center=(0,0), **function_arg
     assert callable(function), "provided function must be callable"
 
     x0,y0 = center
-    
-
-    #calculate the fresnel complex phase 
+     
     output = function(aperture.XX-x0, aperture.YY-y0, **function_args)
 
     aperture.aperture = output
@@ -272,6 +273,8 @@ def fresnel_zone_plate_aperture(aperture, focal_length, wavelength, radius=None,
                  
     aperture.aperture = fzp2
     return aperture
+
+
 
 
 # Aperture operations
@@ -971,6 +974,8 @@ def fzp_mask(N_pixels, foc, wavelength, xsize, ysize, filename, plotting=False, 
         plt.show()
         
     return fzp2 
+    
+
 
 
 
