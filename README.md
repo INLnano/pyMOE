@@ -1,6 +1,7 @@
 # pyMOE
 Python library for designing and producing masks for Micro Optical Elements. 
 
+
 # Features
 Mask design features: 
 * Designing multi-layer (grayscale) masks from analytical and/or numerical (e.g. Gerchberg–Saxton) methods  
