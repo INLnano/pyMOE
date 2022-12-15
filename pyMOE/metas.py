@@ -105,9 +105,11 @@ def metasurface_from_phase(xsiz, ysiz, pixelx, pixely, p, aperture_vals, topcell
     
     #################################
     ###elements options:
+    pflag = 3 
     if type(gdspyelements) is not str:
-        pflag=1
         print("Custom metasurface")
+        
+        print(np.asarray(gdspyelements).size)
                 
         if np.asarray(gdspyelements).size>1:
             assert len(gdspyelements)==len(phase_array), "The length of unique phase values and gdspyelements argument array is different." 
@@ -128,8 +130,13 @@ def metasurface_from_phase(xsiz, ysiz, pixelx, pixely, p, aperture_vals, topcell
         
         else: 
             pflag = 1 
-    
-    if pflag: 
+    else: 
+        if gdspyelements is None: 
+            pflag = 4
+        else: 
+            pflag = 1
+        
+    if pflag==1: 
         print("Unsuported gdspyelements argument!")  
         
         
@@ -301,15 +308,18 @@ def metasurface_from_phase_instances (xsiz, ysiz, pixelx, pixely, p, aperture_va
         
     #################################
     ###elements options:
+    pflag = 3
     if infile is None: 
         if type(gdspyelements) is not str:
-            pflag=0
             print("Custom metasurface")
-
+            
+            print(np.asarray(gdspyelements).size)
+                    
             if np.asarray(gdspyelements).size>1:
                 assert len(gdspyelements)==len(phase_array), "The length of unique phase values and gdspyelements argument array is different." 
                 pflag = 2
             elif np.asarray(gdspyelements).size==1: 
+                print("Single gdspyelement element")
                 pflag =0
 
         elif type(gdspyelements) is str: ###This corresponds to the default
@@ -321,12 +331,17 @@ def metasurface_from_phase_instances (xsiz, ysiz, pixelx, pixely, p, aperture_va
 
                 gdspyelements = gdspy.Round((0, 0), diameter/2, tolerance = tolerance, number_of_points = nr_points, max_points=100)
                 pflag = 0 
-
+            
             else: 
                 pflag = 1 
-
-        if pflag: 
-            print("Unsuported gdspyelements argument!")    
+        else: 
+            if gdspyelements is None: 
+                pflag = 4
+            else: 
+                pflag = 1
+    
+    if pflag==1: 
+        print("Unsuported gdspyelements argument!")              
     
     if largest_phase is None: 
         largest_phase = np.max(aperture_vals)
