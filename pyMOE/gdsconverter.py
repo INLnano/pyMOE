@@ -252,7 +252,8 @@ class GDSMask():
     @property
     def levels(self):
         levels = self.mask.levels
-        assert levels is not None, "Cannot access GDSMask.levels as aperture is not yet discretized"
+        assert levels is not None, "Cannot access GDSMask.levels as aperture is not yet discretized. Please run aperture.discretize(n+1), where n is the number of levels."
+        ###Might change if we change levels -> (levels -1) in utils.digitize_array_to_bins
         return self.mask.levels
     
     @property
