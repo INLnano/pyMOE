@@ -75,7 +75,7 @@ def digitize_array_to_bins(array, levels):
     assert isinstance(levels, (np.ndarray, int)), "levels must be a scalar or numpy array"
     if isinstance(levels, int):
         bins = np.linspace(array.min(), array.max() , levels, endpoint=False) 
-        ###TODO, for next release -> Pass (levels -1) number of layers as arguments, to return the same number as (levels-1) -> Same as the defined number of layers! 
+        ###TODO, for next release -> Pass (levels -1)  as number of layers as arguments, to return the same number as (levels-1) -> Same as the defined number of layers! 
     else:
         bins = levels
     
