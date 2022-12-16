@@ -189,8 +189,10 @@ def cell_wpol_gdspy(cs, cellname, prec=1e-6, mpoints=1e9):
             #print("pols "+str(len(polset.polygons)))
             
             #layers and datatypes of polygon set 
-            layes = polset.layers[0]
-            dts  = polset.datatypes[0]
+            if polset.layers!=[]: 
+                layes = polset.layers[0]
+            if polset.datatypes!=[]:
+                dts  = polset.datatypes[0]
 
             #print(polset.polygons)
             if len(polset.polygons)==1:
@@ -252,8 +254,7 @@ class GDSMask():
     @property
     def levels(self):
         levels = self.mask.levels
-        assert levels is not None, "Cannot access GDSMask.levels as aperture is not yet discretized. Please run aperture.discretize(n+1), where n is the number of levels."
-        ###Might change if we change levels -> (levels -1) in utils.digitize_array_to_bins
+        assert levels is not None, "Cannot access GDSMask.levels as aperture is not yet discretized. Please run aperture.discretize(n) before, where n is the number of levels."
         return self.mask.levels
     
     @property
