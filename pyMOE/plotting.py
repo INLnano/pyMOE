@@ -33,7 +33,8 @@ def plot_aperture(aperture, scale=None, colorbar=True, only_plot=False, filename
         aperture: Aperture object of the mask
         colorbar: True/False flag to plot colorbars
         only_plot: if True, only shows image without labels and axes
-        filename: if provided, saves figure to filename
+        filename: if provided, saves figure to filename 
+        ###available output file extensions are same as opencv https://docs.opencv.org/3.4/d4/da8/group__imgcodecs.html 
     """
     assert type(aperture) is Aperture, "aperture given is not an Aperture object"
 
@@ -64,7 +65,10 @@ def plot_aperture(aperture, scale=None, colorbar=True, only_plot=False, filename
 
     plt.subplots_adjust(wspace=0.3)
     if filename is not None:
-        plt.savefig(filename)
+        plt.savefig("temp.png", bbox_inches='tight', pad_inches = 0)
+        plt.close(fig1)
+        img = cv2.imread("temp.png")
+        cv2.imwrite(filename, img)
     plt.show()
 
 
@@ -81,6 +85,7 @@ def plot_field(aperture, which='both', scale=None, colorbar=True, only_plot=Fals
         colorbar: True/False flag to plot colorbars
         only_plot: if True, only shows image without labels and axes
         filename: if provided, saves figure to filename
+        ###available output file extensions are same as opencv https://docs.opencv.org/3.4/d4/da8/group__imgcodecs.html
     """
     assert type(aperture) is ApertureField, "aperture given is not an Aperture object"
     assert which in ["both", "amplitude", "phase"]
@@ -138,4 +143,8 @@ def plot_field(aperture, which='both', scale=None, colorbar=True, only_plot=Fals
             
     plt.subplots_adjust(wspace=0.3)
     if filename is not None:
-        plt.savefig(filename)
+        plt.savefig("temp.png", bbox_inches='tight', pad_inches = 0)
+        plt.close(fig1)
+        img = cv2.imread("temp.png")
+        cv2.imwrite(filename, img)
+

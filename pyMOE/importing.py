@@ -354,10 +354,11 @@ def gds2img(infile,outfile,norm, verbose=False):
     plt.tight_layout(pad=0, w_pad=0, h_pad=0) 
     plt.subplots_adjust(hspace = 0, wspace=0)
     fig.tight_layout(w_pad=0, h_pad=0, pad =0)
-    fig.savefig(outfile,bbox_inches=0, pad_inches = 0)
+    #fig.savefig(outfile,bbox_inches=0, pad_inches = 0)        
+    fig.savefig("temp.png", bbox_inches='tight', pad_inches = 0)
     
     #remove any white padding
-    im = cv2.imread(outfile)
+    im = cv2.imread("temp.png")
     gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
     gray = 255*(gray < 128).astype(np.uint8) 
     coords = cv2.findNonZero(gray) 
