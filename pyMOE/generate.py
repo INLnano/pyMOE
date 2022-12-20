@@ -568,19 +568,6 @@ def makegrid(N_pixels, xsize, ysize):
     
     return (XX, YY )
     
-
-
-
-def save_mask_plot(maskcir, xsize, ysize, filename):
-    fig1 = plt.figure()
-    figx = plt.imshow(maskcir, vmin=0, vmax=1,extent =[0,xsize,0,ysize], cmap=plt.get_cmap("Greys"))
-    plt.axis('off')
-    figx.axes.get_xaxis().set_visible(False)
-    figx.axes.get_yaxis().set_visible(False)
-    plt.savefig(filename, bbox_inches='tight', pad_inches = 0)
-    plt.close(fig1)
-    
-
 ##Code to create a gray scale with successive gray levels 
 def create_scale(N_pixels, nsz, ngs): 
     """

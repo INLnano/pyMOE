@@ -12,6 +12,17 @@ from pyMOE import Aperture
 from pyMOE import ApertureField
 
 
+def save_mask_plot(maskcir, xsize, ysize, filename):
+    fig1 = plt.figure()
+    figx = plt.imshow(maskcir, vmin=0, vmax=1,extent =[0,xsize,0,ysize], cmap=plt.get_cmap("Greys"))
+    plt.axis('off')
+    figx.axes.get_xaxis().set_visible(False)
+    figx.axes.get_yaxis().set_visible(False)
+    plt.savefig("temp.png", bbox_inches='tight', pad_inches = 0)
+    plt.close(fig1)
+    
+    img = cv2.imread("temp.png")
+    cv2.imwrite(filename, img)
     
 
 def plot_aperture(aperture, scale=None, colorbar=True, only_plot=False, filename=None, **kwargs):
