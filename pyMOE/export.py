@@ -139,6 +139,7 @@ def grayim2gds_writer_frac(infile, outfile, pixelx, pixely, cellname, level, nm=
             cell = lib.new_cell(cellname)
 
             for i in np.arange(hi,hi+nmy):
+                cell.remove_polygons(lambda pts, layer, datatype: layer == 0)
                 if verbose == True: 
                     print(i/h)
                 for j in np.arange(wi, wi+nmx):
@@ -224,6 +225,7 @@ def grayim2gds_writer(infile, outfile, pixelx, pixely, cellname, level, layer=0,
             #print(wi)
 
             for i in np.arange(hi,hi+nmy):
+                cell.remove_polygons(lambda pts, layer, datatype: layer == 0)
                 if verbose == True: 
                     print(i/h)
                 
