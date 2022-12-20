@@ -1,4 +1,11 @@
 
+"""
+utils.py 
+Module containing utility functions 
+
+""" 
+
+
 import time
 from datetime import timedelta
 import numpy as np

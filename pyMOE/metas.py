@@ -1,4 +1,9 @@
-##metas.py 
+"""
+metas.py 
+Module containing functions to create metasurfaces from phase masks  
+
+
+"""
 
 import cv2
 import gdspy 

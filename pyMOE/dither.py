@@ -1,3 +1,9 @@
+
+"""
+dither.py 
+Module for dithering of masks/images 
+"""
+
 import cv2 
 import numpy as np 
 

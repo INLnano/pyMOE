@@ -1,10 +1,18 @@
-import matplotlib.pyplot as plt
+"""
+plotting.py 
+Module for plotting apertures ans save them as image files 
 
+
+"""
+
+import matplotlib.pyplot as plt
+import cv2 
 
 from pyMOE import Aperture
 from pyMOE import ApertureField
 
 
+    
 
 def plot_aperture(aperture, scale=None, colorbar=True, only_plot=False, filename=None, **kwargs):
     """

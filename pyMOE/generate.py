@@ -1,16 +1,21 @@
-####generate.py 
+"""
+generate.py 
+Module containing several functions to construct arbitrary aperture masks 
 
-#import the gds operations from the gds_klops file 
+
+"""
+
 from pyMOE.gds_klops import * 
+from pyMOE.importing import *
+from pyMOE.plotting import *
+import pyMOE.sag_functions as sag
+from pyMOE.aperture import Aperture
+
 import numpy as np 
 from scipy import ndimage
 from matplotlib import pyplot as plt
 import math 
 import cv2 
-
-import pyMOE.sag_functions as sag
-
-from pyMOE.aperture import Aperture
 
 
 

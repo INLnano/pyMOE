@@ -1,11 +1,11 @@
 """
+gdsconverter.py
 GDS converter module
 
 """
 import gdspy
 import numpy as np
 
-# import pyMOE as moe
 from pyMOE.aperture import Aperture
 from pyMOE.utils import progress_bar, Timer
 

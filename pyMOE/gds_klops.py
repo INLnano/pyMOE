@@ -1,5 +1,17 @@
+
+"""
+gds_klops.py 
+Module containing several functions for operations with/within mask files (e.g. gds) 
+
+These functions might require pya, gdspy, gdstk or gdshelpers libraries. 
+Functions using gdspy and/or pya are exemplified within the notebooks.  
+
 ####IMPORTANT: these functions work on the klayout-0.26.11 version
-####There might be some inconsistencies for later versions 
+####There might be some inconsistencies for later versions of pya library 
+
+"""
+
+
 import pya 
 
 

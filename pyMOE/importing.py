@@ -1,4 +1,10 @@
-####imports gds and transforms into gray image 
+"""
+importing.py 
+Module containing functions to import gds files, inspect them in matplotlib and save gds files as image files 
+
+
+"""
+
 import numpy as np 
 import matplotlib.pyplot as plt 
 import gdspy 
