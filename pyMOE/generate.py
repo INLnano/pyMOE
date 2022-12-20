@@ -620,6 +620,9 @@ def create_scale(N_pixels, nsz, ngs):
 
 def fresnel_phase_mask(N_pixels, foc, wavelength, xsize, ysize,n, filename=None, plotting=False ,prec = 1e-6, mpoints = 1e9, grid=None):
     """
+    
+    ###TO BE DEPRECATED IN NEXT MAJOR RELEASE (use generate.fresnel_phase) 
+
     returns a Fresnel "phase mask" (2D array of the phase IN RADIANS)
     parameters: 
     N_pixels = nr of pixels , by default the results 2D array is N_pixels by N_pixels 
@@ -704,6 +707,9 @@ def fresnel_phase_mask(N_pixels, foc, wavelength, xsize, ysize,n, filename=None,
 
 def arbitrary_phase_mask(mode, N_pixels, xsize, ysize, n, fname,*args,filename=None, plotting=False ,prec = 1e-6, mpoints = 1e9 , zlevs = [],grid=None, **kwargs):
     """
+    
+    ###TO BE DEPRECATED IN NEXT MAJOR (use generate.arbitrary_aperture_function)
+    
     returns a "phase mask" (2D array of the phase IN RADIANS) from arbitrary COMPLEX PHASE function fname  given as argument
     
     parameters: 
@@ -800,6 +806,10 @@ def arbitrary_phase_mask(mode, N_pixels, xsize, ysize, n, fname,*args,filename=N
 
 def arbitrary_multilayer_mask(mode, N_pixels, xsize, ysize, n, fname,*args,filename=None, plotting=False ,prec = 1e-6, mpoints = 1e9 , zlevs = [],grid=None, **kwargs):
     """
+    
+    ###TO BE DEPRECATED IN NEXT MAJOR RELEASE (use generate.arbitrary_aperture_function)
+    
+    
     returns a "contour" mask of the arbitrary fname function 
     
     parameters: 
@@ -892,6 +902,9 @@ def arbitrary_multilayer_mask(mode, N_pixels, xsize, ysize, n, fname,*args,filen
 ####Function that defines a Fresnel Zone Plate mask 
 def fzp_mask(N_pixels, foc, wavelength, xsize, ysize, filename, plotting=False, grid=None ):
     """
+    
+    ###TO BE DEPRECATED IN NEXT MAJOR (use generate.fresnel_zone_plate_aperture) 
+    
     returns a fresnel zone plate (as a numpy 2D array)
     N_pixels = nr of pixels 
     foc = focal length in um
