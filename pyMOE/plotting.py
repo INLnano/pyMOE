@@ -1,10 +1,29 @@
-import matplotlib.pyplot as plt
+"""
+plotting.py 
+Module for plotting apertures ans save them as image files 
 
+
+"""
+
+import matplotlib.pyplot as plt
+import cv2 
 
 from pyMOE import Aperture
 from pyMOE import ApertureField
 
 
+def save_mask_plot(maskcir, xsize, ysize, filename):
+    fig1 = plt.figure()
+    figx = plt.imshow(maskcir, vmin=0, vmax=1,extent =[0,xsize,0,ysize], cmap=plt.get_cmap("Greys"))
+    plt.axis('off')
+    figx.axes.get_xaxis().set_visible(False)
+    figx.axes.get_yaxis().set_visible(False)
+    plt.savefig("temp.png", bbox_inches='tight', pad_inches = 0)
+    plt.close(fig1)
+    
+    img = cv2.imread("temp.png")
+    cv2.imwrite(filename, img)
+    
 
 def plot_aperture(aperture, scale=None, colorbar=True, only_plot=False, filename=None, **kwargs):
     """
@@ -14,7 +33,8 @@ def plot_aperture(aperture, scale=None, colorbar=True, only_plot=False, filename
         aperture: Aperture object of the mask
         colorbar: True/False flag to plot colorbars
         only_plot: if True, only shows image without labels and axes
-        filename: if provided, saves figure to filename
+        filename: if provided, saves figure to filename 
+        ###available output file extensions are same as opencv https://docs.opencv.org/3.4/d4/da8/group__imgcodecs.html 
     """
     assert type(aperture) is Aperture, "aperture given is not an Aperture object"
 
@@ -36,7 +56,7 @@ def plot_aperture(aperture, scale=None, colorbar=True, only_plot=False, filename
         plt.xlabel("x [%sm]"%scale)
         plt.ylabel("y [%sm]"%scale)
         if colorbar:
-            fig.colorbar(pcm, ax=ax, label='z [a.u.]', shrink=0.6)
+            fig.colorbar(pcm, ax=ax, shrink=0.6)
 
     else:
         plt.axis('off')
@@ -45,7 +65,10 @@ def plot_aperture(aperture, scale=None, colorbar=True, only_plot=False, filename
 
     plt.subplots_adjust(wspace=0.3)
     if filename is not None:
-        plt.savefig(filename)
+        plt.savefig("temp.png", bbox_inches='tight', pad_inches = 0)
+        plt.close(fig1)
+        img = cv2.imread("temp.png")
+        cv2.imwrite(filename, img)
     plt.show()
 
 
@@ -62,6 +85,7 @@ def plot_field(aperture, which='both', scale=None, colorbar=True, only_plot=Fals
         colorbar: True/False flag to plot colorbars
         only_plot: if True, only shows image without labels and axes
         filename: if provided, saves figure to filename
+        ###available output file extensions are same as opencv https://docs.opencv.org/3.4/d4/da8/group__imgcodecs.html
     """
     assert type(aperture) is ApertureField, "aperture given is not an Aperture object"
     assert which in ["both", "amplitude", "phase"]
@@ -119,4 +143,8 @@ def plot_field(aperture, which='both', scale=None, colorbar=True, only_plot=Fals
             
     plt.subplots_adjust(wspace=0.3)
     if filename is not None:
-        plt.savefig(filename)
+        plt.savefig("temp.png", bbox_inches='tight', pad_inches = 0)
+        plt.close(fig1)
+        img = cv2.imread("temp.png")
+        cv2.imwrite(filename, img)
+

@@ -1,6 +1,8 @@
-####export.py 
+"""
+export.py 
+Module containing several functions to export masks to gds. 
 
-
+"""
 import cv2
 import gdspy 
 import numpy as np 
@@ -137,6 +139,7 @@ def grayim2gds_writer_frac(infile, outfile, pixelx, pixely, cellname, level, nm=
             cell = lib.new_cell(cellname)
 
             for i in np.arange(hi,hi+nmy):
+                cell.remove_polygons(lambda pts, layer, datatype: layer == 0)
                 if verbose == True: 
                     print(i/h)
                 for j in np.arange(wi, wi+nmx):
@@ -222,6 +225,7 @@ def grayim2gds_writer(infile, outfile, pixelx, pixely, cellname, level, layer=0,
             #print(wi)
 
             for i in np.arange(hi,hi+nmy):
+                cell.remove_polygons(lambda pts, layer, datatype: layer == 0)
                 if verbose == True: 
                     print(i/h)
                 
@@ -335,7 +339,7 @@ def grayim2gds_writer_klops(infile,  output_filename , pixelx, pixely, cellname,
                                 #here we can also think of selectin pixels at a certain level only
                                 #and creating a GDS from a grayscale image 
                                 if img[i][j] == int(level):
-                                    new_instance = pya.CellInstArray( cell_index, pya.Trans(pya.Vector(int(j*pixelx*1000),int(i*pixely*1000))), pya.Vector(0, 0), pya.Vector(0, 0), 0, 0)
+                                    new_instance = pya.CellInstArray( cell_index, pya.Trans(pya.Vector(int(j*pixelx*1000),int(-i*pixely*1000))), pya.Vector(0, 0), pya.Vector(0, 0), 0, 0)
                                     top.insert( new_instance ) #insert the cell in the array
             else:
                 if cellname==cell_name:

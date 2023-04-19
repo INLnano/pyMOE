@@ -1,4 +1,11 @@
 
+"""
+utils.py 
+Module containing utility functions 
+
+""" 
+
+
 import time
 from datetime import timedelta
 import numpy as np
@@ -74,7 +81,7 @@ def digitize_array_to_bins(array, levels):
     """    
     assert isinstance(levels, (np.ndarray, int)), "levels must be a scalar or numpy array"
     if isinstance(levels, int):
-        bins = np.linspace(array.min(), array.max() , levels, endpoint=False)
+        bins = np.linspace(array.min(), array.max() , levels, endpoint=False) 
     else:
         bins = levels
     

@@ -1,11 +1,11 @@
 """
+gdsconverter.py
 GDS converter module
 
 """
 import gdspy
 import numpy as np
 
-# import pyMOE as moe
 from pyMOE.aperture import Aperture
 from pyMOE.utils import progress_bar, Timer
 
@@ -189,8 +189,10 @@ def cell_wpol_gdspy(cs, cellname, prec=1e-6, mpoints=1e9):
             #print("pols "+str(len(polset.polygons)))
             
             #layers and datatypes of polygon set 
-            layes = polset.layers[0]
-            dts  = polset.datatypes[0]
+            if polset.layers!=[]: 
+                layes = polset.layers[0]
+            if polset.datatypes!=[]:
+                dts  = polset.datatypes[0]
 
             #print(polset.polygons)
             if len(polset.polygons)==1:
@@ -252,7 +254,7 @@ class GDSMask():
     @property
     def levels(self):
         levels = self.mask.levels
-        assert levels is not None, "Cannot access GDSMask.levels as aperture is not yet discretized"
+        assert levels is not None, "Cannot access GDSMask.levels as aperture is not yet discretized. Please run aperture.discretize(n) before, where n is the number of levels."
         return self.mask.levels
     
     @property
@@ -452,7 +454,7 @@ class GDSMask():
         datatype = 0
         
         # Creates top cell that will reference the remaining cells
-        topcell = gdspy.Cell(cellname, exclude_from_current=True)
+        #topcell = gdspy.Cell(cellname, exclude_from_current=True)
     
 
         with Timer("Total time converting to GDS"):
@@ -465,7 +467,7 @@ class GDSMask():
             ###TODO: change for the actual position of in zlevs 
                 cs = plt.contourf(XX,YY,self.mask.aperture_discretized, len(self.levels))
 
-            self.gdslib, cell1 = cell_wpol_gdspy(cs, 'TOP', prec = self.precision, mpoints=1e9)
+            self.gdslib, cell1 = cell_wpol_gdspy(cs, cellname, prec = self.precision, mpoints=1e9)
            
 
             return self.gdslib

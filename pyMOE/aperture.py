@@ -2,7 +2,7 @@
 mask.py
 
 
-Definition of Class Apertures
+Definition of Class Aperture
 
 
 """
@@ -10,8 +10,6 @@ Definition of Class Apertures
 import numpy as np
 from pyMOE.utils import digitize_array_to_bins
 from pyMOE.utils import discretize_array
-
-
 
 
 class Aperture:

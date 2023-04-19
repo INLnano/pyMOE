@@ -1,4 +1,10 @@
-####imports gds and transforms into gray image 
+"""
+importing.py 
+Module containing functions to import gds files, inspect them in matplotlib and save gds files as image files 
+
+
+"""
+
 import numpy as np 
 import matplotlib.pyplot as plt 
 import gdspy 
@@ -7,7 +13,7 @@ from shapely.geometry import MultiPolygon, Polygon
 import pickle 
 import cv2 
 
-from gdshelpers.geometry.chip import Cell
+# from gdshelpers.geometry.chip import Cell
 
  
  
@@ -348,10 +354,11 @@ def gds2img(infile,outfile,norm, verbose=False):
     plt.tight_layout(pad=0, w_pad=0, h_pad=0) 
     plt.subplots_adjust(hspace = 0, wspace=0)
     fig.tight_layout(w_pad=0, h_pad=0, pad =0)
-    fig.savefig(outfile,bbox_inches=0, pad_inches = 0)
+    #fig.savefig(outfile,bbox_inches=0, pad_inches = 0)        
+    fig.savefig("temp.png", bbox_inches='tight', pad_inches = 0)
     
     #remove any white padding
-    im = cv2.imread(outfile)
+    im = cv2.imread("temp.png")
     gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
     gray = 255*(gray < 128).astype(np.uint8) 
     coords = cv2.findNonZero(gray) 

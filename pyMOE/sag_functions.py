@@ -1,4 +1,5 @@
 """
+sag_functions.py 
 Module containing several sag or phase functions for various optical elements
 
 
@@ -23,6 +24,8 @@ def fresnel_lens_phase(XX,YY,focal_length,wavelength):
     rc = np.sqrt((XX)**2 + (YY)**2)
     fresn = np.exp(1.0j*(focal_length-np.sqrt(focal_length**2 + rc**2))*(2*np.pi)/(wavelength))
     fresn = np.angle(fresn)
+    fresn = fresn-np.min(fresn)
+    
     return fresn     
 
 

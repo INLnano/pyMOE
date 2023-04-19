@@ -1,5 +1,17 @@
+
+"""
+gds_klops.py 
+Module containing several functions for operations with/within mask files (e.g. gds) 
+
+These functions might require pya, gdspy, gdstk or gdshelpers libraries. 
+Functions using gdspy and/or pya are exemplified within the notebooks.  
+
 ####IMPORTANT: these functions work on the klayout-0.26.11 version
-####There might be some inconsistencies for later versions 
+####There might be some inconsistencies for later versions of pya library 
+
+"""
+
+
 import pya 
 
 
@@ -409,26 +421,29 @@ def change_layers(fstgds_filename, fst_cellname, layerspol,\
     ly2.write(output_filename)
     
     print("Changed layers - wrote result to " +str(output_filename))
-    
-    
-    
+     
     
 ####FUNCTION USING KLAYOUT PYTHON LIB TO RESCALE THE WHOLE LAYOUT
-def rescale_layout(readfile, cellname, factor, outfile, divfactor=1): 
+def rescale_layout(readfile, cellname, factor, outfile, divfactor=1, newcellname=None, verbose=True): 
     """
     (void) Rescales the layout
     'readfile'    = string filename of input gds
-    'cellname'    = string name of cell 
+    'cellname'    = string name of cell in the readfile
     'factor'      = int with scaling factor multiply   
     'outfile'     = string filename of output gds
     'divfactor'   = int with scaling factor division, defaults to 1   
+    'newcellname' = string name of the cell in the outfile, defaults to cellname 
     """
     import pya
-
+    
     #define layout and read layout from file
     layoutor = pya.Layout()
     lmap = layoutor.read(readfile)
     cell = layoutor.cell(cellname)
+    cell_index = layoutor.cell(cellname).cell_index()
+    
+    if newcellname is not None: 
+        newcell = layoutor.rename_cell(cell_index, newcellname)
     
     cell.layout().scale_and_snap(cell, int(1), int(factor), int(divfactor))
     
@@ -440,8 +455,34 @@ def rescale_layout(readfile, cellname, factor, outfile, divfactor=1):
     
     layoutor.write(outfile)
     
-    print("Rescaled "+str(readfile)+  "by a factor of " +str(factor/divfactor))
-    print("Saved the result to "+str(outfile))
+    if verbose == True: 
+        print("Rescaled "+str(readfile)+  "by a factor of " +str(factor/divfactor))
+        print("Saved the result to "+str(outfile))
+        
+        
+
+def rotate_layout(readfile, cellname, angle, outputfile, transx =0, transy=0): 
+    """
+    rotate layout by angle, inspired in 
+    https://www.klayout.de/forum/discussion/2143/import-a-gds-then-make-into-a-cell-to-rotate 
+    
+    + 
+    translation with vector (transx, transy), default = (0,0)
+    """
+    ly = pya.Layout()
+    ly.read(readfile)
+
+    org_top = ly.top_cell()
+    new_top = ly.create_cell("TEMP")
+    new_top.insert(pya.DCellInstArray(org_top.cell_index(), pya.DCplxTrans(1.0, angle, False, pya.DVector(transx, transy))))
+    
+    new_top.flatten(1)
+    ly.rename_cell(new_top.cell_index(), cellname)
+    
+    ly.write(outputfile)
+    
+    print("Rotated " +readfile + " by " +str(angle)+ " degrees. Saved in " + outputfile)
+        
     
 ####FUNCTION TO MAKE THE DIFFS BETWEEN THE LAYERS IN THE LAYERS ARRAY 
 def diffs_layers_arrays(readfile, cellname, layerspol1, datatypes1, layerspol2, datatypes2, outfile): 
