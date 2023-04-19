@@ -13,7 +13,7 @@ from shapely.geometry import MultiPolygon, Polygon
 import pickle 
 import cv2 
 
-from gdshelpers.geometry.chip import Cell
+# from gdshelpers.geometry.chip import Cell
 
  
  
