@@ -97,3 +97,41 @@ def discretize_array(array, levels):
     bins, dig = digitize_array_to_bins(array, levels)
     
     return bins[dig]
+    
+def simpson2d(f,ax,bx,ay,by):
+    """
+    Implements Simpson method for calculating a double integral in 2D array f
+    
+    Arguments: 
+        f = 2D array to calculate integral 
+        [ax, bx] = limits of integration in x, [lower, upper]
+        [ay, by] = limits of integration in y, [lower, upper]
+    """
+    
+    num = len(f)
+    hx = (bx-ax)/(num-1)
+    hy = (by-ay)/(num-1)
+    h = hx * hy / 9
+
+    # Simpson coefficients 
+    #1 4 2 4 ...2 4 1
+    sc = 2*np.ones(num)
+    sc[np.arange(1,num-1,2)] = 4
+    sc[0] = 1
+    sc[num-1] = 1
+    #print(sc)
+
+    scx = np.meshgrid(sc,sc)[0]
+    scxy = np.ones((num,num))
+    scxy[np.arange(1,num-1,2,dtype=int),:] = scx[np.arange(1,num-1,2,dtype=int),:]*sc[1]
+    scxy[np.arange(2,num-2,2, dtype=int),:] = scx[np.arange(2,num-2,2,dtype=int),:]*sc[2]
+    scxy[0,:] = sc
+    scxy[num-1,:] = sc
+    
+    #print(scxy)
+
+    # integral    
+    tint = h * np.sum(np.sum(scxy * f))
+    
+    return tint
+
