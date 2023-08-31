@@ -52,14 +52,6 @@ pyMOE.generate module
    :undoc-members:
    :show-inheritance:
 
-pyMOE.generate \- Copy module
------------------------------
-
-.. automodule:: pyMOE.generate - Copy
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 pyMOE.holograms module
 ----------------------
 
@@ -76,34 +68,10 @@ pyMOE.importing module
    :undoc-members:
    :show-inheritance:
 
-pyMOE.importing\-copy module
-----------------------------
-
-.. automodule:: pyMOE.importing-copy
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 pyMOE.metas module
 ------------------
 
 .. automodule:: pyMOE.metas
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pyMOE.metas \- Copy module
---------------------------
-
-.. automodule:: pyMOE.metas - Copy
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pyMOE.metas \- deprecated functions module
-------------------------------------------
-
-.. automodule:: pyMOE.metas - deprecated functions
    :members:
    :undoc-members:
    :show-inheritance:
@@ -124,30 +92,6 @@ pyMOE.propagate module
    :undoc-members:
    :show-inheritance:
 
-pyMOE.propagate \- Copy module
-------------------------------
-
-.. automodule:: pyMOE.propagate - Copy
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pyMOE.propagate \- debug module
--------------------------------
-
-.. automodule:: pyMOE.propagate - debug
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pyMOE.propagate \- v module
----------------------------
-
-.. automodule:: pyMOE.propagate - v
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 pyMOE.sag\_functions module
 ---------------------------
 
@@ -160,14 +104,6 @@ pyMOE.utils module
 ------------------
 
 .. automodule:: pyMOE.utils
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pyMOE.utils \- Copy module
---------------------------
-
-.. automodule:: pyMOE.utils - Copy
    :members:
    :undoc-members:
    :show-inheritance:
