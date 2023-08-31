@@ -21,27 +21,22 @@ def metasurface_from_phase(xsiz, ysiz, pixelx, pixely, p, aperture_vals, topcell
     Transform a 2D array (aperture_vals) representing the phase into a 2D metasurface and saves it to gds 
     
     Args: 
-        'xsiz':     x size of aperture in x in um 
-        'ysiz':     y size of aperture size in y in um
-        'pixelx':   pixel size in x in um
-        'pixely':   pixel size in y in um
-        'p':        periodicity in um 
-        'aperture_vals': 2D array with the phase  
-        'topcellname':   string with name of top cell, e.g. 'TOP'
-        'oufilen':       string filename of output gds
-        'gdspyelements': gdspy element to be used as individual meta-element (also accepts array of such elements for iteration, \
-            with same dimension as unique values in aperture_vals). If == 'pillar' (default) -> gdspy circle with 1 um diameter 
-        'verbose':       if True, prints during execution 
-        'rotation':      array with the rotation angles of unique meta-elements (1:1 correspondence with unique aperture_vals values!),\
-            Rotation angle is anti-clockwise in radians. If None (default), sets the rotation angle = 0 for all elements. 
-        'scaling':      array with the scaling factor of unique meta-element (1:1 correspondence with unique aperture_vals values!), \
-            Scaling factor is with respect to the dimension of the individual meta-element. If None (default), sets scaling factor 
-            to 1.0 for all elements.  
-        'grid':         Type of grid, options are 'square' or 'hex'. Default is 'square'. Please make sure the aperture_vals have been evaluated 
-            in an hexagonal grid, to make sure the values match. 
-        'mindim:        clipping scaling factor (cannot scale below a certain value, to avoid very small elements)
-        'smallerdim':   lowest scaling factor
-        'largest_phase': largest phase in the phase mask. If None, takes the maximum of aperture_vals  
+        :xsiz:             x size of aperture in x in um 
+        :ysiz:             y size of aperture size in y in um
+        :pixelx:           pixel size in x in um
+        :pixely:           pixel size in y in um
+        :p:                periodicity in um 
+        :aperture_vals:    2D array with the phase  
+        :topcellname:      string with name of top cell, e.g. 'TOP'
+        :oufilen:          string filename of output gds
+        :gdspyelements:    gdspy element to be used as individual meta-element (also accepts array of such elements for iteration, with same dimension as unique values in aperture_vals). If == 'pillar' (default) -> gdspy circle with 1 um diameter 
+        :verbose:          if True, prints during execution 
+        :rotation:         array with the rotation angles of unique meta-elements (1:1 correspondence with unique aperture_vals values!), Rotation angle is anti-clockwise in radians. If None (default), sets the rotation angle = 0 for all elements. 
+        :scaling:          array with the scaling factor of unique meta-element (1:1 correspondence with unique aperture_vals values!), Scaling factor is with respect to the dimension of the individual meta-element. If None (default), sets scaling factor to 1.0 for all elements.  
+        :grid:             Type of grid, options are 'square' or 'hex'. Default is 'square'. Please make sure the aperture_vals have been evaluated in an hexagonal grid, to make sure the values match. 
+        :mindim:           clipping scaling factor (cannot scale below a certain value, to avoid very small elements)
+        :smallerdim:       lowest scaling factor
+        :largest_phase:    largest phase in the phase mask. If None, takes the maximum of aperture_vals  
     
     Returns:
         None
@@ -221,30 +216,24 @@ def metasurface_from_phase_instances (xsiz, ysiz, pixelx, pixely, p, aperture_va
     Transform a 2D array (aperture_vals) representing the phase into a 2D metasurface using instances (from pya) package and saves it to gds 
     
     Args: 
-        'xsiz':     x size of aperture in x in um 
-        'ysiz':     y size of aperture size in y in um
-        'pixelx':   pixel size in x in um
-        'pixely':   pixel size in y in um
-        'p':        periodicity in um 
-        'aperture_vals': 2D array with the phase  
-        'topcellname':   string with name of top cell, e.g. 'TOP'
-        'oufilen':       string filename of output gds
-        'gdspyelements': gdspy element to be used as individual meta-element (also accepts array of such elements for iteration, \
-            with same dimension as unique values in aperture_vals). If == 'pillar' (default) -> gdspy circle with 1 um diameter.
-            If 'infile' is provided, ignores this design. 
-        'infile':        string with filename to be used as meta-element
-        'verbose':       if True, prints during execution 
-        'rotation':      array with the rotation angles of unique meta-elements (1:1 correspondence with unique aperture_vals values!),\
-            Rotation angle is anti-clockwise in radians. If None (default), sets the rotation angle = 0 for all elements. 
-        'scaling':      array with the scaling factor of unique meta-element (1:1 correspondence with unique aperture_vals values!), \
-            Scaling factor is with respect to the dimension of the individual meta-element. If None (default), sets scaling factor 
-            to 1.0 for all elements.  
-        'grid':         Type of grid, options are 'square' or 'hex'. Default is 'square'. Please make sure the aperture_vals have been evaluated 
-            in an hexagonal grid, to make sure the values match. 
-        'mindim:        clipping scaling factor (cannot scale below a certain value, to avoid very small elements)
-        'smallerdim':   lowest scaling factor
-        'tempfile':     string with name of a temporary file that will be used to have the individual elements and make the instances 
-        'largest_phase': largest phase in the phase mask. If None, takes the maximum of aperture_vals  
+        :xsiz:              x size of aperture in x in um 
+        :ysiz:              y size of aperture size in y in um
+        :pixelx:            pixel size in x in um
+        :pixely:            pixel size in y in um
+        :p:                 periodicity in um 
+        :aperture_vals:     2D array with the phase  
+        :topcellname:       string with name of top cell, e.g. 'TOP'
+        :oufilen:           string filename of output gds
+        :gdspyelements:     gdspy element to be used as individual meta-element (also accepts array of such elements for iteration, with same dimension as unique values in aperture_vals). If == 'pillar' (default) -> gdspy circle with 1 um diameter. If 'infile' is provided, ignores this design. 
+        :infile:            string with filename to be used as meta-element
+        :verbose:           if True, prints during execution 
+        :rotation:          array with the rotation angles of unique meta-elements (1:1 correspondence with unique aperture_vals values!), Rotation angle is anti-clockwise in radians. If None (default), sets the rotation angle = 0 for all elements. 
+        :scaling:           array with the scaling factor of unique meta-element (1:1 correspondence with unique aperture_vals values!), Scaling factor is with respect to the dimension of the individual meta-element. If None (default), sets scaling factor to 1.0 for all elements.  
+        :grid:              Type of grid, options are 'square' or 'hex'. Default is 'square'. Please make sure the aperture_vals have been evaluated in an hexagonal grid, to make sure the values match. 
+        :mindim:            clipping scaling factor (cannot scale below a certain value, to avoid very small elements)
+        :smallerdim:        lowest scaling factor
+        :tempfile:          string with name of a temporary file that will be used to have the individual elements and make the instances 
+        :largest_phase:     largest phase in the phase mask. If None, takes the maximum of aperture_vals  
     
     Returns:
         None

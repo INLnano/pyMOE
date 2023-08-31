@@ -19,11 +19,13 @@ import pya
 def merge_layer(readfile, cellname, layer_nr, datatype_nr, outputfile): 
     """
     (void) Merges all shapes within gds (only tested gds with single layer)
-    'readfile'    = string filename of input gds
-    'cellname'    = string name of cell 
-    'layer_nr'    = int    layer number 
-    'datatype_nr' = int    datatype number
-    'outputfile'  = string filename of output gds
+    
+    Args:
+        :readfile:     string filename of input gds
+        :cellname:     string name of cell 
+        :layer_nr:     int    layer number 
+        :datatype_nr:  int    datatype number
+        :outputfile:   string filename of output gds
     """
     layoutor = pya.Layout()
     lmap = layoutor.read(readfile)
@@ -47,12 +49,14 @@ def import_gds(fstgds_filename, fst_cellname, fst_layer_nr, fst_datatype_nr, \
                output_filename, clear_gds = True ):
     """
     (void) Imports shapes from fst gds file INTO snd gds file 
-    'Ngds_filename'   = string filename of N(=fst,snd) gds
-    'N_cellname'      = string name of cell in N(=fst,snd) gds 
-    'N_layer_nr'      = int layer number in N(=fst,snd) gds  
-    'N_datatype_nr'   = int datatype number in N(=fst,snd) gds  
-    'output_filename' = string filename of output gds
-    'clear_gds'       = clear gds, before inserting shapes, defaults to True 
+    
+    Args:
+        :Ngds_filename:   string filename of N(=fst,snd) gds
+        :N_cellname:      string name of cell in N(=fst,snd) gds 
+        :N_layer_nr:      int layer number in N(=fst,snd) gds  
+        :N_datatype_nr:   int datatype number in N(=fst,snd) gds  
+        :output_filename: string filename of output gds
+        :clear_gds:       clear gds, before inserting shapes, defaults to True 
     """
     
     #ly1 with 1st gds file
@@ -109,15 +113,17 @@ def correct_gds(inputfilename_gds, outputfilename_dxf):
 def instance_array(cell_name, input_filename, transx, transy, nr_inst_X, nr_inst_Y, pitx, pity, output_filename):
     """
     (void) Makes array of existing object(s) in the gds
-    'cell_name'       = string name of cell
-    'input_filename'  = string name of the input gds 
-    'transx'          = translation vector in x in um 
-    'transy'          = translation vector in y in um
-    'nr_inst_X'       = int number of repeated objects in x
-    'nr_inst_Y'       = int number of repeated objects in y 
-    'pitx'            = int pitch in x in um
-    'pity'            = int pitch in y in um 
-    'output_filename' = string filename of output gds
+    
+    Args:
+        :cell_name:        string name of cell
+        :input_filename:   string name of the input gds 
+        :transx:           translation vector in x in um 
+        :transy:           translation vector in y in um
+        :nr_inst_X:        int number of repeated objects in x
+        :nr_inst_Y:        int number of repeated objects in y 
+        :pitx:             int pitch in x in um
+        :pity:             int pitch in y in um 
+        :output_filename:  string filename of output gds
     """
 
     layout = pya.Layout()
@@ -160,11 +166,13 @@ def instance_array(cell_name, input_filename, transx, transy, nr_inst_X, nr_inst
 def reset_datatypes(fstgds_filename, fst_cellname, fst_layer_nr, fst_datatype_nr, snd_layer_nr, snd_datatype_nr, output_filename):
     """
     (void) resets datatypes 
-    'Ngds_filename'   = string filename of N(=fst,snd) gds
-    'N_cellname'      = string name of cell in N(=fst,snd) gds 
-    'N_layer_nr'      = int layer number in N(=fst,snd) gds  
-    'N_datatype_nr'   = int datatype number in N(=fst,snd) gds  
-    'output_filename' = string filename of output gds
+    
+    Args:
+        :Ngds_filename:    string filename of N(=fst,snd) gds
+        :N_cellname:       string name of cell in N(=fst,snd) gds 
+        :N_layer_nr:       int layer number in N(=fst,snd) gds  
+        :N_datatype_nr:    int datatype number in N(=fst,snd) gds  
+        :output_filename:  string filename of output gds
     """
     
     #ly1 with 1st gds file
@@ -246,11 +254,12 @@ def cell_wpol(cs, cellname):
 def inspect_gds2layers_gdstk(filename): 
     """
     Get all layer polygons from gds filename ='filename'
-    returns 
-    [0] gstk lib object with all information of cell, layers and shapes 
-    [1] pol_dict, dictionary of gdstk Polygons {(layer_nr, datatype_nr): [Polygon1, Polygon2,...]}
-    [2] nmpy array with (layer_nr, datatype_nr)
-    [3] list with (layer_nr, datatype_nr)
+    
+    Returns: 
+        [0] gstk lib object with all information of cell, layers and shapes 
+        [1] pol_dict, dictionary of gdstk Polygons {(layer_nr, datatype_nr): [Polygon1, Polygon2,...]}
+        [2] nmpy array with (layer_nr, datatype_nr)
+        [3] list with (layer_nr, datatype_nr)
     """
     from gdshelpers.geometry.chip import Cell
     import gdstk
@@ -323,9 +332,14 @@ def inspect_gds2layers_gdstk(filename):
 def cell_wpol_gdstk(cs, cellname):
     """
     Transforms contourf into GDS2 using gdstk
-    'cs'       = contours FROM matplotlif contourf function 
-    'cellname' = string cellname, e.g. 'TOP' 
-    Returns:[0] gdstk library, [1] cell with polygons  
+    
+    Args:
+        :cs:        contours FROM matplotlif contourf function 
+        :cellname:  string cellname, e.g. 'TOP' 
+    
+    Returns:
+        [0] gdstk library
+        [1] cell with polygons  
     """
     
     import gdstk
@@ -374,11 +388,13 @@ def change_layers(fstgds_filename, fst_cellname, layerspol,\
     """
     (void) Transforms layers from the source layer into the destination
     #by default considers datatypes are int(0), set datatypes to 0 function can be used before
-    'fstgds_filename'   = string filename of gds to read
-    'fst_cellname'      = string name of cell in the gds 
-    'layerspol'         = array of the layers of the gds file 
-    'new_layers'              = array of destination layers - MUST HAVE THE SAME CORRESPONDENCE 
-    'output_filename'   = string filename of output gds
+    
+    Args:
+        :fstgds_filename:    string filename of gds to read
+        :fst_cellname:       string name of cell in the gds 
+        :layerspol:          array of the layers of the gds file 
+        :new_layers:         array of destination layers - MUST HAVE THE SAME CORRESPONDENCE 
+        :output_filename:    string filename of output gds
     """
     
     import pya
@@ -427,12 +443,14 @@ def change_layers(fstgds_filename, fst_cellname, layerspol,\
 def rescale_layout(readfile, cellname, factor, outfile, divfactor=1, newcellname=None, verbose=True): 
     """
     (void) Rescales the layout
-    'readfile'    = string filename of input gds
-    'cellname'    = string name of cell in the readfile
-    'factor'      = int with scaling factor multiply   
-    'outfile'     = string filename of output gds
-    'divfactor'   = int with scaling factor division, defaults to 1   
-    'newcellname' = string name of the cell in the outfile, defaults to cellname 
+    
+    Args:
+        :readfile:     string filename of input gds
+        :cellname:     string name of cell in the readfile
+        :factor:       int with scaling factor multiply   
+        :outfile:      string filename of output gds
+        :divfactor:    int with scaling factor division, defaults to 1   
+        :newcellname:  string name of the cell in the outfile, defaults to cellname 
     """
     import pya
     
@@ -488,13 +506,15 @@ def rotate_layout(readfile, cellname, angle, outputfile, transx =0, transy=0):
 def diffs_layers_arrays(readfile, cellname, layerspol1, datatypes1, layerspol2, datatypes2, outfile): 
     """
     (void) Sequentially makes the difference from one layer to the other, from layerspol1 to layerspol2
-    'readfile'    = string filename of input gds
-    'cellname'    = string name of cell 
-    'layerspol1'   = numpy array with all layer that will be substracted
-    'datatypes1'   = numpy array with all datatypes   that will be subtracted 
-    'layerspol2'   = numpy array with all layer where we will subtract
-    'datatypes2'   = numpy array with all datatypes where we will substract
-    'outfile'     = string filename of output gds
+    
+    Args: 
+        :readfile:     string filename of input gds
+        :cellname:     string name of cell 
+        :layerspol1:   numpy array with all layer that will be substracted
+        :datatypes1:   numpy array with all datatypes   that will be subtracted 
+        :layerspol2:   numpy array with all layer where we will subtract
+        :datatypes2:   numpy array with all datatypes where we will substract
+        :outfile:      string filename of output gds
     """
     import pya
     import numpy as np 
@@ -562,10 +582,16 @@ def diffs_layers_arrays(readfile, cellname, layerspol1, datatypes1, layerspol2, 
 ########CREATES A GDSPY CELL WITH THE POLYGONS USING GDSPY
 def cell_wpol_gdspy(cs, cellname, prec=1e-6, mpoints=1e9):
     """
-    Cell made with cut polygons from the z profile 
-    'cs'       = contours FROM matplotlif contourf function
-    'cellname' = string cellname, e.g. 'TOP' 
-    Returns:[0] gdspy library, [1] cell with polygons  
+    Cell made with cut polygons from the z profile
+
+    Args:
+        :cs:        contours FROM matplotlif contourf function 
+        :cellname:  string cellname, e.g. 'TOP' 
+    
+    Returns:
+        [0] gdspy library
+        [1] cell with polygons  
+  
     ##By default the levels start at 0 and go to the number of levels in the contourplot 
     """
     
@@ -630,9 +656,14 @@ def cell_wpol_gdspy(cs, cellname, prec=1e-6, mpoints=1e9):
 def cell_wpol_gdspy_fast(cs, cellname, prec=1e-6, mpoints=1e9):
     """
     Cell made with cut polygons from the z profile 
-    'cs'       = contours FROM matplotlif contourf function
-    'cellname' = string cellname, e.g. 'TOP' 
-    Returns:[0] gdspy library, [1] cell with polygons  
+
+    Args:
+        :cs:        contours FROM matplotlif contourf function 
+        :cellname:  string cellname, e.g. 'TOP' 
+    
+    Returns:
+        [0] gdspy library
+        [1] cell with polygons 
     ##By default the levels start at 0 and go to the number of levels in the contourplot 
     """
     

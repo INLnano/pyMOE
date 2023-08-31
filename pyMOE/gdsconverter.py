@@ -16,7 +16,7 @@ def count_vertices(pols):
     """ Counts vertices of polygons
     
     Args: 
-        polygon or polygon set 
+        :pols: polygon or polygon set 
     
     Returns: 
         number of vertices 
@@ -41,11 +41,11 @@ def merge_polygons(polygons, layer=0, assume_non_overlap=True, break_vertices=25
     N instead of N^2.
     
     Args:
-        polygons: must be a list of polygons, polygonset, rectangles etc that the boolean operation accepts
-        layer: default 0 and ignored. The merged list of merged polygons will have the same layer as the input polygons (assumed the same for all)
-        assume_non_overlap: default True, if True the function will break the merged list of polygons when reaching break_vertices
-        break_vertices: approximate number of vertices to consider in the boolean operation before breaking the list.
-        verbose: default True. Prints the progress bar.
+        :polygons:              must be a list of polygons, polygonset, rectangles etc that the boolean operation accepts
+        :layer:                 default 0 and ignored. The merged list of merged polygons will have the same layer as the input polygons (assumed the same for all)
+        :assume_non_overlap:    default True, if True the function will break the merged list of polygons when reaching break_vertices
+        :break_vertices:        approximate number of vertices to consider in the boolean operation before breaking the list.
+        :verbose:               default True. Prints the progress bar.
         
     Returns:
         list of merged polygons or polygonsets.
@@ -90,11 +90,11 @@ def change_layers_gdspy(fstgds_filename, new_cellname, layerspol, new_layers, ou
     Assumes that we have the polygons in the top level of the input gds 
     
     Args: 
-        'fstgds_filename'   : string filename of gds to read
-        'new_cellname'      : string name of cell in the gds 
-        'layerspol'         : array of the layers of the gds file, if it is not the same, leaves the absent layers untouched 
-        'new_layers'              : array of destination layers - MUST HAVE THE SAME CORRESPONDENCE 
-        'output_filename'   : string filename of output gds
+        :fstgds_filename:    string filename of gds to read
+        :new_cellname:       string name of cell in the gds 
+        :layerspol:          array of the layers of the gds file, if it is not the same, leaves the absent layers untouched 
+        :new_layers:         array of destination layers - MUST HAVE THE SAME CORRESPONDENCE 
+        :output_filename:    string filename of output gds
         
 
     """
@@ -156,9 +156,15 @@ def cell_wpol_gdspy(cs, cellname, prec=1e-6, mpoints=1e9):
     ###TODO: migrate functions from the gds_klops (implemented with various libraries) to gdsp y 
     
     Cell made with cut polygons from the z profile 
-    'cs'       = contours FROM matplotlif contourf function
-    'cellname' = string cellname, e.g. 'TOP' 
-    Returns:[0] gdspy library, [1] cell with polygons  
+    
+    Args:
+        :cs:        contours FROM matplotlif contourf function
+        :cellname:  string cellname, e.g. 'TOP' 
+    
+    Returns:
+        :[0]:       gdspy library, 
+        :[1]:       cell with polygons  
+    
     ##By default the levels start at 0 and go to the number of levels in the contourplot 
     """
 
@@ -224,21 +230,20 @@ class GDSMask():
         Receives an aperture and provides methods to calculate the corresponding GDS layout
     
     Args:
-        mask: aperture object 
+        :mask: aperture object 
     
     Methods:
-        mask
-        levels: number of unique discretized levels in mask 
-        layers: list of layers in layout
-        cells: list of cells in layout
-        total_polygons: total number of polygons in layout in all layers
-        total_vertices:  total number of vertices in all polygons in all layers
+        :levels:            number of unique discretized levels in mask 
+        :layers:            list of layers in layout
+        :cells:             list of cells in layout
+        :total_polygons:    total number of polygons in layout in all layers
+        :total_vertices:    total number of vertices in all polygons in all layers
 
-        create_layout(): Creates layout (raster or vector or edges etc todo)
-        merge(layer): merges polygons in layer
-        plot(): plots mask
-        viewer(): Opens LayoutViewer of gdspy
-        save_gds(filename): saves layout to gds file
+        :create_layout():   Creates layout (raster or vector or edges etc todo)
+        :merge(layer):      merges polygons in layer
+        :plot():            plots mask
+        :viewer():          Opens LayoutViewer of gdspy
+        :save_gds(filename): saves layout to gds file
 
     """
     def __init__(self, mask, units=1e-6, precision=1e-9, verbose=True):
@@ -302,13 +307,13 @@ class GDSMask():
         Creates GDS layout of the discretized aperture
         
         Args:
-            mode: default Raster. TO DO
-            cellname: name of the topcell to include all the merged polygons
-            merge: default False. If True, will merge the individual pixel polygons 
-            break_vertices: threshold value to speed up the merging of polygons
+            :mode:          default Raster. (can also accept contour)
+            :cellname:      name of the topcell to include all the merged polygons
+            :merge:         default False. If True, will merge the individual pixel polygons 
+            :break_vertices: threshold value to speed up the merging of polygons
         
         Returns:
-            gdslib: library with topcell will update the class internal gdslib
+            :gdslib: l      ibrary with topcell will update the class internal gdslib
         """
 
         if self.gdslib is None:

@@ -11,18 +11,18 @@ import numpy as np
 ###Function exports an image file (converted to gray) into a gds file 
 def grayim2gds(infile, outfile, pixelx, pixely, cellname, level, layer=0, datatype=0, verbose=False):
     """
-    (void) Transforms one image (converted to grayscale) into a gds, using cv2 for reading the image
-    'infile'  = input IMAGE file (on extension that cv2 can read ), e.g. "image.png"
-    'outfile' = output GDS file, e.g. "image.gds"
-    'pixelx'  = pixel size in x, in um 
-    'pixely'  = pixel size in y, in um 
-    'cellname'= string with cellname, e.g. "TOP"
-    'level'   = int from 0 to 255, pixels gray value to be passed to GDS 
+    (void) Transforms one image (converted to grayscale) into a gds, using cv2 
     
-    optional:
-    'layer' = gray level, defaults to 0 
-    'datatype' = gds datatype, defaults to 0 
-    'verbose' defaults to False, if True prints 
+    Args: 
+        :infile:    input IMAGE file (on extension that cv2 can read ), e.g. "image.png"
+        :outfile:   output GDS file, e.g. "image.gds"
+        :pixelx:    pixel size in x, in um 
+        :pixely:    pixel size in y, in um 
+        :cellname:  string with cellname, e.g. "TOP"
+        :level:     int from 0 to 255, pixels gray value to be passed to GDS 
+        :layer:     (optional) gray level, defaults to 0 
+        :datatype:  (optional) gds datatype, defaults to 0 
+        :verbose:   (optional) defaults to False, if True prints 
     
     ---- 
     Usage example: 
@@ -68,21 +68,21 @@ def grayim2gds(infile, outfile, pixelx, pixely, cellname, level, layer=0, dataty
     
 def grayim2gds_writer_frac(infile, outfile, pixelx, pixely, cellname, level, nm=None, layer=0, datatype=0 , verbose=False):
     """
-    (void) Transforms one image (converted to grayscale) into a gds, using cv2 for reading the image
-    If nm is given fractionates the image 
-    by default adds the image to (layer, datatype) = (0,0)
-    'infile'  = input IMAGE file (on extension that cv2 can read ), e.g. "image.png"
-    'outfile' = output GDS file, e.g. "image.gds"
-    'pixelx'  = pixel size in x, in um 
-    'pixely'  = pixel size in y, in um 
-    'cellname'= string with cellname, e.g. "TOP"
-    'level'   = int from 0 to 255 (0 = black, 255=white) , pixels gray value to be passed to GDS
-
-    optional:
-    'nm' = nr of pixels for each fractioned part  (should be multiple of pixel sizes), defaults to None
-    'layer' = gray level, defaults to 0 
-    'datatype' = gds datatype, defaults to 0 
-    'verbose' defaults to False, if True prints 
+    (void) Transforms one image (converted to grayscale) into a gds, using cv2 
+    
+    By default adds the image to (layer, datatype) = (0,0)
+    
+    Args:
+        :infile:    input IMAGE file (on extension that cv2 can read ), e.g. "image.png"
+        :outfile:   output GDS file, e.g. "image.gds"
+        :pixelx:    pixel size in x, in um 
+        :pixely:    pixel size in y, in um 
+        :cellname:  string with cellname, e.g. "TOP"
+        :level:     int from 0 to 255 (0 = black, 255=white) , pixels gray value to be passed to GDS
+        :nm:        (optional) If nm is given fractionates the image, nr of pixels for each fractioned part  (should be multiple of pixel sizes), defaults to None
+        :layer:     (optional) gray level, defaults to 0 
+        :datatype:  (optional) gds datatype, defaults to 0 
+        :verbose:   (optional) defaults to False, if True prints 
     
     ---- 
     Usage example: 
@@ -164,19 +164,19 @@ def grayim2gds_writer_frac(infile, outfile, pixelx, pixely, cellname, level, nm=
   
 def grayim2gds_writer(infile, outfile, pixelx, pixely, cellname, level, layer=0, datatype=0 , verbose=False):
     """
-    (void) Transforms one image (converted to grayscale) into a gds, using cv2 for reading the image
+    (void) Transforms one image (converted to grayscale) into a gds, using cv2 
     by default adds the image to (layer, datatype) = (0,0)
-    'infile'  = input IMAGE file (on extension that cv2 can read ), e.g. "image.png"
-    'outfile' = output GDS file, e.g. "image.gds"
-    'pixelx'  = pixel size in x, in um 
-    'pixely'  = pixel size in y, in um 
-    'cellname'= string with cellname, e.g. "TOP"
-    'level'   = int from 0 to 255 (0 = black, 255=white) , pixels gray value to be passed to GDS 
-
-    optional:
-    'layer' = gray level, defaults to 0 
-    'datatype' = gds datatype, defaults to 0 
-    'verbose' defaults to False, if True prints 
+    
+    Args:
+        :infile:    input IMAGE file (on extension that cv2 can read ), e.g. "image.png"
+        :outfile:   output GDS file, e.g. "image.gds"
+        :pixelx:    pixel size in x, in um 
+        :pixely:    pixel size in y, in um 
+        :cellname:  string with cellname, e.g. "TOP"
+        :level:     int from 0 to 255 (0 = black, 255=white) , pixels gray value to be passed to GDS 
+        :layer:     (optional) gray level, defaults to 0 
+        :datatype:  (optional) gds datatype, defaults to 0 
+        :verbose:   (optional) defaults to False, if True prints 
     
     ---- 
     Usage example: 
@@ -250,17 +250,17 @@ def grayim2gds_writer_klops(infile,  output_filename , pixelx, pixely, cellname,
     """
     (void)  Transforms one image (converted to grayscale) into a gds, using cv2 for reading the image
     by default adds the image to (layer, datatype) = (0,0)
-    'infile'  = input IMAGE file (on extension that cv2 can read ), e.g. "image.png"
-    'output_filename' = intermediate GDS file
-    'pixelx'  = pixel size in x, in um 
-    'pixely'  = pixel size in y, in um 
-    'cellname'= string with cellname, e.g. "TOP"
-    'level'   = int from 0 to 255 (0 = black, 255=white) , pixels gray value to be passed to GDS 
-
-    optional:
-    'layer' = gds layer, defaults to 0 
-    'datatype' = gds datatype, defaults to 0 
-    'verbose' defaults to False, if True prints 
+    
+    Args: 
+        :infile:            input IMAGE file (on extension that cv2 can read ), e.g. "image.png"
+        :output_filename:   intermediate GDS file
+        :pixelx:            pixel size in x, in um 
+        :pixely:            pixel size in y, in um 
+        :cellname:          string with cellname, e.g. "TOP"
+        :level:             int from 0 to 255 (0 = black, 255=white) , pixels gray value to be passed to GDS 
+        :layer:             (optional) gray level, defaults to 0 
+        :datatype:          (optional) gds datatype, defaults to 0 
+        :verbose:           (optional) defaults to False, if True prints 
 
     """
     
