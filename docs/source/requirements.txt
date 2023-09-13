@@ -1,1 +1,1 @@
-pyMOE
+opencv-python
