@@ -9,7 +9,7 @@
 project = 'pyMOE'
 copyright = '2023, J. Cunha, D. E. Aguiam'
 author = 'J. Cunha, D. E. Aguiam'
-release = 'v1.2'
+release = 'v1.3'
 import os               # line 13
 import sys              # line 14
 sys.path.insert(0, os.path.abspath('../pyMOE/'))
