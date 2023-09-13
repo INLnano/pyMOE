@@ -14,19 +14,10 @@ import os               # line 13
 import sys              # line 14
 #import sphinx_rtd_theme
 
-import os
-import sys
-import pathlib
 
-if "READTHEDOCS" in os.environ:
-    src_folder = pathlib.Path(__file__).resolve().parent.parent / "pyMOE"
-    sys.path.append(str(src_folder))
-
-    print("Detected running on ReadTheDocs")
-    print(f"Added {src_folder} to sys.path")
-    sys.path.insert(0, os.path.abspath('../pyMOE/'))
-    sys.path.insert(0, os.path.abspath('..')) 
-    sys.path.insert(0, os.path.abspath('../..'))  
+sys.path.insert(0, os.path.abspath('../pyMOE/'))
+sys.path.insert(0, os.path.abspath('..')) 
+sys.path.insert(0, os.path.abspath('../..'))  
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
