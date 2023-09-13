@@ -12,7 +12,7 @@ author = 'J. Cunha, D. E. Aguiam'
 release = 'v1.3'
 import os               # line 13
 import sys              # line 14
-#import sphinx_rtd_theme
+import sphinx_rtd_theme
 
 
 sys.path.insert(0, os.path.abspath('../pyMOE/'))
