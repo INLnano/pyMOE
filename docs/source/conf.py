@@ -12,7 +12,7 @@ author = 'J. Cunha, D. E. Aguiam'
 release = 'v1.3'
 import os               # line 13
 import sys              # line 14
-import sphinx_rtd_theme
+#import sphinx_rtd_theme
 
 
 sys.path.insert(0, os.path.abspath('../pyMOE/'))
@@ -35,6 +35,6 @@ autoclass_content = 'both'
 
 #html_theme = 'sphinx_rtd_theme'   
 #html_static_path = ['_static']
-html_theme = "sphinx_rtd_theme"
+#html_theme = "sphinx_rtd_theme"
 
-html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+#html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
