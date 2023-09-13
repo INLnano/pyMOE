@@ -6,7 +6,8 @@ Python library for designing and producing masks for Micro Optical Elements.
 Mask design features: 
 * Designing multi-layer (grayscale) masks from analytical and/or numerical (e.g. Gerchberg–Saxton) methods  
 * Designing single layer (binary) dithered masks from grayscale masks 
-* Designing rudimentary metasurfaces masks  
+* Designing rudimentary metasurfaces masks 
+* Numerical propagation methods of electric fields from (grayscale) masks 
 
 Mask production features: 
 * Image file (binary/grayscale) <-> CAD files input-output conversion  
@@ -17,6 +18,11 @@ Mask production features:
 # Getting started
 
 Follow the notebooks inside `notebooks\` directory
+
+
+# Documentation
+
+For documentation on classes and functions within package's modules, please visit https://pymoe-doc.readthedocs.io 
 
 
 # Test
