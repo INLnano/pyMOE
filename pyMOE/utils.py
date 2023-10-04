@@ -16,8 +16,8 @@ def progress_bar(progress, bar_length=20, bar_character='#'):
     Writes a progress bar in place in the output
     
     Args:
-        progress: value between 0 and 1
-        bar_length: number of characters to consider in the bar
+        :progress: value between 0 and 1
+        :bar_length: number of characters to consider in the bar
     """
     
     if isinstance(progress, int):
@@ -69,12 +69,12 @@ def digitize_array_to_bins(array, levels):
     """Digitizes the given array to within the number of levels provided 
     
     Args:
-        array : input array of values
-        levels : integer number of levels to consider or array of levels
+        :array:  input array of values
+        :levels: integer number of levels to consider or array of levels
         
     Returns:
-        bins: bins corresponding to the levels
-        digitized: digitized array
+        :bins:      bins corresponding to the levels
+        :digitized: digitized array
         
     To do:
         Consider the midpoint selection in the future
@@ -103,9 +103,9 @@ def simpson2d(f,ax,bx,ay,by):
     Implements Simpson method for calculating a double integral in 2D array f
     
     Arguments: 
-        f = 2D array to calculate integral 
-        [ax, bx] = limits of integration in x, [lower, upper]
-        [ay, by] = limits of integration in y, [lower, upper]
+        :f:         2D array to calculate integral 
+        :[ax, bx]:  limits of integration in x, [lower, upper]
+        :[ay, by]:  limits of integration in y, [lower, upper]
     """
     
     num = len(f)

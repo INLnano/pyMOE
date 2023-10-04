@@ -30,10 +30,10 @@ def plot_aperture(aperture, scale=None, colorbar=True, only_plot=False, filename
     Plots the given aperture
 
     Args:
-        aperture: Aperture object of the mask
-        colorbar: True/False flag to plot colorbars
-        only_plot: if True, only shows image without labels and axes
-        filename: if provided, saves figure to filename 
+        :aperture:  Aperture object of the mask
+        :colorbar:  True/False flag to plot colorbars
+        :only_plot: if True, only shows image without labels and axes
+        :filename:  if provided, saves figure to filename 
         ###available output file extensions are same as opencv https://docs.opencv.org/3.4/d4/da8/group__imgcodecs.html 
     """
     assert type(aperture) is Aperture, "aperture given is not an Aperture object"
@@ -80,11 +80,11 @@ def plot_field(aperture, which='both', scale=None, colorbar=True, only_plot=Fals
     Plots the given aperture
 
     Args:
-        aperture: Aperture object of the mask
-        which: default "both", "amplitude" or "phase"
-        colorbar: True/False flag to plot colorbars
-        only_plot: if True, only shows image without labels and axes
-        filename: if provided, saves figure to filename
+        :aperture:  Aperture object of the mask
+        :which:     default "both", "amplitude" or "phase"
+        :colorbar:  True/False flag to plot colorbars
+        :only_plot: if True, only shows image without labels and axes
+        :filename:  if provided, saves figure to filename
         ###available output file extensions are same as opencv https://docs.opencv.org/3.4/d4/da8/group__imgcodecs.html
     """
     assert type(aperture) is ApertureField, "aperture given is not an Aperture object"

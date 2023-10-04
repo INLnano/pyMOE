@@ -9,10 +9,12 @@ import numpy as np
 
 def floyd_steinberg(input_img , plot = False ): 
     """
-    make dithered image 
-    'input_img' = input 2D representation of img from cv2 
-    optional: 
-    plotting if True, shows the plot, deafults to False 
+    Applies Floyd-Steinberg dithering algorithm to input image. 
+        
+    Args:
+        :input_img: input image as a 2D grid (use cv2 img) 
+        :plot:      binary value, if True shows the plot, defaults to False 
+    
     """
     ###NOTE: considers the same pixel as in the image, possible improvement, change of pixel size 
 
@@ -53,7 +55,7 @@ def floyd_steinberg(input_img , plot = False ):
     if plot == True: 
         import matplotlib.pyplot as plt 
         fig = plt.figure()
-        plt.imshow(img_dither, vmin=0, vmax=255, cmap=plt.get_cmap("Greys"))
+        plt.imshow(255-img_dither, vmin=0, vmax=255, cmap=plt.get_cmap("Greys"))
 
     #cv2.imwrite(output_filename, img_dither_inv)
     
@@ -62,14 +64,16 @@ def floyd_steinberg(input_img , plot = False ):
     
 def dither_img(input_img, output_filename, plotting = False): 
     """
-    make dithered image from input_img, save to output_img
-    'inputcv2' = input 2D representation of img from cv2 
-    'output_filename' = filename of image to be written 
-    'pl' = plotting parameter, defaults to False 
+    Returns a make dithered image from input_img, save to output_img.
+        
+    Args:
+        :inputcv2:          input image as a 2D grid (use cv2 img)  
+        :output_filename:   filename of image to be written 
+        :plotting:          binary value, if True shows the plot, defaults to False 
     """
 
     img_gray0 = cv2.imread(input_img, cv2.IMREAD_GRAYSCALE)
-    img_gray0 = 255 - img_gray0
+    #img_gray0 = 255 - img_gray0
     
     #possible IMPROVEMENT considering passing any dithering algorithm as argument to to dither_img 
     img_gray_eq, img_dither= floyd_steinberg(img_gray0, plot = plotting)

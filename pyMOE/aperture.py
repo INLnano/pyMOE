@@ -19,12 +19,12 @@ class Aperture:
         to the transfer function matrix across the aperture
     
     Args:
-        x = Vector for the x axis
-        y = Vector for the y axis
+        :x:         Vector for the x axis
+        :y:         Vector for the y axis
     
     Methods:
-        aperture: returns the aperture
-        shape: returns the shape of the aperture
+        :aperture:  returns the aperture
+        :shape:     returns the shape of the aperture
 
     """
     def __init__(self, x, y):
@@ -65,15 +65,15 @@ class ApertureField:
         to the transfer function matrix across the aperture
     
     Args:
-        x = Vector for the x axis
-        y = Vector for the y axis
+        :x:         Vector for the x axis
+        :y:         Vector for the y axis
     
     Methods:
-        aperture: returns the complex aperture array
-        amplitude: sets or returns the amplitude of the aperture array
-        phase: sets or returns the phase of the aperture array
-        unwrap: retursn the unwrapped phase
-        shape: returns the shape of the aperture
+        :aperture:  returns the complex aperture array
+        :amplitude: sets or returns the amplitude of the aperture array
+        :phase:     sets or returns the phase of the aperture array
+        :unwrap:    retursn the unwrapped phase
+        :shape:     returns the shape of the aperture
 
     """
     def __init__(self, x, y):

@@ -31,11 +31,13 @@ def makesubplot(x,y, *argv, **kwargs):
 
 def inspect_gds2(filename, colors, rescale=0, **kwargs): 
     """
-    (void) plots the gds for inspection in python matplotlib, only with the borders of the features 
+    Plots the gds for inspection in python matplotlib, only with the borders of the features 
     Note: if plotting different gds file together, please make sure they are aligned (e.g. centered at origin) 
-    'filename' = string gds filename (e.g. 'yolo.gds')
-    'color'    = string color name for plotting  
-    rescale    = int rescaling factor for all points in mask, by default is 0 
+    
+    Args:
+        :filename:   string gds filename (e.g. 'yolo.gds')
+        :color:      string color name for plotting  
+        :rescale:    int rescaling factor for all points in mask, by default is 0 
     
     """
 
@@ -106,19 +108,22 @@ def inspect_gds2(filename, colors, rescale=0, **kwargs):
     print("Done.")
     
 
-def inspect_gds2layers(filename, norm,verbose = False, **kwargs ): 
+def inspect_gds2layers(filename, norm, rescale=0,verbose = False, **kwargs ): 
     """
     Returns cell, polygon dictionary, (xmin,xmax) and (ymin,ymax) for representation of the gds layers into a grayscale image  
-    'filename' = string gds filename (e.g. 'yolo.gds')
-    'norm' = maximum level of gray (e.g. 128)  
-    'verbose' = show some information while doing the operations 
-    for **kwargs, add 'axes = subplot', where subplot has been previously defined as subplot = fig.add_subplot(111) 
-    with 'import matplotlib.pyplot as plt' and 'fig = plt.figure()'
+    
+    Args:
+        :filename:  string gds filename (e.g. 'yolo.gds')
+        :norm:      maximum level of gray (e.g. 128)  
+        :verbose:   if True show some information while doing the operations. defaults false
+        
+        for **kwargs, add 'axes = subplot', where subplot has been previously defined as subplot = fig.add_subplot(111) 
+        with 'import matplotlib.pyplot as plt' and 'fig = plt.figure()'
     """
 
     
     #create cell to store the layers 
-    cell_multipol = Cell('top')
+    cell_multipol = gdspy.Cell('top')
 
     lib = gdspy.GdsLibrary(infile=filename)
     main_cell = lib.top_level()[0]
@@ -177,6 +182,9 @@ def inspect_gds2layers(filename, norm,verbose = False, **kwargs ):
             for k, pols in enumerate(pol_dict[(i,j)][:]):
                 pol_dict[(i,j)][k] = Polygon(pol_dict[(i,j)][k])
                 x1,y1 = pol_dict[(i,j)][k].exterior.xy 
+                if rescale!=0:
+                    x1= np.array(x1)*rescale #get coords in um 
+                    y1= np.array(y1)*rescale #get coords in um 
                 #print(x1)
                 axess.fill(x1, y1, fc=colorx)
                 
@@ -187,14 +195,15 @@ def inspect_gds2layers(filename, norm,verbose = False, **kwargs ):
                 
                 
             pol_dict[(i,j)] = MultiPolygon(pol_dict[(i,j)])
-            polslayer = pol_dict[(i,j)]
-            if polslayer.is_valid ==False: 
-                if verbose == True: 
-                    print(i/(norm-1))
-                    print("There is an invalid polygon at "+str(i)+", but I will proceed, please check the result at the end")
+            polslayer = gdspy.PolygonSet(pol_dict[(i,j)], layer=i)
+            #if polslayer.is_valid ==False: 
+            #    if verbose == True: 
+            #        print(i/(norm-1))
+            #        print("There is an invalid polygon at "+str(i)+", but I will proceed, please check the result at the end")
             
-            cell_multipol.add_to_layer(i, polslayer)
-
+            
+            cell_multipol.add(polslayer)
+    
     xmx = np.max(xmaxs)
     ymx = np.max(ymaxs)
     xmn = np.min(xmins)
@@ -213,18 +222,22 @@ def inspect_gds2layers(filename, norm,verbose = False, **kwargs ):
     return cell_multipol, pol_dict, xmn, xmx, ymn, ymx
     
 
-def inspect_gds2layersplt(filename, norm, verbose = False, **kwargs ):  
+def inspect_gds2layersplt(filename, norm, rescale=0, verbose = False, **kwargs ):  
     """
     Returns cell, polygon dictionary, (xmin,xmax) and (ymin,ymax) for representation of ALL gds layers into a grayscale image  
-    'filename' = string gds filename (e.g. 'yolo.gds')
-    'norm' = maximum level of gray (e.g. 128)  
-    'verbose' = show some information while doing the operations 
-    for **kwargs, add 'axes = plt' where we have previously 
-    'import matplotlib.pyplot as plt' and 'fig = plt.figure()'
+    
+    Args:
+        :filename:  string gds filename (e.g. 'yolo.gds')
+        :norm:      maximum level of gray (e.g. 128)  
+        :verbose:   if True show some information while doing the operations. defaults false
+        
+        for **kwargs, add 'axes = subplot', where subplot has been previously defined as subplot = fig.add_subplot(111) 
+        with 'import matplotlib.pyplot as plt' and 'fig = plt.figure()'
     """
     
     #create cell to store the layers 
-    cell_multipol = Cell('top')
+    gdspy.current_library = gdspy.GdsLibrary()
+    cell_multipol = gdspy.Cell('top')
 
     lib = gdspy.GdsLibrary(infile=filename)
     main_cell = lib.top_level()[0]
@@ -286,6 +299,9 @@ def inspect_gds2layersplt(filename, norm, verbose = False, **kwargs ):
             for k, pols in enumerate(pol_dict[(i,j)][:]):
                 pol_dict[(i,j)][k] = Polygon(pol_dict[(i,j)][k])
                 x1,y1 = pol_dict[(i,j)][k].exterior.xy 
+                if rescale!=0:
+                    x1= np.array(x1)*rescale #get coords in um 
+                    y1= np.array(y1)*rescale #get coords in um 
                 #print(x1)
                 fplot = axess.fill(x1, y1, fc=colorx)
                 axess.axis('off')
@@ -299,14 +315,13 @@ def inspect_gds2layersplt(filename, norm, verbose = False, **kwargs ):
                 
                 
             pol_dict[(i,j)] = MultiPolygon(pol_dict[(i,j)])
-            polslayer = pol_dict[(i,j)]
-            if polslayer.is_valid ==False: 
-                if verbose == True: 
-                    print(i/(norm-1))
-                    print("There is an invalid polygon at "+str(i)+", but I will proceed, please check the result at the end")
+            polslayer = gdspy.PolygonSet(pol_dict[(i,j)], layer=i)
+            #if polslayer.is_valid ==False: 
+            #    if verbose == True: 
+            #        print(i/(norm-1))
+            #        print("There is an invalid polygon at "+str(i)+", but I will proceed, please check the result at the end")
             
-            
-            cell_multipol.add_to_layer(i, polslayer)
+            cell_multipol.add(polslayer)
     
       
     xmx = np.max(xmaxs)
@@ -326,46 +341,48 @@ def inspect_gds2layersplt(filename, norm, verbose = False, **kwargs ):
     
 
 
-def gds2img(infile,outfile,norm, verbose=False): 
+def gds2img(infile,outfile,norm, rescaled=0, verbose=False): 
     """
     (void) plots the gds for inspection in python matplotlib and saves the figure to image file  
     Note: if plotting different gds file together, please make sure they are aligned (e.g. centered at origin) 
-    'infile' = string gds filename (e.g. 'yolo.gds')
-    'outfile' = string img filename (e.g. 'yolo.tiff')
-    'norm' = maximum level of gray (e.g. 128)  
-    'verb' if True, shows verbose, defaults to False 
-    """
-
-    fig = plt.figure()
-    cell_multipol, pol_dict, xmn, xmx, ymn, ymx = inspect_gds2layersplt(infile,norm,verbose = verbose, axes=plt)
     
-    #This dpi was chosen as high enough... but can be changed 
-    my_dpi=4000
+    Args:
+        :infile:    string gds filename (e.g. 'yolo.gds')
+        :outfile:   string img filename (e.g. 'yolo.tiff')
+        :norm:      maximum level of gray (e.g. 128)  
+        :rescaled:  if !=0 will rescale the layout 
+        :verb:      if True, shows verbose, defaults to False 
+    """
+    
+    fig = plt.figure()
+        
+    cell_multipol, pol_dict, xmn, xmx, ymn, ymx = inspect_gds2layersplt(infile,norm,rescale=rescaled, verbose = verbose, axes=plt)
+    
+    ax = fig.add_subplot(1,1,1)
+    
+    fig.set_dpi(1)
 
     plt.axis('equal')
     plt.axis('off')
     
-    fig.set_size_inches(((xmx-xmn)+4)/my_dpi, ((ymx-ymn)+4)/my_dpi)
-    fig.set_dpi(my_dpi)
-    
-    plt.xlim([0,xmx-xmn])
-    plt.ylim([0,ymx-ymn])
     
     plt.tight_layout(pad=0, w_pad=0, h_pad=0) 
-    plt.subplots_adjust(hspace = 0, wspace=0)
     fig.tight_layout(w_pad=0, h_pad=0, pad =0)
-    #fig.savefig(outfile,bbox_inches=0, pad_inches = 0)        
-    fig.savefig("temp.png", bbox_inches='tight', pad_inches = 0)
+    
+    plt.gca().set_axis_off()
+    plt.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0, hspace = 0, wspace = 0) 
+    plt.margins(0,0)
+    
+    fig.set_size_inches(((xmx-xmn)), ((ymx-ymn)))
+        
+     
+    fig.savefig("temp.png", bbox_inches=0,pad_inches = 0, dpi=1)
+
     
     #remove any white padding
     im = cv2.imread("temp.png")
-    gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
-    gray = 255*(gray < 128).astype(np.uint8) 
-    coords = cv2.findNonZero(gray) 
-    x, y, w, h = cv2.boundingRect(coords) 
-    nopad = im[y:y+h, x:x+w] 
 
-    cv2.imwrite(outfile, nopad)
+    cv2.imwrite(outfile, im)
     
     print("Imported file "+infile+" and exported into "+outfile+ " with size "+ str(int(xmx)) + " x " + str(int(ymx)) + " pixels.")
     

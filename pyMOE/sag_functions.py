@@ -12,11 +12,12 @@ import numpy as np
 def fresnel_lens_phase(XX,YY,focal_length,wavelength): 
     """
     returns the COMPLEX PHASE of a fresnel lens with input meshgrid (x,y) with center at (x0,y0)
+    
     Args:
-        XX:  x array from meshgrid 
-        YY: y array from meshgrid 
-        focal_length: focal distance 
-        wavelength: wavelength of design
+        :XX:            x array from meshgrid 
+        :YY:            y array from meshgrid 
+        :focal_length:  focal distance 
+        :wavelength:    wavelength of design
     
     Note: for angle (in rad), call numpy.angle(...)
     """
@@ -34,10 +35,11 @@ def fresnel_lens_phase(XX,YY,focal_length,wavelength):
 def spiral(x,y,L):
     """
     returns a spiral COMPLEX PHASE with input meshgrid (x,y) with center at (x0,y0)
+    
     Args:
-        x = x array from meshgrid 
-        y = y array from meshgrid 
-        L = topological charge 
+        :x:  x array from meshgrid 
+        :y:  y array from meshgrid 
+        :L:  topological charge 
         
     Returns
         spiral phase
@@ -52,11 +54,12 @@ def spiral(x,y,L):
 def saddle(x,y,a,b):
     """
     returns a COMPLEX PHASE saddle function 
+    
     Args:
-        x = x array from meshgrid 
-        y = y array from meshgrid 
-        a = arbitrary parameter
-        b  = arbitrary parameter 
+        :x:   x array from meshgrid 
+        :y:   y array from meshgrid 
+        :a:   arbitrary parameter
+        :b:   arbitrary parameter 
     """
 
     sfunc =  (a * ((x*x - y*y)) -b) 
@@ -69,11 +72,12 @@ def saddle(x,y,a,b):
 def monkey_saddle(x,y,a,b):
     """
     returns a COMPLEX PHASE monkey saddle function 
+    
     Args:
-        x = x array from meshgrid 
-        y = y array from meshgrid 
-        a = arbitrary parameter
-        b  = arbitrary parameter 
+        :x:   x array from meshgrid 
+        :y:   y array from meshgrid 
+        :a:   arbitrary parameter
+        :b:   arbitrary parameter 
     """
     
     sfunc =  (a * ((x*x*x- 3*x*y*y)*1e6) -b) 

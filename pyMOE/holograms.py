@@ -8,6 +8,8 @@ import numpy as np
 
 from pyMOE.utils import progress_bar, Timer, mean_squared_error, discretize_array
 
+from pyMOE.propagate import *
+
 class Field():
     """ 
     Class to define complex fields with methods for amplitude and phase"""
@@ -45,13 +47,13 @@ def algorithm_Gerchberg_Saxton(target_intensity, iterations=3, levels=None, inpu
     U1 - calculated far-field
     
     Args:
-        target_intensity: 2D array of intensity values 
-        levels: Scalar or array: levels to consider in the phase mask as physical constraint. If None, it does not discretize.
-        input_phase: If given, uses this input_phase as starting phase instead of random.
+        :target_intensity:  2D array of intensity values 
+        :levels:            Scalar or array: levels to consider in the phase mask as physical constraint. If None, it does not discretize.
+        :input_phase:       If given, uses this input_phase as starting phase instead of random.
     
     Returns:
-        phase_mask: 2D phase mask
-        error_list: list of errors measured in each iteration
+        :phase_mask:        2D phase mask
+        :error_list:        list of errors measured in each iteration
     """
     shape = target_intensity.shape
         
@@ -122,13 +124,14 @@ def calculate_phase_farfield(phase, source_beam=None):
     
     TODO Fraunhofer propagation
     
-    Args
-        phase: phase mask
-        source_beam: if not given, assumes constant intensity=1
+    Args:
+        :phase:         phase mask
+        :source_beam:   if not given, assumes constant intensity=1
         
     Returns
-        far_field: far field amplitude
+        :far_field:     far field amplitude
     """
+    #fraunhofer(z, mask, npixmask, pixsizemask, npixscreen, dxscreen, dyscreen, wavelength)
     
     shape = phase.shape
     if source_beam is not None:
@@ -143,6 +146,8 @@ def calculate_phase_farfield(phase, source_beam=None):
     
     field_1.signal = np.fft.fft2(field_0.signal)
     field_1.signal = np.fft.fftshift(field_1.signal)
+    
+
     
     return field_1.amplitude
     

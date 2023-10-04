@@ -24,13 +24,13 @@ def create_empty_aperture(xmin, xmax, N_x, ymin, ymax, N_y):
     Creates an empty aperture max of the mesh dimensions provided
     
     Args: 
-        xmin, xmax: range for x 
-        N_x: number of x points
-        ymin, ymax: range for y 
-        N_y: number of y points
+        :xmin, xmax:    range for x 
+        :N_x:           number of x points
+        :ymin, ymax:    range for y 
+        :N_y:           number of y points
     
     Returns:
-        mask: empty Aperture
+        :mask: empty Aperture
     """
     x = np.linspace(xmin, xmax, N_x)
     y = np.linspace(ymin, ymax, N_y)
@@ -42,9 +42,9 @@ def create_empty_aperture_from_aperture(aperture):
     Creates an empty aperture with the same spatial dimensions of the given aperture
     
     Args:
-        aperture: aperture
+        :aperture: aperture
     Returns:
-        aperture: empty Aperture of same spatial dimensions
+        :aperture: empty Aperture of same spatial dimensions
     """
     assert type(aperture) is Aperture, "aperture must be of type Aperture"
 
@@ -59,12 +59,12 @@ def create_aperture_from_array(array, pixel_size, center=False):
     pixel_size
 
     Args:
-        array: 2D numpy array of a mask
-        pixel_size: absolute value for each pixel, as a tuple (x,y) 
-        center: if True, will center the image at the origin
+        :array:         2D numpy array of a mask
+        :pixel_size:    absolute value for each pixel, as a tuple (x,y) 
+        :center:        if True, will center the image at the origin
             
     Returns:
-        aperture: aperture with the mask inserted
+        :aperture:      aperture with the mask inserted
     """
     
     assert (isinstance(array, np.ndarray)) and (len(array.shape)==2), "Array must be 2D numpy array "
@@ -92,12 +92,12 @@ def circular_aperture(aperture, radius, center=(0,0)):
     Updates aperture and returns 2D circular aperture mask 
     
     Args: 
-        aperture: mask of type Aperture
-        radius: radius of the circle aperture
-        center: default (x0=0, y0=0) center of circle
+        :aperture:  mask of type Aperture
+        :radius:    radius of the circle aperture
+        :center:    default (x0=0, y0=0) center of circle
         
     Returns:
-        aperture: aperture with circular amplitude
+        :aperture:  aperture with circular amplitude
     """
 
     assert type(aperture) is Aperture, "aperture must be of type Aperture"
@@ -121,13 +121,13 @@ def rectangular_aperture(aperture, width, height, corner=None, center=None):
     Updates aperture and returns 2D rectangular aperture mask 
     
     Args: 
-        aperture: aperture of type Aperture
-        width, height:  width and height of the rectangle
-        corner: if given, sets the lower left corner of the rectangle
-        center: if given, sets the center of the rectangle
+        :aperture:          aperture of type Aperture
+        :width, height:     width and height of the rectangle
+        :corner:            if given, sets the lower left corner of the rectangle
+        :center:            if given, sets the center of the rectangle
         
     Returns:
-        aperture: aperture with rectangular amplitude
+        :aperture:          aperture with rectangular amplitude
     """
     
     assert type(aperture) is Aperture, "aperture must be of type Aperture"
@@ -160,11 +160,11 @@ def arbitrary_aperture_function(aperture, function, center=(0,0), **function_arg
     Updates aperture and returns phase mask calculated based on function
     
     Args: 
-        aperture: mask of type Aperture
-        function: function to calculate the phase on 
-        **function_args: additional arguments to pass onto the function
+        :aperture:          mask of type Aperture
+        :function:          function to calculate the phase on 
+        :**function_args:   additional arguments to pass onto the function
     Returns:
-        aperture: aperture with fresnel phase
+        :aperture:          aperture with fresnel phase
     """
 
     assert type(aperture) is Aperture, "aperture must be of type Aperture"
@@ -183,10 +183,10 @@ def truncate_aperture_radius(aperture, radius, center=(0,0), truncate_value=0):
     Truncates the aperture to inside the circle of radius at center
     
     Args:
-        aperture: mask to be truncated
-        radius: radius to select the region
-        center: center points tuple of the circle
-        truncate_value: value to truncate the mask, by default 0 
+        :aperture:          mask to be truncated
+        :radius:            radius to select the region
+        :center:            center points tuple of the circle
+        :truncate_value:    value to truncate the mask, by default 0 
     
     Returns:
         aperture
@@ -208,13 +208,13 @@ def fresnel_phase(aperture, focal_length, wavelength, radius=None, center=(0,0))
     Updates aperture and returns Fresnel phase mask
     
     Args: 
-        aperture: mask of type Aperture
-        focal_length: design focal length
-        wavelength: design wavelength
-        radius: if defined, truncates the fresnel phase to inside this radius
+        :aperture:          mask of type Aperture
+        :focal_length:      design focal length
+        :wavelength:        design wavelength
+        :radius:            if defined, truncates the fresnel phase to inside this radius
         
     Returns:
-        aperture: aperture with fresnel phase
+        :aperture:          aperture with fresnel phase
     """
 
     assert type(aperture) is Aperture, "aperture must be of type Aperture"
@@ -237,13 +237,13 @@ def fresnel_zone_plate_aperture(aperture, focal_length, wavelength, radius=None,
     Updates aperture and returns Fresnel zone plate aperture
     
     Args: 
-        aperture: mask of type Aperture
-        focal_length: design focal length
-        wavelength: design wavelength
-        radius: if defined, truncates the fresnel phase to inside this radius
+        :aperture:          mask of type Aperture
+        :focal_length:      design focal length
+        :wavelength:        design wavelength
+        :radius:            if defined, truncates the fresnel phase to inside this radius
         
     Returns:
-        aperture: aperture with fresnel zone plate
+        :aperture:          aperture with fresnel zone plate
     """
 
     assert type(aperture) is Aperture, "aperture must be of type Aperture"
@@ -290,12 +290,12 @@ def aperture_operation(aperture1, aperture2, operand):
     Both apertures must have the same spatial distribution and shape.
     
     Args:
-        aperture1: First Aperture
-        aperture2: Second Aperture
-        operand: numpy operand function to consider
+        :aperture1: First Aperture
+        :aperture2: Second Aperture
+        :operand:   numpy operand function to consider
         
     Returns:
-        aperture: Aperture with result of operation
+        :aperture:  Aperture with result of operation
     """
     assert (type(aperture1) is Aperture) and type(aperture2) is Aperture, "aperture must be of type Aperture"
     assert type(operand) == np.ufunc, "operand must be a numpy function"
@@ -328,12 +328,12 @@ def resize_linear(image_matrix, new_height:int, new_width:int):
     https://stackoverflow.com/questions/48121916/numpy-resize-rescale-image
     
     Args: 
-        image_matrix : input 2D array (image)
-        new_height : integer, height of the image 
-        new_width : integer, width of the image
+        :image_matrix: input 2D array (image)
+        :new_height:   integer, height of the image 
+        :new_width:    integer, width of the image
 
     Returns: 
-        output_image: resized 2D array (image)
+        :output_image: resized 2D array (image)
     """
     output_image = np.zeros((new_height, new_width), dtype=image_matrix.dtype)
     original_height, original_width = image_matrix.shape
@@ -373,10 +373,10 @@ def aperture_rotate(aperture_in, angle, pivot=None, background =0):
     https://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.rotate.html
 
     Args: 
-        aperture_in : input aperture object 
-        angle : rotation angle in degrees 
-        pivot : coordinates of pivot point (center of rotation) in the img 2D array, defaults to center of aperture
-        background: background value where rotation is done, by default 0 
+        :aperture_in:   input aperture object 
+        :angle:         rotation angle in degrees 
+        :pivot:         coordinates of pivot point (center of rotation) in the img 2D array, defaults to center of aperture
+        :background:    background value where rotation is done, by default 0 
         
     Returns: 
         Rotated 2D array, with padding 
@@ -421,7 +421,7 @@ def aperture_rotate(aperture_in, angle, pivot=None, background =0):
     rotated_aperture = ndimage.rotate(aperture_temp.aperture, angle, reshape=True, order=5, cval = background)
 
     #number of pixels of the rotated aperture 
-    new_dimx, new_dimy = rotated_aperture.shape
+    new_dimy, new_dimx = rotated_aperture.shape
  
     #width and height of the rotated aperture 
     dx = dx0 * np.cos(np.radians(angle)) + dy0 * np.sin(np.radians(angle))
@@ -467,9 +467,9 @@ def clip_aperture(aperture_in, new_dx0_1,new_dx0_2, new_dy0_1, new_dy0_2):
     Clips the aperture between [new_dx0_1, new_dx0_2] and [new_dy0_1, new_dy0_2] limits
 
     Args: 
-        aperture_in : input aperture object  
-        new_dx0_1, new_dx0_2 : limits in x 
-        new_dy0_1, new_dy0_2 : limits in y 
+        :aperture_in:           input aperture object  
+        :new_dx0_1, new_dx0_2:  limits in x 
+        :new_dy0_1, new_dy0_2:  limits in y 
         
     Returns: 
         Clipped aperture with limits [new_dx0_1, new_dx0_2] and [new_dy0_1, new_dy0_2]
@@ -507,9 +507,9 @@ def clip_aperture_within(aperture_in, new_dx0_1, new_dx0_2, new_dy0_1, new_dy0_2
     Clips the aperture by a rectangular aperture 
 
     Args: 
-        aperture_in : input aperture object 
-        new_dx0_1, new_dx0_2 : limits in x 
-        new_dy0_1, new_dy0_2 : limits in y 
+        :aperture_in:           input aperture object 
+        :new_dx0_1, new_dx0_2:  limits in x 
+        :new_dy0_1, new_dy0_2:  limits in y 
         
     Returns: 
         Clipped aperture_in with the rectangle
@@ -552,9 +552,9 @@ def makegrid(N_pixels, xsize, ysize):
     Creates a square meshgrid of N_pixels by N_pixels in with arrays till xsize and ysize
 
     Args: 
-        N_pixels = nr of pixels , by default the results 2D array is N_pixels by N_pixels 
-        xsize = size in x  
-        ysize = size in y 
+        :N_pixels:  nr of pixels , by default the results 2D array is N_pixels by N_pixels 
+        :xsize:     size in x  
+        :ysize:     size in y 
     
     Returns:     
         Meshgrid (XX, YY) 
@@ -572,9 +572,11 @@ def makegrid(N_pixels, xsize, ysize):
 def create_scale(N_pixels, nsz, ngs): 
     """
     returns a 2D array with a scale of successive gray levels 
-    N_pixels= nr of pixels 
-    nsz = division in size 
-    ngs = nr of gray levels 
+    
+    Args:
+        :N_pixels:  nr of pixels 
+        :nsz:       division in size 
+        :ngs:       nr of gray levels 
     
     """
     

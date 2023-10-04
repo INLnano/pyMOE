@@ -24,15 +24,15 @@ def fresnel(z, mask, npixmask, pixsizemask, npixscreen, dxscreen, dyscreen, wave
     """
     Calculate Fresnel approximation, following Goodman exp 4-17 
     
-    inputs: 
-        z = distance to the observation plane in m
-        mask = 2D map (x-y plane) npixel vs npixel mask 
-        npixmask = number of pixels of the mask 
-        pixsizemask = size of the pixel at the mask in m
-        npixscreen = size of the pixel at the screen 
-        dxscreen = x-size of the screen  in m 
-        dyscreen = y-size of the screen   in m
-        wavelength = wavelength in m 
+    Args: 
+        :z:             distance to the observation plane in m
+        :mask:          2D map (x-y plane) npixel vs npixel mask 
+        :npixmask:      number of pixels of the mask 
+        :pixsizemask:   size of the pixel at the mask in m
+        :npixscreen:    size of the pixel at the screen 
+        :dxscreen:      x-size of the screen  in m 
+        :dyscreen:      y-size of the screen   in m
+        :wavelength:    wavelength in m 
     
     returns 2D map (x-y plane) with abs of Electric field at distance z
     
@@ -74,15 +74,15 @@ def fraunhofer(z, mask, npixmask, pixsizemask, npixscreen, dxscreen, dyscreen, w
     """
     Calculate Fraunhofer approximation, following Goodman exp 4-25
     
-    inputs: 
-        z = distance to the observation plane in m
-        mask = 2D map (x-y plane) npixel vs npixel mask 
-        npixmask = number of pixels of the mask 
-        pixsizemask = size of the pixel at the mask in m
-        npixscreen = size of the pixel at the screen 
-        dxscreen = x-size of the screen  in m 
-        dyscreen = y-size of the screen   in m
-        wavelength = wavelength in m 
+    Args: 
+        :z:             distance to the observation plane in m
+        :mask:          2D map (x-y plane) npixel vs npixel mask 
+        :npixmask:      number of pixels of the mask 
+        :pixsizemask:   size of the pixel at the mask in m
+        :npixscreen:    size of the pixel at the screen 
+        :dxscreen:      x-size of the screen  in m 
+        :dyscreen:      y-size of the screen   in m
+        :wavelength:    wavelength in m 
 
     returns 2D map (x-y plane) with abs of Electric field at distance z 
     
@@ -123,19 +123,16 @@ def RS_intXY(zs, mask, npixmask, pixsizemask, npixscreen, dxscreen, dyscreen, wa
     Calculates the RS int of the first kind
     returns Escreen (complex electric field at obs screen), Iscreen (intensity at obs screen), iplot (the actual intensity) 
     
-    Inputs: 
-        zs = distance to screen [m]
-        mask = Electric field at the mask, complex valued 2D function   
-        npixmask = number of pixels on the side of the mask 
-        pixsizemask = size of pixel of the mask [m]
-        npixscreen = number of pixels on the side of the screen (observation) 
-        dxscreen = max_x of the screen [m], the screen range is [-dxscreen, dxscreen]
-        dyscreen = max_y of the screen [m], the screen range is [-dyscreen, dyscreen]
-        wavelength = wavelength of the light [m]
-
-    ------- 
-    optional 
-    verbose, defaults to False, if True prints 
+    Args: 
+        :zs:            distance to screen [m]
+        :mask:          Electric field at the mask, complex valued 2D function   
+        :npixmask:      number of pixels on the side of the mask 
+        :pixsizemask:   size of pixel of the mask [m]
+        :npixscreen:    number of pixels on the side of the screen (observation) 
+        :dxscreen:      max_x of the screen [m], the screen range is [-dxscreen, dxscreen]
+        :dyscreen:      max_y of the screen [m], the screen range is [-dyscreen, dyscreen]
+        :wavelength:    wavelength of the light [m]
+        :verbose:       defaults to False, if True prints 
     """
     # set the precision to double that of float64
     decimal.setcontext(decimal.Context(prec=34))
@@ -201,7 +198,7 @@ def RS_intXY_kernel(dmask, nps, npm, xs, ys,zs,xm,ym,zm,k, E0m,verbose):
                 r = np.sqrt((xs[isc,jsc]-xm)**2 + (ys[isc,jsc]-ym)**2 + (zs-zm)**2)
                 r2 = r*r
                 prop1= np.exp(r*1.0j*k)/r2
-                prop2 = zs * (1.0j * k  - unit/r)
+                prop2 = zs * k/(2*np.pi) *(unit / (r*k)  - 1.0j * unit)
                 propE = E0m * prop1 * prop2
 
                 #rEs[isc,jsc] = double_Integral(-dmask/2, dmask/2, -dmask/2, dmask/2, npm*100,npm*100,np.real(propE))/(2*np.pi)
@@ -218,22 +215,19 @@ def RS_intZZ(zmin, zmax, nzs, xfixed, yfixed, mask, npixmask, pixsizemask, npixs
     Calculates the RS_int in the  of the first kind, taking information about mask, distance to screen, and screen information
     returns Escreen (complex electric field at obs screen), Iscreen (intensity at obs screen), iplot (the actual intensity) 
         
-    Inputs: 
-        [zmin, zmax] = distance range limits in z [m]
-        nzs = number of points along the optical axis 
-        xfixed, yfixed = x and y fixed coordinates
-        mask = Electric field at the mask, complex valued 2D function   
-        npixmask = number of pixels on the side of the mask 
-        pixsizemask = size of pixel of the mask [m]
-        npixscreen = number of pixels on the side of the screen (observation) 
-        dxscreen = max_x of the screen [m], the screen range is [-dxscreen, dxscreen]
-        dyscreen = max_y of the screen [m], the screen range is [-dyscreen, dyscreen]
-        nind = scaling refractive index 
-        wavelength = wavelength of the light [m]
-
-    ------- 
-    optional 
-    verbose, defaults to False, if True prints 
+    Args: 
+        :[zmin, zmax]:      distance range limits in z [m]
+        :nzs:               number of points along the optical axis 
+        :xfixed, yfixed:    x and y fixed coordinates
+        :mask:              Electric field at the mask, complex valued 2D function   
+        :npixmask:          number of pixels on the side of the mask 
+        :pixsizemask:       size of pixel of the mask [m]
+        :npixscreen:        number of pixels on the side of the screen (observation) 
+        :dxscreen:          max_x of the screen [m], the screen range is [-dxscreen, dxscreen]
+        :dyscreen:          max_y of the screen [m], the screen range is [-dyscreen, dyscreen]
+        :nind:              scaling refractive index 
+        :wavelength:        wavelength of the light [m]
+        :verbose:           defaults to False, if True prints 
     """
     # set the precision to double that of float64
     decimal.setcontext(decimal.Context(prec=34))
@@ -243,7 +237,9 @@ def RS_intZZ(zmin, zmax, nzs, xfixed, yfixed, mask, npixmask, pixsizemask, npixs
     npm = npixmask 
     
     #size of mask 
-    dmask = pixsizemask * npm
+    #dmask = pixsizemask * npm
+    dmask = 2*dxscreen
+    
     
     #prop const
     k = 2* np.pi/(wavelength*nind)
@@ -295,7 +291,7 @@ def RS_intZZ_kernel(dmask, npm, nzs, xs, ys,zs,xm,ym,zm,k, E0m, verbose):
             r = np.sqrt((xs-xm)**2 + (ys-ym)**2 + (zs[jsc]-zm)**2)
             r2 = r*r
             prop1= np.exp(r*1.0j*k)/r2
-            prop2 = zs[jsc] * (1.0j * k  - unit/r)
+            prop2 = zs[jsc] * k/(2*np.pi) *(unit / (r*k)  - 1.0j * unit)
             propE = E0m * prop1 * prop2
 
             #rEs[isc,jsc] = double_Integral(-dmask/2, dmask/2, -dmask/2, dmask/2, npm*100,npm*100,np.real(propE))/(2*np.pi)
@@ -312,22 +308,21 @@ def RS_intYZ(zmin, zmax, nzs, yfixed, mask, npixmask, pixsizemask, npixscreen, d
     Calculates the RS_int in the  of the first kind, taking information about mask, distance to screen, and screen information
     returns Escreen (complex electric field at obs screen), Iscreen (intensity at obs screen), iplot (the actual intensity) 
     
-    Inputs: 
-        [zmin, zmax] = distance range limits in z [m]
-        nzs = number of points along the optical axis 
-        yfixed = y fixed coordinates
-        mask = Electric field at the mask, complex valued 2D function   
-        npixmask = number of pixels on the side of the mask 
-        pixsizemask = size of pixel of the mask [m]
-        npixscreen = number of pixels on the side of the screen (observation) 
-        dxscreen = max_x of the screen [m], the screen range is [-dxscreen, dxscreen]
-        dyscreen = max_y of the screen [m], the screen range is [-dyscreen, dyscreen]
-        nind = scaling refractive index 
-        wavelength = wavelength of the light [m]
-    
-    ------- 
-    optional 
-    verbose, defaults to False, if True prints 
+    Args: 
+        
+        :[zmin, zmax]:      distance range limits in z [m]
+        :nzs:               number of points along the optical axis 
+        :yfixed:            y fixed coordinates
+        :mask:              Electric field at the mask, complex valued 2D function   
+        :npixmask:          number of pixels on the side of the mask 
+        :pixsizemask:       size of pixel of the mask [m]
+        :npixscreen:        number of pixels on the side of the screen (observation) 
+        :dxscreen:          max_x of the screen [m], the screen range is [-dxscreen, dxscreen]
+        :dyscreen:          max_y of the screen [m], the screen range is [-dyscreen, dyscreen]
+        :nind:              scaling refractive index 
+        :wavelength:        wavelength of the light [m]
+        :verbose:           defaults to False, if True prints 
+
     """
     # set the precision to double that of float64
     decimal.setcontext(decimal.Context(prec=34))
@@ -394,8 +389,9 @@ def RS_intYZ_kernel(dmask, npm, nzs, npixscreen, xfixed, ys,zarray,xm,ym,zm,k, E
                 r = np.sqrt((xfixed-xm)**2 + (ys[isc]-ym)**2 + (zarray[jsc]-zm)**2)
                 r2 = r*r
                 prop1= np.exp(r*1.0j*k)/r2
-                prop2 = zarray[jsc] * (1.0j * k - unit/r)
+                prop2 = zarray[jsc] * k/(2*np.pi) *(unit / (r*k)  - 1.0j * unit)
                 propE = E0m * prop1 * prop2
+                
                 
                 #rEs[isc,jsc] = double_Integral(-dmask/2, dmask/2, -dmask/2, dmask/2, npm*100,npm*100,np.real(propE))/(2*np.pi)
                 #iEs[isc,jsc] = double_Integral(-dmask/2, dmask/2, -dmask/2, dmask/2, npm*100,npm*100,np.imag(propE))/(2*np.pi)
@@ -409,12 +405,14 @@ def RS_intYZ_kernel(dmask, npm, nzs, npixscreen, xfixed, ys,zarray,xm,ym,zm,k, E
 def Fresnel_num(width, wavelength, zdist):
     """
     Calculation of Fresnel number, Goodman pag 85
-    inputs:
-    width = size of the aperture in m 
-    wavelength = wavelength of the aperture in m 
-    zdist = distance to the screen in m 
     
-    returns Fresnel number 
+    Args:
+        :width:         size of the aperture in m 
+        :wavelength:    wavelength of the aperture in m 
+        :zdist:         distance to the screen in m 
+    
+    Returns: 
+        Fresnel number 
     """
     NF = width**2 / (wavelength * zdist)
     return NF 
@@ -422,11 +420,13 @@ def Fresnel_num(width, wavelength, zdist):
 def Fraunhofer_criterion(aperturesiz, wavelength): 
     """
     Calculation of "Fraunhofer distance" , Goodman exp 4-27  
-    inputs:
-    aperturesiz = size of the aperture in m 
-    wavelength = wavelength of the aperture in m 
     
-    returns Fraunhofer distance 
+    Args:
+        :aperturesiz: size of the aperture in m 
+        :wavelength: wavelength of the aperture in m 
+    
+    Returns: 
+        Fraunhofer distance 
     """
     zfraun = 2 * aperturesiz**2 / wavelength 
     
