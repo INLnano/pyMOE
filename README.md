@@ -24,6 +24,9 @@ Follow the notebooks inside `notebooks\` directory
 
 For documentation on classes and functions within package's modules, please visit https://pymoe-doc.readthedocs.io 
 
+# Dependencies
+
+A list of dependencies (with versions) is at https://github.com/INLnano/pyMOE/blob/main/docs/requirements.txt . To use the package straighforwardly please make sure you have those dependencies (and versions) installed. 
 
 # Test
 
