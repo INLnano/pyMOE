@@ -1,4 +1,4 @@
-opencv-python==4.5.3
+opencv-python==4.5
 gdspy==1.6.3
 klayout==0.26.11
 Pillow==8.1.1
