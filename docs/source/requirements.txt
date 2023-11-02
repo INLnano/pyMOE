@@ -4,4 +4,4 @@ klayout==0.26.12
 Pillow==8.1.1
 scipy==1.6.1
 matplotlib==3.5.3
-numpy==1.21.6
+numpy==1.20
