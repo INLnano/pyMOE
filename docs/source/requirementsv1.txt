@@ -1,0 +1,7 @@
+opencv-python
+gdspy
+klayout
+Pillow
+scipy
+matplotlib
+numpy

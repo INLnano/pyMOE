@@ -1,7 +1,0 @@
-opencv-python==4.5.3
-gdspy==1.6.3
-klayout==0.26.11
-Pillow==8.1.1
-scipy==1.6.1
-matplotlib==3.5.3
-numpy==1.21.6
