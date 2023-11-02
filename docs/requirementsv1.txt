@@ -1,9 +1,0 @@
-sphinx_rtd_theme
-opencv-python
-gdspy
-klayout
-Pillow
-scipy
-matplotlib
-numpy
-shapely
