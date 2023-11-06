@@ -86,3 +86,25 @@ def monkey_saddle(x,y,a,b):
 
     return func
 
+
+def Alvarez_phase(XX,YY, f1, f2, tuning_distance, wavelength): 
+    """
+    returns the phase of an Alvarez lens profile
+    
+    Args:
+        :XX:            x array from meshgrid 
+        :YY:            y array from meshgrid 
+        :f1:  shorter focal distance f1<f2
+        :f2:  longer focal distance f1<f2
+        :tuning_distance: tuning displacement range for the Alvarez lens
+        :wavelength:    wavelength of design
+    
+    Note: 
+    """
+
+    A = np.pi/(2*tuning_distance*wavelength)*(1/f1-1/f2)
+
+    phase = A*(XX*np.power(YY,2)+np.power(XX,3)/3)
+
+    return phase
+

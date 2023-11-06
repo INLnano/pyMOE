@@ -49,12 +49,20 @@ class Aperture:
         """Discretizes the aperture to the number of levels"""
         if self.aperture_original is None:
             self.aperture_original = np.copy(self.aperture)
-        levels, digitized = digitize_array_to_bins(self.aperture_original, levels)
+        levels, digitized = digitize_array_to_bins(self.aperture, levels)
         
         self.levels = levels
         self.aperture_discretized = digitized
         self.aperture = levels[digitized]
         self.discretized_flag=True
+
+    def modulos(self, mod):
+        """Discretizes the aperture to the number of levels"""
+        if self.aperture_original is None:
+            self.aperture_original = np.copy(self.aperture)
+
+        aux = self.aperture        
+        self.aperture = aux % (mod)
 
 
 
