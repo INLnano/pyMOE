@@ -13,9 +13,12 @@ import pyMOE.gds_klops as gdsops
 import pyMOE.importing as importing
 import pyMOE.metas as metas 
 import pyMOE.propagate as propagate
+import pyMOE.field as field
 
 from pyMOE.aperture import Aperture
+from pyMOE.field import Field
 from pyMOE.aperture import ApertureField
+
 from pyMOE.gdsconverter import GDSMask
 
 import pyMOE.plotting as plotting
