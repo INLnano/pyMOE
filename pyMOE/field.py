@@ -33,7 +33,7 @@ class Field:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.XX, self.YY = np.meshgrid(x, y)
+        self.XX, self.YY = np.meshgrid(x, y,)# indexing='ij')
         self.pixel_x = self.x[1]-self.x[0]
         self.pixel_y = self.y[1]-self.y[0]
     
@@ -172,7 +172,7 @@ def generate_gaussian_field(field, E0, w0, center=(0,0) ):
     Returns:
         :field: returns the field.
     """
-    assert type(field) is Field, "field must be of type Field"
+    assert type(field) is Field, "field must be of type Field. Field is type %s"%(type(field))
 
 
     x0,y0 = center
@@ -184,3 +184,113 @@ def generate_gaussian_field(field, E0, w0, center=(0,0) ):
 
 
 
+
+
+
+
+
+
+class Screen:
+    """
+    Class Screen:
+        Creates a Screen object that is 1D or 2D and has internal xyz coordinates
+         to facilitate the propagation of a field onto a target screen
+          
+        
+        
+    Args:
+        :x:         Vector for the x axis
+        :y:         Vector for the y axis
+        :z:         Vector for the z axis
+    
+    Methods:
+        :field:  returns the field
+        :shape:     returns the shape of the field
+
+    """
+    def __init__(self, x, y, z):
+        self.x = x
+        self.y = y
+        self.z = z
+        self.XX, self.YY, self.ZZ = np.meshgrid(x, y, z, indexing='ij')
+        # self.pixel_x = self.x[1]-self.x[0]
+        # self.pixel_y = self.y[1]-self.y[0]
+        # self.pixel_z = self.z[1]-self.z[0]
+    
+        self.screen = np.zeros(self.XX.shape, dtype=complex)
+    @property
+    def shape(self):
+        return self.screen.shape
+    @property
+    def amplitude(self):
+        return np.abs(self.screen)
+    @property
+    def phase(self):
+        return np.angle(self.screen)
+    
+
+    
+    
+def create_screen_XY(xmin, xmax, N_x, ymin, ymax, N_y, z):
+    """
+    Creates an empty screen of the mesh dimensions provided
+    
+    Args: 
+        :xmin, xmax:    range for x 
+        :N_x:           number of x points
+        :ymin, ymax:    range for y 
+        :N_y:           number of y points
+        :z:             z position of the screen plane
+    
+    Returns:
+        :screen: empty Screen
+    """
+    x = np.linspace(xmin, xmax, N_x)
+    y = np.linspace(ymin, ymax, N_y)
+    z=z
+    
+    return Screen(x,y,z)
+
+
+
+    
+def create_screen_YZ(ymin, ymax, N_y, zmin, zmax, N_z, x=0):
+    """
+    Creates an empty screen of the mesh dimensions provided
+    
+    Args: 
+        :ymin, ymax:    range for y 
+        :N_y:           number of y points
+        :zmin, zmax:    range for z
+        :N_z:           number of z points
+        :x:             x position of the screen plane
+    
+    Returns:
+        :screen: empty Screen
+    """
+    x=x
+    y = np.linspace(ymin, ymax, N_y)
+    z = np.linspace(zmin, zmax, N_z)
+
+    return Screen(x,y,z)
+
+
+    
+def create_screen_ZZ(zmin, zmax, N_z, x=0, y=0):
+    """
+    Creates an empty screen of the mesh dimensions provided
+    
+    Args: 
+        :zmin, zmax:    range for z
+        :N_z:           number of z points
+        :x:             x position of the screen line
+        :y:             y position of the screen line
+    
+    Returns:
+        :screen: empty Screen
+    """
+    z = np.linspace(zmin, zmax, N_z)
+    y=y
+    x=x
+    
+    return Screen(x,y,z)

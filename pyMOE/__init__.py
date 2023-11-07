@@ -17,6 +17,7 @@ import pyMOE.field as field
 
 from pyMOE.aperture import Aperture
 from pyMOE.field import Field
+from pyMOE.field import Screen
 from pyMOE.aperture import ApertureField
 
 from pyMOE.gdsconverter import GDSMask

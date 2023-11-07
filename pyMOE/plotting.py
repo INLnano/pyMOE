@@ -10,6 +10,7 @@ import cv2
 
 from pyMOE import Aperture
 from pyMOE import Field
+from pyMOE import Screen
 from pyMOE import ApertureField
 
 
@@ -81,7 +82,7 @@ def plot_field(field, which='both', scale=None, colorbar=True, only_plot=False, 
     Plots the given field
 
     Args:
-        :field:  Aperture object of the mask
+        :field:  Field object of the mask
         :which:     default "both", "amplitude" or "phase"
         :colorbar:  True/False flag to plot colorbars
         :only_plot: if True, only shows image without labels and axes
@@ -148,6 +149,161 @@ def plot_field(field, which='both', scale=None, colorbar=True, only_plot=False, 
         plt.close(fig1)
         # img = cv2.imread("temp.png")
         # cv2.imwrite(filename, img)
+
+
+
+
+
+def plot_screen_XY(screen, which='both', scale=None, colorbar=True, only_plot=False, filename=None, **kwargs):
+    """
+    Plots the given screen
+
+    Args:
+        :screen:  Screen object of the mask
+        :which:     default "both", "amplitude" or "phase"
+        :colorbar:  True/False flag to plot colorbars
+        :only_plot: if True, only shows image without labels and axes
+        :filename:  if provided, saves figure to filename
+        ###available output file extensions are same as opencv https://docs.opencv.org/3.4/d4/da8/group__imgcodecs.html
+    """
+    assert type(screen) is Screen, "screen given is not an Screen object"
+    assert which in ["both", "amplitude", "phase"]
+    
+    if scale is not None:
+        scale_factor = scale
+    else:
+        scale_factor = 1 
+        scale = ""
+
+    if which == "both":
+        fig, axes = plt.subplots(1,2, sharey=True, sharex=True, )
+        ax1 = axes[0]
+        ax2 = axes[1]
+    elif which == "amplitude":
+        fig = plt.figure()
+        ax1 = plt.gca()
+    elif which == "phase":
+        fig = plt.figure()
+        ax2 = plt.gca()
+    
+    if which in ["both", "amplitude"]:
+        plt.sca(ax1)
+        ax1.set_aspect(1)
+        pcm = plt.pcolormesh(screen.x/scale_factor, screen.y/scale_factor, screen.amplitude[:,:,0],)
+        
+        if not only_plot:
+            plt.xlabel("x [%sm]"%scale)
+            plt.ylabel("y [%sm]"%scale)
+            if colorbar:
+                fig.colorbar(pcm, ax=ax1, label='Amplitude [a.u.]', shrink=0.6)
+            else:
+                plt.title("Amplitude")
+        else:
+            plt.axis('off')
+            ax1.get_xaxis().set_visible(False)
+            ax1.get_yaxis().set_visible(False)
+
+    if which in ["both", "phase"]:
+        plt.sca(ax2)
+        ax2.set_aspect(1)
+        pcm = plt.pcolormesh(screen.x/scale_factor, screen.y/scale_factor, screen.phase[:,:,0])
+    
+        if not only_plot:
+            plt.xlabel("x [%sm]"%scale)
+            plt.ylabel("y [%sm]"%scale)
+            if colorbar:
+                fig.colorbar(pcm, ax=ax2, label='Phase [rad]', shrink=0.6)
+            else:
+                plt.title("Phase")
+        else:
+            plt.axis('off')
+            ax2.get_xaxis().set_visible(False)
+            ax2.get_yaxis().set_visible(False) 
+            
+    plt.subplots_adjust(wspace=0.3)
+    if filename is not None:
+        plt.savefig("temp.png", bbox_inches='tight', pad_inches = 0)
+        plt.close(fig1)
+        # img = cv2.imread("temp.png")
+        # cv2.imwrite(filename, img)
+
+
+def plot_screen_YZ(screen, which='both', scale=None, colorbar=True, only_plot=False, filename=None, **kwargs):
+    """
+    Plots the given screen
+
+    Args:
+        :screen:  Screen object of the mask
+        :which:     default "both", "amplitude" or "phase"
+        :colorbar:  True/False flag to plot colorbars
+        :only_plot: if True, only shows image without labels and axes
+        :filename:  if provided, saves figure to filename
+        ###available output file extensions are same as opencv https://docs.opencv.org/3.4/d4/da8/group__imgcodecs.html
+    """
+    assert type(screen) is Screen, "screen given is not an Screen object"
+    assert which in ["both", "amplitude", "phase"]
+    
+    if scale is not None:
+        scale_factor = scale
+    else:
+        scale_factor = 1 
+        scale = ""
+
+    if which == "both":
+        fig, axes = plt.subplots(1,2, sharey=True, sharex=True, )
+        ax1 = axes[0]
+        ax2 = axes[1]
+    elif which == "amplitude":
+        fig = plt.figure()
+        ax1 = plt.gca()
+    elif which == "phase":
+        fig = plt.figure()
+        ax2 = plt.gca()
+    
+    if which in ["both", "amplitude"]:
+        plt.sca(ax1)
+        ax1.set_aspect(1)
+        pcm = plt.pcolormesh(screen.z/scale_factor, screen.y/scale_factor, screen.amplitude[0,:,:],)
+        
+        if not only_plot:
+            plt.xlabel("x [%sm]"%scale)
+            plt.ylabel("y [%sm]"%scale)
+            if colorbar:
+                fig.colorbar(pcm, ax=ax1, label='Amplitude [a.u.]', shrink=0.6)
+            else:
+                plt.title("Amplitude")
+        else:
+            plt.axis('off')
+            ax1.get_xaxis().set_visible(False)
+            ax1.get_yaxis().set_visible(False)
+
+    if which in ["both", "phase"]:
+        plt.sca(ax2)
+        ax2.set_aspect(1)
+        pcm = plt.pcolormesh(screen.z/scale_factor, screen.y/scale_factor, screen.phase[0,:,:])
+    
+        if not only_plot:
+            plt.xlabel("x [%sm]"%scale)
+            plt.ylabel("y [%sm]"%scale)
+            if colorbar:
+                fig.colorbar(pcm, ax=ax2, label='Phase [rad]', shrink=0.6)
+            else:
+                plt.title("Phase")
+        else:
+            plt.axis('off')
+            ax2.get_xaxis().set_visible(False)
+            ax2.get_yaxis().set_visible(False) 
+            
+    plt.subplots_adjust(wspace=0.3)
+    if filename is not None:
+        plt.savefig("temp.png", bbox_inches='tight', pad_inches = 0)
+        plt.close(fig1)
+        # img = cv2.imread("temp.png")
+        # cv2.imwrite(filename, img)
+
+
+
+
 
 
 ################## consider removing below
