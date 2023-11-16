@@ -487,7 +487,7 @@ def kernel_RS(field, k, x,y,z):
 
     return Exyz
 
-def RS_integral(field, screen, wavelength, n=1, scheduler=False):
+def RS_integral(field, screen, wavelength, n=1, parallel_computing=True):
     """
     Calculates the Raleyigh Sommerfeld integral in the  of the first kind, receiving an input field and an observation screen plane on which to 
     calculate the integral.
@@ -498,16 +498,18 @@ def RS_integral(field, screen, wavelength, n=1, scheduler=False):
         :screen:    Observation Screen
         :wavelength:    wavelength to consider
         :n:         refractive index of the propagation medium (default=1 for vacuum/air)
-
+        :parallel_computing: Flag to trigger the concurrent computation of the kernels using Python Dask library
     Returns:
         :screen:    Returns the screen populated with the result
     """
 
+    if (field.pixel_x > wavelength/2) or (field.pixel_y > wavelength/2):
+        print("Warning: Sampling field pixel is larger than wavelength/2!")
     k = 2* np.pi/(wavelength*n)
 
     xlen,ylen,zlen = screen.XX.shape
 
-    if scheduler:
+    if parallel_computing:
         delayed_tasks = []
         # For each cell on the screen, the RS integral will be calculated based on the input field
         # this loop sets up the delayed tasks to be executed

@@ -342,7 +342,7 @@ def plot_screen_ZZ(screen, which='both', scale=None, only_plot=False, filename=N
         
         if not only_plot:
             plt.xlabel("z [%sm]"%scale)
-            plt.ylabel("Amplitude [%sm]"%scale)
+            plt.ylabel("Amplitude [a.u.]")
            
         else:
             plt.axis('off')
@@ -356,7 +356,7 @@ def plot_screen_ZZ(screen, which='both', scale=None, only_plot=False, filename=N
     
         if not only_plot:
             plt.xlabel("z [%sm]"%scale)
-            plt.ylabel("Phase [%sm]"%scale)
+            plt.ylabel("Phase [rad]")
                 # plt.title("Phase")
         else:
             plt.axis('off')
