@@ -81,7 +81,7 @@ def create_aperture_from_array(array, pixel_size, center=False):
         x = x-np.mean(x)
         y = y-np.mean(y)
     aperture = Aperture(x,y)
-    aperture.aperture = array.T
+    aperture.aperture = array.TW
       
     return aperture
     
@@ -982,6 +982,8 @@ def fzp_mask(N_pixels, foc, wavelength, xsize, ysize, filename, plotting=False, 
         
     return fzp2 
     
+
+
 
 
 

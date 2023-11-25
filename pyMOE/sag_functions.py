@@ -108,3 +108,9 @@ def Alvarez_phase(XX,YY, f1, f2, tuning_distance, wavelength):
 
     return phase
 
+
+
+
+
+
+
