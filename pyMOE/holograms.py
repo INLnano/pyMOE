@@ -151,3 +151,7 @@ def calculate_phase_farfield(phase, source_beam=None):
     
     return field_1.amplitude
     
+
+
+def correct_mask_shift(mask):
+    return np.fft.fftshift(mask)

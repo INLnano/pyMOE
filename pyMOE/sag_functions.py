@@ -108,3 +108,74 @@ def Alvarez_phase(XX,YY, f1, f2, tuning_distance, wavelength):
 
     return phase
 
+
+
+
+
+### Dammann gratings
+
+def alternate_transitions(x, transitions, start_value=1):
+    y = np.full_like(x, start_value)
+    for i in range(len(transitions)-1):
+        mask = np.logical_and(x >= transitions[i], x < transitions[i+1])
+        y[mask] = start_value * (-1) ** (i+1)
+    mask = x >= transitions[-1]  # Add this line to handle the last transition
+    y[mask] = start_value * (-1) ** len(transitions)
+    return y
+
+
+
+def alternate_transitions_symmetric(x, transitions, start_value=1):
+    assert np.all(np.diff(transitions) > 0), "transitions should be monotonic increasing"
+    y = np.full_like(x, start_value)
+    for i in range(len(transitions)-1):
+        mask = np.logical_and(abs(x) >= transitions[i], abs(x) < transitions[i+1])
+        y[mask] = start_value * (-1) ** (i+1)
+    mask = abs(x) >= transitions[-1]  # Add this line to handle the last transition
+    y[mask] = start_value * (-1) ** len(transitions)
+    return y
+
+
+
+    
+
+def dammann_grating_element(x,transitions, start_value=1):
+    assert np.all(np.array(transitions)<=0.5), "transitions should be <= 0.5"
+
+    y = alternate_transitions_symmetric(x,transitions=transitions, start_value=start_value)
+    return y
+
+
+
+def dammann_grating_periodic(x,transitions, period=1, start_value=1):
+    # assert np.all(np.array(transitions)<=0.5), "transitions should be <= 0.5"
+
+    transitions = np.array(transitions)*period
+    # x = clip_remainder(x, period)
+    half_period = period/2
+    x = np.mod(np.abs(x+half_period), period)-half_period
+
+    y = alternate_transitions_symmetric(x,transitions=transitions, start_value=start_value)
+    return y
+
+
+    
+def dammann_2d(XX,YY,transitions_x=None, period_x=1, transitions_y=None, period_y=1, start_value_x=1, start_value_y=1):
+    x = XX[0,:]
+    y = YY[:,0]
+
+    if transitions_x is not None:
+        grating_x = dammann_grating_periodic(x, transitions_x, period=period_x, start_value=start_value_x)
+    else:
+        grating_x = np.ones_like(x)
+    
+    if transitions_y is not None:
+        grating_y = dammann_grating_periodic(y, transitions_y, period=period_y, start_value=start_value_y)
+    else:  
+        grating_y = np.ones_like(y)
+
+    grating = np.outer(grating_y, grating_x)
+    return grating
+
+
+

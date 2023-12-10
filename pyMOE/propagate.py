@@ -431,3 +431,126 @@ def Fraunhofer_criterion(aperturesiz, wavelength):
     zfraun = 2 * aperturesiz**2 / wavelength 
     
     return zfraun 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+################################################
+from scipy import integrate
+import dask.array as da
+
+from dask import delayed
+import dask
+import dask.bag as db
+from dask.diagnostics import ProgressBar
+
+
+
+@dask.delayed
+def kernel_RS(field, k, x,y,z):
+    """
+    Calculates the RS kernel integral from a field input aperture, assumed to be at z=0
+    and returns the calculated E field
+
+    Args:
+        :field:     input field
+        :k:         Calculated wavenumber k=2pi/(wl*n)
+        :x,y,z:     x, y, z coordinates of the screen point being evaluated
+
+    Returns:
+        :E:         Calculated field
+    """
+
+    z_field = 0 # the field source is assumed at z=0
+    r = np.sqrt( (field.XX-x)**2 + (field.YY-y)**2 + (z_field-z)**2)
+    r2 = r*r
+
+    prop1 = np.exp(r*1.0j*k)/r2
+    prop2 = z * k/(2*np.pi) *( 1/(r*k) - 1.0j)
+    propE = field.field * prop1 * prop2
+
+    # integrate over the input field and return field
+    Exyz = integrate.simpson(integrate.simpson(propE, field.x),field.y)/(2*np.pi) 
+
+    return Exyz
+
+def RS_integral(field, screen, wavelength, n=1, parallel_computing=True):
+    """
+    Calculates the Raleyigh Sommerfeld integral in the  of the first kind, receiving an input field and an observation screen plane on which to 
+    calculate the integral.
+    
+    Args: 
+        
+        :field:     input Field
+        :screen:    Observation Screen
+        :wavelength:    wavelength to consider
+        :n:         refractive index of the propagation medium (default=1 for vacuum/air)
+        :parallel_computing: Flag to trigger the concurrent computation of the kernels using Python Dask library
+    Returns:
+        :screen:    Returns the screen populated with the result
+    """
+
+    if (field.pixel_x > wavelength/2) or (field.pixel_y > wavelength/2):
+        print("Warning: Sampling field pixel is larger than wavelength/2!")
+    k = 2* np.pi/(wavelength*n)
+
+    xlen,ylen,zlen = screen.XX.shape
+
+    if parallel_computing:
+        delayed_tasks = []
+        # For each cell on the screen, the RS integral will be calculated based on the input field
+        # this loop sets up the delayed tasks to be executed
+        for x_i in range(xlen):
+            for y_i in range(ylen):
+                for z_i in range(zlen):
+
+                    x = screen.XX[x_i, y_i, z_i]
+                    y = screen.YY[x_i, y_i, z_i]
+                    z = screen.ZZ[x_i, y_i, z_i]
+
+                    # the kernel is configured as a dask delayed task
+                    result = kernel_RS(field, k, x,y,z)
+
+                    delayed_tasks.append(result)
+                    # screen.screen[x_i, y_i, z_i] = a
+        
+        # the dask.compute triggers the computation of the delayed tasks and stores the result
+        # into the results list
+        # print(delayed_tasks)
+        with ProgressBar():
+            results = list(dask.compute(*delayed_tasks))
+        # print(results)
+        # again we go through the for loop to pop the results and insert it into the screen position
+        for x_i in range(xlen):
+            for y_i in range(ylen):
+                for z_i in range(zlen):
+                    screen.screen[x_i, y_i, z_i] = results.pop(0)
+    else:
+        for x_i in range(xlen):
+            for y_i in range(ylen):
+                for z_i in range(zlen):
+
+                    x = screen.XX[x_i, y_i, z_i]
+                    y = screen.YY[x_i, y_i, z_i]
+                    z = screen.ZZ[x_i, y_i, z_i]
+
+                    # the kernel is configured as a dask delayed task
+                    result = kernel_RS(field, k, x,y,z).compute()
+                    screen.screen[x_i, y_i, z_i] = result
+                    progress_bar((x_i*zlen*ylen+y_i*zlen+z_i)/(xlen*ylen*zlen))
+        progress_bar(1)
+
+    return screen
