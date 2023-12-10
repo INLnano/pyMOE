@@ -460,7 +460,7 @@ from dask.diagnostics import ProgressBar
 
 
 @dask.delayed
-def kernel_RS(field, k, x,y,z):
+def kernel_RS(field, k, x,y,z, simp2d=False):
     """
     Calculates the RS kernel integral from a field input aperture, assumed to be at z=0
     and returns the calculated E field
@@ -483,11 +483,15 @@ def kernel_RS(field, k, x,y,z):
     propE = field.field * prop1 * prop2
 
     # integrate over the input field and return field
-    Exyz = integrate.simpson(integrate.simpson(propE, field.x),field.y)/(2*np.pi) 
+    if simp2d==True: 
+        Exyz = simpson2d(propE,field.x[0], field.x[-1], field.y[0], field.y[-1]) /(2*np.pi)
+    else: 
+        Exyz = integrate.simpson(integrate.simpson(propE, field.x),field.y)/(2*np.pi) 
 
     return Exyz
+    
 
-def RS_integral(field, screen, wavelength, n=1, parallel_computing=True):
+def RS_integral(field, screen, wavelength, n=1, parallel_computing=True, simp2d=False):
     """
     Calculates the Raleyigh Sommerfeld integral in the  of the first kind, receiving an input field and an observation screen plane on which to 
     calculate the integral.
@@ -520,9 +524,9 @@ def RS_integral(field, screen, wavelength, n=1, parallel_computing=True):
                     x = screen.XX[x_i, y_i, z_i]
                     y = screen.YY[x_i, y_i, z_i]
                     z = screen.ZZ[x_i, y_i, z_i]
-
+                    
                     # the kernel is configured as a dask delayed task
-                    result = kernel_RS(field, k, x,y,z)
+                    result = kernel_RS(field, k ,x,y,z, simp2d)
 
                     delayed_tasks.append(result)
                     # screen.screen[x_i, y_i, z_i] = a
@@ -539,18 +543,23 @@ def RS_integral(field, screen, wavelength, n=1, parallel_computing=True):
                 for z_i in range(zlen):
                     screen.screen[x_i, y_i, z_i] = results.pop(0)
     else:
-        for x_i in range(xlen):
-            for y_i in range(ylen):
-                for z_i in range(zlen):
+        with Timer():
+            for x_i in range(xlen):
+                for y_i in range(ylen):
+                    for z_i in range(zlen):
 
-                    x = screen.XX[x_i, y_i, z_i]
-                    y = screen.YY[x_i, y_i, z_i]
-                    z = screen.ZZ[x_i, y_i, z_i]
+                        x = screen.XX[x_i, y_i, z_i]
+                        y = screen.YY[x_i, y_i, z_i]
+                        z = screen.ZZ[x_i, y_i, z_i]
+                        
+                        result = kernel_RS(field, k ,x,y,z, simp2d).compute()
 
-                    # the kernel is configured as a dask delayed task
-                    result = kernel_RS(field, k, x,y,z).compute()
-                    screen.screen[x_i, y_i, z_i] = result
-                    progress_bar((x_i*zlen*ylen+y_i*zlen+z_i)/(xlen*ylen*zlen))
-        progress_bar(1)
+                        screen.screen[x_i, y_i, z_i] = result
+                        progress_bar((x_i*zlen*ylen+y_i*zlen+z_i)/(xlen*ylen*zlen))
+            progress_bar(1)
 
     return screen
+
+
+
+    
