@@ -12,7 +12,6 @@ Mask design features:
 Mask production features: 
 * Image file (binary/grayscale) <-> CAD files input-output conversion  
 * Operations with/within mask files (e.g. change layer numbers, make intances, CAD file import, merge shapes, ...)  
-* STL-to-GDS, convert 3D file into multi-layer GDS 
 
 
 # Getting started
