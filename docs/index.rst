@@ -5,6 +5,10 @@
 
 
 .. toctree::
+	:hidden:
+	notebooks
+	
+.. toctree::
    :maxdepth: 4
    
    
@@ -48,7 +52,6 @@ Example Notebooks
 Check the notebooks in the menu. 
 
 .. toctree::
-	:hidden:
 	notebooks
 
 
