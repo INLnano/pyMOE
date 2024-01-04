@@ -3,7 +3,7 @@ Example Notebooks
 
 Check the notebooks in the menu. 
 
-.. toctree::
+.. contents::
    :glob: 
    
    notebooks/Generate_masks.ipynb
