@@ -297,12 +297,8 @@ class GDSMask():
         print("Saved %s"%(filename))
         
         
-        
-#<<<<<<< dev-refactor-compatibility
-#    def create_layout(self, mode="raster", cellname='TOP', merge=True, break_vertices=250):
-#=======
+
     def create_layout(self, mode="raster", cellname='TOP', merge=False, break_vertices=250):
-#>>>>>>> dev-refactor
         """
         Creates GDS layout of the discretized aperture
         
@@ -323,8 +319,6 @@ class GDSMask():
         
         if mode is "raster":
             return self._create_layout_raster(cellname=cellname, merge=merge, break_vertices=break_vertices)
-        #else:
-        #    raise ValueError('Supported modes are "raster"')
         elif mode is "contour": 
             return self._create_layout_contour(cellname = cellname)
         else: 
@@ -385,21 +379,23 @@ class GDSMask():
 
                         current_point = i*size_x+j
                         aperture_value = self.aperture[i,j]
-
-                        current_layer = aperture_value
-                        x = XX[i,j]
-                        y = YY[i,j]
                         
-                        # Creates corners of rectangle with center at the data value
-                        rectangle_first_corner = (x-half_pixel_x,y-half_pixel_y)
-                        rectangle_second_corner = (x+half_pixel_x,y+half_pixel_y)
+                        if not np.isnan(aperture_value):
+                            current_layer = int(np.rint(aperture_value))
                         
-                        #Creates rectangle and adds it to the cell corresponding to the current layer
-                        rect = gdspy.Rectangle(rectangle_first_corner, rectangle_second_corner, current_layer, datatype)
-                        cell = list_cells[current_layer]
-                        
-                        # Saves each rectangle to a separate cell so we can merge more easily afterwards
-                        cell.add(rect)
+                            x = XX[i,j]
+                            y = YY[i,j]
+                            
+                            # Creates corners of rectangle with center at the data value
+                            rectangle_first_corner = (x-half_pixel_x,y-half_pixel_y)
+                            rectangle_second_corner = (x+half_pixel_x,y+half_pixel_y)
+                            
+                            #Creates rectangle and adds it to the cell corresponding to the current layer
+                            rect = gdspy.Rectangle(rectangle_first_corner, rectangle_second_corner,current_layer, datatype)
+                            cell = list_cells[current_layer]
+                            
+                            # Saves each rectangle to a separate cell so we can merge more easily afterwards
+                            cell.add(rect)
                         
                     if self.verbose:
                         progress_bar(current_point/total_points)
