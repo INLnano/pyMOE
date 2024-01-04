@@ -207,7 +207,7 @@ class Screen:
         :z:         Vector for the z axis
     
     Methods:
-        :field:  returns the field
+        :screen:  returns the field on the screen
         :shape:     returns the shape of the field
 
     """
