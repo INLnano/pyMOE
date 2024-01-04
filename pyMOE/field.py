@@ -80,7 +80,7 @@ def create_empty_field_from_field(field):
     Returns:
         :field: empty Field of same spatial dimensions
     """
-    assert type(field) is Field, "aperture must be of type Aperture"
+    assert type(field) is Field, "aperture must be of type Field"
 
 
     return Field(field.x, field.y)
