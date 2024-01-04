@@ -364,8 +364,7 @@ def gds2img(infile,outfile,norm, rescaled=0, verbose=False):
 
     plt.axis('equal')
     plt.axis('off')
-    
-    
+
     plt.tight_layout(pad=0, w_pad=0, h_pad=0) 
     fig.tight_layout(w_pad=0, h_pad=0, pad =0)
     
@@ -374,11 +373,9 @@ def gds2img(infile,outfile,norm, rescaled=0, verbose=False):
     plt.margins(0,0)
     
     fig.set_size_inches(((xmx-xmn)), ((ymx-ymn)))
-        
-     
+
     fig.savefig("temp.png", bbox_inches=0,pad_inches = 0, dpi=1)
 
-    
     #remove any white padding
     im = cv2.imread("temp.png")
 
