@@ -47,12 +47,12 @@ Check the notebooks in the menu.
    :caption: Contents:
    :glob: 
    
-   ..\\1 - Generate_masks\\Generate_masks.ipynb
-   ..\\2 - Metasurfaces\\Metasurfaces_masks.ipynb
-   ..\\3 - Import_export\\Import_export.ipynb
-   ..\\4 - GDS_operations\\GDS_operations.ipynb
-   ..\\5 - Holograms\\Hologram_masks.ipynb
-   ..\\6 - Propagation\\Propagate_masks.ipynb
+   notebooks/Generate_masks.ipynb
+   notebooks/Metasurfaces_masks.ipynb
+   notebooks/Import_export.ipynb
+   notekoobs/GDS_operations.ipynb
+   notebooks/Hologram_masks.ipynb
+   notebooks/Propagate_masks.ipynb
 
 
 Full function/class listings 
