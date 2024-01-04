@@ -81,7 +81,7 @@ def create_aperture_from_array(array, pixel_size, center=False):
         x = x-np.mean(x)
         y = y-np.mean(y)
     aperture = Aperture(x,y)
-    aperture.aperture = array.TW
+    aperture.aperture = array
       
     return aperture
     
@@ -512,7 +512,7 @@ def clip_aperture_within(aperture_in, new_dx0_1, new_dx0_2, new_dy0_1, new_dy0_2
         :new_dy0_1, new_dy0_2:  limits in y 
         
     Returns: 
-        Clipped aperture_in with the rectangle
+        Clipped aperture_in 
         
     """  
     #get limits of input aperture
