@@ -12,13 +12,19 @@ Features
 ********
 
 Mask design features: 
+
 * Designing multi-layer (grayscale) masks from analytical and/or numerical (e.g. Gerchberg–Saxton) methods  
+
 * Designing single layer (binary) dithered masks from grayscale masks 
+
 * Designing rudimentary metasurfaces masks 
+
 * Numerical propagation methods (Rayleigh-Sommerfeld, Fresnel, Fraunhofer) of electric fields from (grayscale) masks 
 
 Mask production features: 
+
 * Image file (binary/grayscale) <-> CAD files input-output conversion  
+
 * Operations with/within mask files (e.g. change layer numbers, make intances, CAD file import, merge shapes, ...)  
 
 Dependencies
@@ -32,15 +38,9 @@ Modular architechture
 pyMOE is based on a modular architechture, where each module provides specific functionalities. The use of each module and its inter-modular connections is exemplified in notebooks (see Notebooks, there is one notebook for each module). 
 
 Example Notebooks 
-*****************
+=================
 
 Check the notebooks in the menu. 
-
-Full function/class listings 
-****************************
-
-Please check the Indices and tables links below. 
- 
 
 .. toctree::
    :maxdepth: 4
@@ -53,10 +53,12 @@ Please check the Indices and tables links below.
    ..\\4 - GDS_operations\\GDS_operations.ipynb
    ..\\5 - Holograms\\Hologram_masks.ipynb
    ..\\6 - Propagation\\Propagate_masks.ipynb
-   
-   
-Indices and tables
-==================
+
+
+Full function/class listings 
+============================
+
+Please check the Indices and tables links below:
 
 * :ref:`genindex`
 * :ref:`modindex`
