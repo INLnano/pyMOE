@@ -29,7 +29,7 @@ A list of dependencies (with versions) is at https://github.com/INLnano/pyMOE/bl
 Modular architechture 
 *********************
 
-pyMOE is based on a modular architechture, where each module provides specific functionalities. The use of each module is exemplified in notebooks (see Notebooks, there is one notebook for each module). 
+pyMOE is based on a modular architechture, where each module provides specific functionalities. The use of each module and its inter-modular connections is exemplified in notebooks (see Notebooks, there is one notebook for each module). 
 
 Example Notebooks 
 *****************
