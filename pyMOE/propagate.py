@@ -163,6 +163,8 @@ def kernel_RS(field, k, x,y,z, simp2d=False):
     """
     Calculates the RS kernel integral from a field input aperture, assumed to be at z=0
     and returns the calculated E field
+    
+    Implements the Kernel in Mahajan 2011 part II eq 1-20 
 
     Args:
         :field:     input field
@@ -192,7 +194,7 @@ def kernel_RS(field, k, x,y,z, simp2d=False):
 
 def RS_integral(field, screen, wavelength, n=1, parallel_computing=True, simp2d=False):
     """
-    Calculates the Raleyigh Sommerfeld integral in the  of the first kind, receiving an input field and an observation screen plane on which to 
+    Calculates the Raleyigh Sommerfeld integral in the  of the first kind (Mahajan 2011 part II eq 1-20), receiving an input field and an observation screen plane on which to 
     calculate the integral.
     
     Args: 
