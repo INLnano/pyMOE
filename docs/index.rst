@@ -5,8 +5,6 @@
 
 .. toctree::
    :maxdepth: 4
-   :caption: Contents:
-   :glob: 
    
 Welcome to pyMOE's documentation!
 =================================
@@ -46,6 +44,9 @@ Example Notebooks
 =================
 
 Check the notebooks in the menu. 
+
+.. toctree::
+   :glob: 
    
    notebooks/Generate_masks.ipynb
    notebooks/Metasurfaces_masks.ipynb
