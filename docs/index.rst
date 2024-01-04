@@ -48,6 +48,7 @@ Example Notebooks
 Check the notebooks in the menu. 
 
 .. toctree::
+	:hidden:
 	notebooks
 
 
