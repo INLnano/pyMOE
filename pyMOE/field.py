@@ -47,6 +47,9 @@ class Field:
     @property
     def phase(self):
         return np.angle(self.field)
+    @property 
+    def intensity(self):
+        return np.abs(self.field)**2
     
 
     
@@ -227,6 +230,9 @@ class Screen:
     @property
     def phase(self):
         return np.angle(self.screen)
+    @property 
+    def intensity(self):
+        return np.abs(self.screen)**2
     
 
     
