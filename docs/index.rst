@@ -35,12 +35,22 @@ Mask production features:
 Dependencies
 ************
 
-A list of dependencies (with versions) is at https://github.com/INLnano/pyMOE/blob/main/docs/requirements.txt . To use the package straighforwardly please make sure you have those dependencies (and versions) installed. 
+A list of dependencies (with versions) is at https://github.com/INLnano/pyMOE/blob/main/requirements.txt . To use the package straighforwardly please make sure you have those dependencies (and versions) installed. 
 
 Modular architechture 
 *********************
 
 pyMOE is based on a modular architechture, where each module provides specific functionalities. The use of each module and its inter-modular connections is exemplified in notebooks (see Notebooks, there is one notebook for each module). 
+
+Example Notebooks 
+*****************
+
+Check the notebooks in the sidebar menu.
+
+Full function/class listings 
+****************************
+
+Please check the function/class Indices and Tables in the sidebar menu or use Search functionality.
 
 .. toctree::
    notebooks
