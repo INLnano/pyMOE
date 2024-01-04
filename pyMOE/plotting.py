@@ -189,7 +189,7 @@ def plot_screen_XY(screen, which='both', scale=None, colorbar=True, only_plot=Fa
     if which in ["both", "amplitude"]:
         plt.sca(ax1)
         ax1.set_aspect(1)
-        pcm = plt.pcolormesh(screen.x/scale_factor, screen.y/scale_factor, screen.amplitude[:,:,0],)
+        pcm = plt.pcolormesh(screen.x/scale_factor, screen.y/scale_factor, screen.amplitude.reshape((len(screen.x),len(screen.y))))
         
         if not only_plot:
             plt.xlabel("x [%sm]"%scale)
@@ -206,7 +206,7 @@ def plot_screen_XY(screen, which='both', scale=None, colorbar=True, only_plot=Fa
     if which in ["both", "phase"]:
         plt.sca(ax2)
         ax2.set_aspect(1)
-        pcm = plt.pcolormesh(screen.x/scale_factor, screen.y/scale_factor, screen.phase[:,:,0])
+        pcm = plt.pcolormesh(screen.x/scale_factor, screen.y/scale_factor, screen.phase.reshape((len(screen.x),len(screen.y))))
     
         if not only_plot:
             plt.xlabel("x [%sm]"%scale)
@@ -263,11 +263,11 @@ def plot_screen_YZ(screen, which='both', scale=None, colorbar=True, only_plot=Fa
     if which in ["both", "amplitude"]:
         plt.sca(ax1)
         # ax1.set_aspect(1)
-        pcm = plt.pcolormesh(screen.z/scale_factor, screen.y/scale_factor, screen.amplitude[0,:,:],)
+        pcm = plt.pcolormesh(screen.z/scale_factor, screen.y/scale_factor, screen.amplitude[:,0])
         
         if not only_plot:
-            plt.xlabel("x [%sm]"%scale)
-            plt.ylabel("y [%sm]"%scale)
+            plt.xlabel("y [%sm]"%scale)
+            plt.ylabel("z [%sm]"%scale)
             if colorbar:
                 fig.colorbar(pcm, ax=ax1, label='Amplitude [a.u.]', shrink=0.6)
             else:
@@ -280,11 +280,11 @@ def plot_screen_YZ(screen, which='both', scale=None, colorbar=True, only_plot=Fa
     if which in ["both", "phase"]:
         plt.sca(ax2)
         # ax2.set_aspect(1)
-        pcm = plt.pcolormesh(screen.z/scale_factor, screen.y/scale_factor, screen.phase[0,:,:])
+        pcm = plt.pcolormesh(screen.z/scale_factor, screen.y/scale_factor, screen.phase[:,0])
     
         if not only_plot:
-            plt.xlabel("x [%sm]"%scale)
-            plt.ylabel("y [%sm]"%scale)
+            plt.xlabel("y [%sm]"%scale)
+            plt.ylabel("z [%sm]"%scale)
             if colorbar:
                 fig.colorbar(pcm, ax=ax2, label='Phase [rad]', shrink=0.6)
             else:
