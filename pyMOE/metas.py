@@ -52,9 +52,12 @@ def metasurface_from_phase(xsiz, ysiz, pixelx, pixely, p, aperture_vals, topcell
 
     #Start the metasurface library  
     lib = gdspy.GdsLibrary()
+
+    if largest_phase is None: 
+        largest_phase = np.max(aperture_vals)
     
-    #Extract unique values of phase from the aperturea 2D array 
-    phase_array = np.unique(aperture_vals)
+    #Extract unique values of phase from the aperture 2D array 
+    phase_array = np.unique(aperture_vals[aperture_vals <=largest_phase])
     
     ##############################################################
     ###Various options for the metasurface currently given as args  
@@ -109,7 +112,7 @@ def metasurface_from_phase(xsiz, ysiz, pixelx, pixely, p, aperture_vals, topcell
     if type(gdspyelements) is not str:
         print("Custom metasurface")
         
-        print(np.asarray(gdspyelements).size)
+        #print(np.asarray(gdspyelements).size)
                 
         if np.asarray(gdspyelements).size>1:
             assert len(gdspyelements)==len(phase_array), "The length of unique phase values and gdspyelements argument array is different." 
@@ -138,11 +141,6 @@ def metasurface_from_phase(xsiz, ysiz, pixelx, pixely, p, aperture_vals, topcell
         
     if pflag==1: 
         print("Unsuported gdspyelements argument!")  
-        
-        
-    if largest_phase is None: 
-        largest_phase = np.max(aperture_vals)
-      
     ######################################################################################################
     #####--------------------------------
     print("Building the metasurface...")
@@ -250,8 +248,11 @@ def metasurface_from_phase_instances (xsiz, ysiz, pixelx, pixely, p, aperture_va
     #Start the metasurface library  
     lib = gdspy.GdsLibrary()
     
+    if largest_phase is None: 
+        largest_phase = np.max(aperture_vals)
+        
     #Extract unique values of phase from the aperturea 2D array 
-    phase_array = np.unique(aperture_vals)
+    phase_array = np.unique(aperture_vals[aperture_vals <=largest_phase])
     
     ##############################################################
     ###Various options for the metasurface currently given as args  
@@ -307,7 +308,7 @@ def metasurface_from_phase_instances (xsiz, ysiz, pixelx, pixely, p, aperture_va
         if type(gdspyelements) is not str:
             print("Custom metasurface")
             
-            print(np.asarray(gdspyelements).size)
+            #print(np.asarray(gdspyelements).size)
                     
             if np.asarray(gdspyelements).size>1:
                 assert len(gdspyelements)==len(phase_array), "The length of unique phase values and gdspyelements argument array is different." 
@@ -336,10 +337,7 @@ def metasurface_from_phase_instances (xsiz, ysiz, pixelx, pixely, p, aperture_va
     
     if pflag==1: 
         print("Unsuported gdspyelements argument!")              
-    
-    if largest_phase is None: 
-        largest_phase = np.max(aperture_vals)
-      
+
     ########################################################################################################
     #####--------------------------------
     print("Building the metasurface...")
