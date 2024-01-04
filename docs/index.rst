@@ -47,12 +47,13 @@ Example Notebooks
 
 Check the notebooks in the sidebar menu.
 
+.. toctree::
+   notebooks
+
 Full function/class listings 
 ****************************
 
 Please check the function/class Indices and Tables in the sidebar menu or use Search functionality.
 
 .. toctree::
-   :hidden:
-   notebooks
    listings
