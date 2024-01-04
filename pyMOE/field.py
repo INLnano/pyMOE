@@ -26,18 +26,18 @@ class Field:
         :y:         Vector for the y axis
     
     Methods:
-        :field:  returns the field
+        :field:     returns the field
         :shape:     returns the shape of the field
 
     """
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.XX, self.YY = np.meshgrid(x, y,)# indexing='ij')
+        self.XX, self.YY = np.meshgrid(x, y) # indexing='ij')
         self.pixel_x = self.x[1]-self.x[0]
         self.pixel_y = self.y[1]-self.y[0]
     
-        self.field = np.zeros(self.XX.shape)
+        self.field = np.zeros(self.XX.shape, dtype=complex)
     @property
     def shape(self):
         return self.field.shape
@@ -215,7 +215,7 @@ class Screen:
         self.x = x
         self.y = y
         self.z = z
-        self.XX, self.YY, self.ZZ = np.meshgrid(x, y, z, indexing='ij')
+        self.XX, self.YY, self.ZZ = np.meshgrid(x, y, z)#, indexing='ij')
         # self.pixel_x = self.x[1]-self.x[0]
         # self.pixel_y = self.y[1]-self.y[0]
         # self.pixel_z = self.z[1]-self.z[0]
