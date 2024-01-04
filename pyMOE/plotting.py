@@ -7,6 +7,7 @@ Module for plotting apertures ans save them as image files
 
 import matplotlib.pyplot as plt
 import cv2 
+import numpy as np
 
 from pyMOE import Aperture
 from pyMOE import Field
@@ -15,16 +16,35 @@ from pyMOE import ApertureField
 
 
 def save_mask_plot(maskcir, xsize, ysize, filename):
-    fig1 = plt.figure()
-    figx = plt.imshow(maskcir, vmin=0, vmax=1,extent =[0,xsize,0,ysize], cmap=plt.get_cmap("Greys"))
-    plt.axis('off')
-    figx.axes.get_xaxis().set_visible(False)
-    figx.axes.get_yaxis().set_visible(False)
-    plt.savefig("temp.png", bbox_inches='tight', pad_inches = 0)
-    plt.close(fig1)
+    plt.ioff()
     
-    img = cv2.imread("temp.png")
-    cv2.imwrite(filename, img)
+    fig = plt.figure()
+    ax = fig.add_subplot(1,1,1)
+    
+    fig.set_dpi(1)
+
+    plt.axis('equal')
+    plt.axis('off')
+    
+    maskcir = np.flip(maskcir,0)
+    plt.imshow(maskcir, vmin=0, vmax=1,extent =[0,xsize,0,ysize], cmap=plt.get_cmap("Greys"))
+    
+    plt.tight_layout(pad=0, w_pad=0, h_pad=0) 
+    fig.tight_layout(w_pad=0, h_pad=0, pad =0)
+    
+    plt.gca().set_axis_off()
+    plt.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0, hspace = 0, wspace = 0) 
+    plt.margins(0,0)
+    
+    fig.set_size_inches((xsize), (ysize))
+    fig.savefig("temp.png", bbox_inches=0,pad_inches = 0, dpi=1)
+    plt.close()
+    
+    #remove any white padding
+    im = cv2.imread("temp.png")
+    cv2.imwrite(filename, im)
+    
+    plt.ion()
     
 
 def plot_aperture(aperture, scale=None, colorbar=True, only_plot=False, filename=None, **kwargs):
