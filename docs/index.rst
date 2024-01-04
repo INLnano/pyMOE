@@ -46,11 +46,6 @@ Example Notebooks
 =================
 
 Check the notebooks in the menu. 
-
-.. toctree::
-   :maxdepth: 4
-   :caption: Contents:
-   :glob: 
    
    notebooks/Generate_masks.ipynb
    notebooks/Metasurfaces_masks.ipynb
