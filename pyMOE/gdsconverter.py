@@ -250,9 +250,9 @@ class GDSMask():
         assert self.aperture is not None, "Cannot create_layout() as aperture is not yet discretized"
         
         
-        if mode is "raster":
+        if mode == "raster":
             return self._create_layout_raster(cellname=cellname, merge=merge, break_vertices=break_vertices)
-        elif mode is "contour": 
+        elif mode == "contour": 
             return self._create_layout_contour(cellname = cellname)
         else: 
             raise ValueError("Unsuported option!")
@@ -399,7 +399,10 @@ class GDSMask():
             with Timer("Create Contours"):
             ## consider to make the discretization as for the raster, to have fixed number of levels 
             ###TODO: change for the actual position of in zlevs 
+                plt.ioff()
                 cs = plt.contourf(XX,YY,self.mask.aperture_discretized, len(self.levels))
+                plt.close()
+                plt.ion()
 
             self.gdslib, cell1 = cell_wpol_gdspy(cs, cellname, prec = self.precision, mpoints=1e9)
            
