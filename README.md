@@ -16,7 +16,7 @@ Mask production features:
 
 # Getting started
 
-Follow the notebooks inside `notebooks\` directory (requires Jupyter Notebook or Lab, as well as a Python distribution, recommended >3.7, and dependencies). 
+Follow the notebooks inside `notebooks\` directory (for running we recommend having Jupyter Notebook or Lab with a Python distribution >3.7, as well as required dependencies). 
 
 
 # Documentation
