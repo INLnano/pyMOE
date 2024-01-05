@@ -21,7 +21,7 @@ Follow the notebooks inside `notebooks\` directory
 
 # Documentation
 
-For documentation on classes and functions within package's modules, please visit https://pymoe-doc.readthedocs.io 
+For documentation please visit https://pymoe-doc.readthedocs.io 
 
 # Dependencies
 
