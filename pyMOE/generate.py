@@ -79,7 +79,7 @@ def create_aperture_from_array(array, pixel_size, center=False):
     
     if center:
         x = x-np.mean(x)
-        y = x-np.mean(y)
+        y = y-np.mean(y)
     aperture = Aperture(x,y)
     aperture.aperture = array
       
@@ -512,7 +512,7 @@ def clip_aperture_within(aperture_in, new_dx0_1, new_dx0_2, new_dy0_1, new_dy0_2
         :new_dy0_1, new_dy0_2:  limits in y 
         
     Returns: 
-        Clipped aperture_in with the rectangle
+        Clipped aperture_in 
         
     """  
     #get limits of input aperture
@@ -982,6 +982,8 @@ def fzp_mask(N_pixels, foc, wavelength, xsize, ysize, filename, plotting=False, 
         
     return fzp2 
     
+
+
 
 
 

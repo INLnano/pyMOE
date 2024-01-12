@@ -82,73 +82,6 @@ def merge_polygons(polygons, layer=0, assume_non_overlap=True, break_vertices=25
     return list_polygonsets
     
 ##############################################################################################################################
-    
-def change_layers_gdspy(fstgds_filename, new_cellname, layerspol, new_layers, output_filename):
-    """
-    Transforms layers from the source layer (layerpol) into the destination (new_layers) 
-    By default considers datatypes are int(0), set datatypes to 0 function can be used before
-    Assumes that we have the polygons in the top level of the input gds 
-    
-    Args: 
-        :fstgds_filename:    string filename of gds to read
-        :new_cellname:       string name of cell in the gds 
-        :layerspol:          array of the layers of the gds file, if it is not the same, leaves the absent layers untouched 
-        :new_layers:         array of destination layers - MUST HAVE THE SAME CORRESPONDENCE 
-        :output_filename:    string filename of output gds
-        
-
-    """
-    
-    
-    lib = gdspy.GdsLibrary()
-    
-    #open the inout gds file
-    lib.read_gds(fstgds_filename)
-    gdspy.current_library = lib
-
-    #get the top cell of the  input gds file 
-    currentcell = lib.top_level()[0]
-
-    #get all polygons within the input gds file 
-    polygons_dict= currentcell.get_polygons(by_spec=True)
-    
-    #for info get the layers in the current file 
-    listlayers = currentcell.get_layers() 
-    
-    #make sure the arrays are both int 
-    filelayers = np.array(list(listlayers), dtype = int)
-    layerpols = np.array(layerspol, dtype=int)
-
-    #new library with the new cell 
-    lib2 = gdspy.GdsLibrary() 
-    newcell = lib2.new_cell(new_cellname)
-
-    #Check if given array corresponds to the layers within file 
-    comp = np.array_equal(filelayers, layerspol)
-    if comp is False:
-        print("Attention: The layers given " + str(layerspol) + " are NOT the same as the layers in the file " + str(filelayers))
-    
-    #change the layers
-    for ips, ids in zip(layerspol, new_layers): 
-        newpols = gdspy.PolygonSet(polygons_dict[(ips, 0)],layer=ids, datatype=0)
-        currentcell.remove_polygons(lambda pts, layer, datatype: layer == ips)
-        newcell.add(newpols)
-        
-        print("Changed the shapes in layer "+str(ips)+" into "+str(ids)) 
-    
-    #layers that are not within the layers list, remain the same 
-    for ips in filelayers:
-        if ips not in layerspol:
-            newpols = gdspy.PolygonSet(polygons_dict[(ips, 0)],layer=ips, datatype=0)
-            currentcell.remove_polygons(lambda pts, layer, datatype: layer == ips)
-            newcell.add(newpols)
-
-    lib.remove(currentcell)    
-    lib.write_gds(output_filename)
-    
-    print("Changed layers - wrote result to " +str(output_filename))
-
-
 
 def cell_wpol_gdspy(cs, cellname, prec=1e-6, mpoints=1e9):
     """
@@ -297,12 +230,8 @@ class GDSMask():
         print("Saved %s"%(filename))
         
         
-        
-#<<<<<<< dev-refactor-compatibility
-#    def create_layout(self, mode="raster", cellname='TOP', merge=True, break_vertices=250):
-#=======
+
     def create_layout(self, mode="raster", cellname='TOP', merge=False, break_vertices=250):
-#>>>>>>> dev-refactor
         """
         Creates GDS layout of the discretized aperture
         
@@ -321,11 +250,9 @@ class GDSMask():
         assert self.aperture is not None, "Cannot create_layout() as aperture is not yet discretized"
         
         
-        if mode is "raster":
+        if mode == "raster":
             return self._create_layout_raster(cellname=cellname, merge=merge, break_vertices=break_vertices)
-        #else:
-        #    raise ValueError('Supported modes are "raster"')
-        elif mode is "contour": 
+        elif mode == "contour": 
             return self._create_layout_contour(cellname = cellname)
         else: 
             raise ValueError("Unsuported option!")
@@ -385,21 +312,23 @@ class GDSMask():
 
                         current_point = i*size_x+j
                         aperture_value = self.aperture[i,j]
-
-                        current_layer = aperture_value
-                        x = XX[i,j]
-                        y = YY[i,j]
                         
-                        # Creates corners of rectangle with center at the data value
-                        rectangle_first_corner = (x-half_pixel_x,y-half_pixel_y)
-                        rectangle_second_corner = (x+half_pixel_x,y+half_pixel_y)
+                        if not np.isnan(aperture_value):
+                            current_layer = int(np.rint(aperture_value))
                         
-                        #Creates rectangle and adds it to the cell corresponding to the current layer
-                        rect = gdspy.Rectangle(rectangle_first_corner, rectangle_second_corner, current_layer, datatype)
-                        cell = list_cells[current_layer]
-                        
-                        # Saves each rectangle to a separate cell so we can merge more easily afterwards
-                        cell.add(rect)
+                            x = XX[i,j]
+                            y = YY[i,j]
+                            
+                            # Creates corners of rectangle with center at the data value
+                            rectangle_first_corner = (x-half_pixel_x,y-half_pixel_y)
+                            rectangle_second_corner = (x+half_pixel_x,y+half_pixel_y)
+                            
+                            #Creates rectangle and adds it to the cell corresponding to the current layer
+                            rect = gdspy.Rectangle(rectangle_first_corner, rectangle_second_corner,current_layer, datatype)
+                            cell = list_cells[current_layer]
+                            
+                            # Saves each rectangle to a separate cell so we can merge more easily afterwards
+                            cell.add(rect)
                         
                     if self.verbose:
                         progress_bar(current_point/total_points)
@@ -470,7 +399,10 @@ class GDSMask():
             with Timer("Create Contours"):
             ## consider to make the discretization as for the raster, to have fixed number of levels 
             ###TODO: change for the actual position of in zlevs 
+                plt.ioff()
                 cs = plt.contourf(XX,YY,self.mask.aperture_discretized, len(self.levels))
+                plt.close()
+                plt.ion()
 
             self.gdslib, cell1 = cell_wpol_gdspy(cs, cellname, prec = self.precision, mpoints=1e9)
            

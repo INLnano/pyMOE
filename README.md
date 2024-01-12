@@ -12,21 +12,20 @@ Mask design features:
 Mask production features: 
 * Image file (binary/grayscale) <-> CAD files input-output conversion  
 * Operations with/within mask files (e.g. change layer numbers, make intances, CAD file import, merge shapes, ...)  
-* STL-to-GDS, convert 3D file into multi-layer GDS 
 
 
 # Getting started
 
-Follow the notebooks inside `notebooks\` directory
+Follow the notebooks inside `notebooks\` directory (for running we recommend having Jupyter Notebook or Lab with a Python distribution >3.7, as well as required dependencies). 
 
 
 # Documentation
 
-For documentation on classes and functions within package's modules, please visit https://pymoe-doc.readthedocs.io 
+For documentation please visit https://pymoe-doc.readthedocs.io 
 
 # Dependencies
 
-A list of dependencies (with versions) is at https://github.com/INLnano/pyMOE/blob/main/docs/requirements.txt . To use the package straighforwardly please make sure you have those dependencies (and versions) installed. 
+A list of dependencies (with versions) is at https://github.com/INLnano/pyMOE/blob/main/requirements.txt . To use the package straighforwardly please make sure you have those dependencies (and versions) installed. 
 
 # Test
 

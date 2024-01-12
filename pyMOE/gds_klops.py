@@ -437,6 +437,74 @@ def change_layers(fstgds_filename, fst_cellname, layerspol,\
     ly2.write(output_filename)
     
     print("Changed layers - wrote result to " +str(output_filename))
+    
+    
+    
+def change_layers_gdspy(fstgds_filename, new_cellname, layerspol, new_layers, output_filename):
+    """
+    Transforms layers from the source layer (layerpol) into the destination (new_layers) 
+    By default considers datatypes are int(0), set datatypes to 0 function can be used before
+    Assumes that we have the polygons in the top level of the input gds 
+    
+    Args: 
+        :fstgds_filename:    string filename of gds to read
+        :new_cellname:       string name of cell in the gds 
+        :layerspol:          array of the layers of the gds file, if it is not the same, leaves the absent layers untouched 
+        :new_layers:         array of destination layers - MUST HAVE THE SAME CORRESPONDENCE 
+        :output_filename:    string filename of output gds
+        
+
+    """
+    
+    
+    lib = gdspy.GdsLibrary()
+    
+    #open the inout gds file
+    lib.read_gds(fstgds_filename)
+    gdspy.current_library = lib
+
+    #get the top cell of the  input gds file 
+    currentcell = lib.top_level()[0]
+
+    #get all polygons within the input gds file 
+    polygons_dict= currentcell.get_polygons(by_spec=True)
+    
+    #for info get the layers in the current file 
+    listlayers = currentcell.get_layers() 
+    
+    #make sure the arrays are both int 
+    filelayers = np.array(list(listlayers), dtype = int)
+    layerpols = np.array(layerspol, dtype=int)
+
+    #new library with the new cell 
+    lib2 = gdspy.GdsLibrary() 
+    newcell = lib2.new_cell(new_cellname)
+
+    #Check if given array corresponds to the layers within file 
+    comp = np.array_equal(filelayers, layerspol)
+    if comp is False:
+        print("Attention: The layers given " + str(layerspol) + " are NOT the same as the layers in the file " + str(filelayers))
+    
+    #change the layers
+    for ips, ids in zip(layerspol, new_layers): 
+        newpols = gdspy.PolygonSet(polygons_dict[(ips, 0)],layer=ids, datatype=0)
+        currentcell.remove_polygons(lambda pts, layer, datatype: layer == ips)
+        newcell.add(newpols)
+        
+        print("Changed the shapes in layer "+str(ips)+" into "+str(ids)) 
+    
+    #layers that are not within the layers list, remain the same 
+    for ips in filelayers:
+        if ips not in layerspol:
+            newpols = gdspy.PolygonSet(polygons_dict[(ips, 0)],layer=ips, datatype=0)
+            currentcell.remove_polygons(lambda pts, layer, datatype: layer == ips)
+            newcell.add(newpols)
+
+    lib.remove(currentcell)    
+    lib.write_gds(output_filename)
+    
+    print("Changed layers - wrote result to " +str(output_filename))
+
      
     
 ####FUNCTION USING KLAYOUT PYTHON LIB TO RESCALE THE WHOLE LAYOUT
@@ -578,8 +646,6 @@ def diffs_layers_arrays(readfile, cellname, layerspol1, datatypes1, layerspol2, 
     print("Saved the result to "+str(outfile))
     
 
-
-########CREATES A GDSPY CELL WITH THE POLYGONS USING GDSPY
 def cell_wpol_gdspy(cs, cellname, prec=1e-6, mpoints=1e9):
     """
     Cell made with cut polygons from the z profile
@@ -650,9 +716,8 @@ def cell_wpol_gdspy(cs, cellname, prec=1e-6, mpoints=1e9):
                
     return lib, cell 
     
-    
-########OTHER EXPERIMENTAL APPROACH USING GDSPY , accelerates the calculation by considering just 2 pols  within a layer - but might lose some polygons in some complicated cases... 
-#CAREFUL, this is better for estimation ONLY as we need enough resolution in the contourplot for this approach to work properly 
+ 
+
 def cell_wpol_gdspy_fast(cs, cellname, prec=1e-6, mpoints=1e9):
     """
     Cell made with cut polygons from the z profile 
@@ -665,6 +730,7 @@ def cell_wpol_gdspy_fast(cs, cellname, prec=1e-6, mpoints=1e9):
         [0] gdspy library
         [1] cell with polygons 
     ##By default the levels start at 0 and go to the number of levels in the contourplot 
+    #CAREFUL, this is better for estimation ONLY as we need enough resolution in the contourplot for this approach to work properly 
     """
     
     from shapely import geometry

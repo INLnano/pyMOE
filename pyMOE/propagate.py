@@ -13,11 +13,16 @@ import scipy.fftpack as sfft
 
 import decimal
 
-##We will use the simpson method for cnumerical calc of integral
 from pyMOE.utils import simpson2d 
-##Another integration methods are also possible 
-#from pyMOE.utils import double_Integral
- 
+
+from scipy import integrate
+
+import dask
+import dask.array as da
+from dask import delayed
+import dask.bag as db
+from dask.diagnostics import ProgressBar
+
 from pyMOE.utils import progress_bar, Timer
 
 def fresnel(z, mask, npixmask, pixsizemask, npixscreen, dxscreen, dyscreen, wavelength):
@@ -34,7 +39,8 @@ def fresnel(z, mask, npixmask, pixsizemask, npixscreen, dxscreen, dyscreen, wave
         :dyscreen:      y-size of the screen   in m
         :wavelength:    wavelength in m 
     
-    returns 2D map (x-y plane) with abs of Electric field at distance z
+    Returns: 
+        2D map (x-y plane) with abs of Electric field at distance z 
     
     """ 
     k = 2* np.pi/wavelength
@@ -63,8 +69,6 @@ def fresnel(z, mask, npixmask, pixsizemask, npixscreen, dxscreen, dyscreen, wave
 def fresnel_kernel(k, xm, ym, z, mask):
     #Goodman, exp 4-17
     v1  = np.exp(1.0j*k* (xm*xm + ym*ym)/ (2*z))
-    #v2  = np.exp(1.0j*k* (xs*xs + ys*ys)/ (2*z)) 
-    #v3  = np.exp(1.0j*k*z)/ (1.0j*wavelength*z)
     intarg = v1 * mask
     Ef = sfft.fftshift(sfft.fft2(sfft.ifftshift(intarg)))
 
@@ -84,7 +88,8 @@ def fraunhofer(z, mask, npixmask, pixsizemask, npixscreen, dxscreen, dyscreen, w
         :dyscreen:      y-size of the screen   in m
         :wavelength:    wavelength in m 
 
-    returns 2D map (x-y plane) with abs of Electric field at distance z 
+    Returns: 
+        2D map (x-y plane) with abs of Electric field
     
     """
     
@@ -118,6 +123,152 @@ def fraunhofer_kernel(k, xm, ym, mask, z, wavelength):
     return Ef 
     
 
+
+
+def Fresnel_num(width, wavelength, zdist):
+    """
+    Calculation of Fresnel number, Goodman pag 85
+    
+    Args:
+        :width:         size of the aperture in m 
+        :wavelength:    wavelength of the aperture in m 
+        :zdist:         distance to the screen in m 
+    
+    Returns: 
+        Fresnel number 
+    """
+    NF = width**2 / (wavelength * zdist)
+    return NF 
+    
+def Fraunhofer_criterion(aperturesiz, wavelength): 
+    """
+    Calculation of "Fraunhofer distance" , Goodman exp 4-27  
+    
+    Args:
+        :aperturesiz: size of the aperture in m 
+        :wavelength: wavelength of the aperture in m 
+    
+    Returns: 
+        Fraunhofer distance 
+    """
+    zfraun = 2 * aperturesiz**2 / wavelength 
+    
+    return zfraun 
+
+
+
+
+@dask.delayed
+def kernel_RS(field, k, x,y,z, simp2d=False):
+    """
+    Calculates the RS kernel integral from a field input aperture, assumed to be at z=0
+    and returns the calculated E field
+    
+    Implements the Kernel in Mahajan 2011 part II eq 1-20 
+
+    Args:
+        :field:     input field
+        :k:         Calculated wavenumber k=2pi/(wl*n)
+        :x,y,z:     x, y, z coordinates of the screen point being evaluated
+        :simp2d:    Defaults False, if True uses the simpson2d function
+    Returns:
+        :E:         Calculated field
+    """
+
+    z_field = 0 # the field source is assumed at z=0
+    r = np.sqrt( (field.XX-x)**2 + (field.YY-y)**2 + (z_field-z)**2)
+    r2 = r*r
+
+    prop1 = np.exp(r*1.0j*k)/r2
+    prop2 = z * k/(2*np.pi) *( 1/(r*k) - 1.0j)
+    propE = field.field * prop1 * prop2
+
+    # integrate over the input field and return field
+    if simp2d==True: 
+        Exyz = simpson2d(propE,field.x[0], field.x[-1], field.y[0], field.y[-1]) /(2*np.pi)
+    else: 
+        Exyz = integrate.simpson(integrate.simpson(propE, field.x),field.y)/(2*np.pi) 
+
+    return Exyz
+    
+
+def RS_integral(field, screen, wavelength, n=1, parallel_computing=True, simp2d=False):
+    """
+    Calculates the Raleyigh Sommerfeld integral in the  of the first kind (Mahajan 2011 part II eq 1-20), receiving an input field and an observation screen plane on which to 
+    calculate the integral.
+    
+    Args: 
+        
+        :field:     input Field
+        :screen:    Observation Screen
+        :wavelength:    wavelength to consider
+        :n:         refractive index of the propagation medium (default=1 for vacuum/air)
+        :parallel_computing: Flag to trigger the concurrent computation of the kernels using Python Dask library
+        :simp2d:    Defaults False, if True uses the simpson2d function
+    Returns:
+        :screen:    Returns the screen populated with the result
+    """
+
+    if (field.pixel_x > wavelength/2) or (field.pixel_y > wavelength/2):
+        print("Warning: Sampling field pixel is larger than wavelength/2!")
+    k = 2* np.pi/(wavelength*n)
+
+    xlen,ylen,zlen = screen.XX.shape
+
+    if parallel_computing:
+        delayed_tasks = []
+        # For each cell on the screen, the RS integral will be calculated based on the input field
+        # this loop sets up the delayed tasks to be executed
+        for x_i in range(xlen):
+            for y_i in range(ylen):
+                for z_i in range(zlen):
+
+                    x = screen.XX[x_i, y_i, z_i]
+                    y = screen.YY[x_i, y_i, z_i]
+                    z = screen.ZZ[x_i, y_i, z_i]
+                    
+                    # the kernel is configured as a dask delayed task
+                    result = kernel_RS(field, k ,x,y,z, simp2d)
+
+                    delayed_tasks.append(result)
+                    # screen.screen[x_i, y_i, z_i] = a
+        
+        # the dask.compute triggers the computation of the delayed tasks and stores the result
+        # into the results list
+        # print(delayed_tasks)
+        with ProgressBar():
+            results = list(dask.compute(*delayed_tasks))
+        # print(results)
+        # again we go through the for loop to pop the results and insert it into the screen position
+        for x_i in range(xlen):
+            for y_i in range(ylen):
+                for z_i in range(zlen):
+                    screen.screen[x_i, y_i, z_i] = results.pop(0)
+    else:
+        with Timer():
+            for x_i in range(xlen):
+                for y_i in range(ylen):
+                    for z_i in range(zlen):
+
+                        x = screen.XX[x_i, y_i, z_i]
+                        y = screen.YY[x_i, y_i, z_i]
+                        z = screen.ZZ[x_i, y_i, z_i]
+                        
+                        result = kernel_RS(field, k ,x,y,z, simp2d).compute()
+
+                        screen.screen[x_i, y_i, z_i] = result
+                        progress_bar((x_i*zlen*ylen+y_i*zlen+z_i)/(xlen*ylen*zlen))
+            progress_bar(1)
+
+    return screen
+
+
+    
+    
+##################################################
+##RS integral functions introduced in v1.3
+    
+    
 def RS_intXY(zs, mask, npixmask, pixsizemask, npixscreen, dxscreen, dyscreen, wavelength, verbose =False ): 
     """
     Calculates the RS int of the first kind
@@ -400,34 +551,3 @@ def RS_intYZ_kernel(dmask, npm, nzs, npixscreen, xfixed, ys,zarray,xm,ym,zm,k, E
         progress_bar(1)
         
     return Escreen
-
-
-def Fresnel_num(width, wavelength, zdist):
-    """
-    Calculation of Fresnel number, Goodman pag 85
-    
-    Args:
-        :width:         size of the aperture in m 
-        :wavelength:    wavelength of the aperture in m 
-        :zdist:         distance to the screen in m 
-    
-    Returns: 
-        Fresnel number 
-    """
-    NF = width**2 / (wavelength * zdist)
-    return NF 
-    
-def Fraunhofer_criterion(aperturesiz, wavelength): 
-    """
-    Calculation of "Fraunhofer distance" , Goodman exp 4-27  
-    
-    Args:
-        :aperturesiz: size of the aperture in m 
-        :wavelength: wavelength of the aperture in m 
-    
-    Returns: 
-        Fraunhofer distance 
-    """
-    zfraun = 2 * aperturesiz**2 / wavelength 
-    
-    return zfraun 
