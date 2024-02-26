@@ -455,7 +455,8 @@ def change_layers_gdspy(fstgds_filename, new_cellname, layerspol, new_layers, ou
         
 
     """
-    
+    import gdspy 
+    import numpy as np
     
     lib = gdspy.GdsLibrary()
     
