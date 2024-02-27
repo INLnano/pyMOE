@@ -6,8 +6,9 @@ Module containing several functions for operations with/within mask files (e.g. 
 These functions might require pya, gdspy, gdstk or gdshelpers libraries. 
 Functions using gdspy and/or pya are exemplified within the notebooks.  
 
-####IMPORTANT: these functions work on the klayout-0.26.11 version
-####There might be some inconsistencies for later versions of pya library 
+####DISCLAIMER: these functions were written with klayout-0.26.11 version
+####There might be some inconsistencies for later versions of pya library
+####Nevertheless, tests were made for klayout-0.28.17 and no apparent conflict was found. 
 
 """
 
@@ -28,6 +29,7 @@ def merge_layer(readfile, cellname, layer_nr, datatype_nr, outputfile):
         :outputfile:   string filename of output gds
     """
     layoutor = pya.Layout()
+
     lmap = layoutor.read(readfile)
     cell = layoutor.cell(cellname)
     cell.flatten(1)
@@ -403,11 +405,12 @@ def change_layers(fstgds_filename, fst_cellname, layerspol,\
     ly1 = pya.Layout()
     lmap1 = ly1.read(fstgds_filename)
     cll1 = ly1.cell(fst_cellname)
-    
+
     #ly2 with copy of gds file - it will be cleared and written in the correct layers 
     ly2 = pya.Layout()
     lmap2 = ly2.read(fstgds_filename)
     cll2 = ly2.cell(fst_cellname)
+
     
     #clear the layers in the destination cell 
     for li, lyr in enumerate(layerspol):
@@ -419,6 +422,7 @@ def change_layers(fstgds_filename, fst_cellname, layerspol,\
     #ntot = np.size(layerspol)
     
     for li, lyr in enumerate(layerspol):
+        print(li)
         #select the layer lyr1
         lyr1 = ly1.layer(int(lyr),int(0))
         #print(lyr)
@@ -455,7 +459,7 @@ def change_layers_gdspy(fstgds_filename, new_cellname, layerspol, new_layers, ou
         
 
     """
-    import gdspy 
+    import gdspy
     import numpy as np
     
     lib = gdspy.GdsLibrary()
@@ -482,12 +486,12 @@ def change_layers_gdspy(fstgds_filename, new_cellname, layerspol, new_layers, ou
     newcell = lib2.new_cell(new_cellname)
 
     #Check if given array corresponds to the layers within file 
-    comp = np.array_equal(filelayers, layerspol)
+    comp = np.array_equal(filelayers, layerpols)
     if comp is False:
-        print("Attention: The layers given " + str(layerspol) + " are NOT the same as the layers in the file " + str(filelayers))
+        print("Attention: The layers given " + str(layerpols) + " are NOT the same as the layers in the file " + str(filelayers))
     
     #change the layers
-    for ips, ids in zip(layerspol, new_layers): 
+    for ips, ids in zip(layerpols, new_layers): 
         newpols = gdspy.PolygonSet(polygons_dict[(ips, 0)],layer=ids, datatype=0)
         currentcell.remove_polygons(lambda pts, layer, datatype: layer == ips)
         newcell.add(newpols)
@@ -496,13 +500,13 @@ def change_layers_gdspy(fstgds_filename, new_cellname, layerspol, new_layers, ou
     
     #layers that are not within the layers list, remain the same 
     for ips in filelayers:
-        if ips not in layerspol:
+        if ips not in layerpols:
             newpols = gdspy.PolygonSet(polygons_dict[(ips, 0)],layer=ips, datatype=0)
             currentcell.remove_polygons(lambda pts, layer, datatype: layer == ips)
             newcell.add(newpols)
 
     lib.remove(currentcell)    
-    lib.write_gds(output_filename)
+    lib2.write_gds(output_filename)
     
     print("Changed layers - wrote result to " +str(output_filename))
 

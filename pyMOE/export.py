@@ -117,18 +117,18 @@ def grayim2gds_writer_frac(infile, outfile, pixelx, pixely, cellname, level, nm=
     harray = np.arange(0,h+1,nmy)
     warray = np.arange(0,w+1,nmx)
     cn = 1
-    print(harray)
+    #print(harray)
     
     for hn, hi in enumerate(harray):
         if hn == (len(harray)-1):
 
             break
-        print(hi)
+        #print(hi)
         for hw, wi in enumerate(warray):
             if hw == (len(warray)-1): 
                 break
                 
-            print(wi)
+            #print(wi)
             
             pols=[]
 
@@ -148,17 +148,15 @@ def grayim2gds_writer_frac(infile, outfile, pixelx, pixely, cellname, level, nm=
                     #and creating a GDS from a grayscale image 
                     if img[i][j] == int(level):
                         #rectangle takes the two  opposite corners 
-                        #pols.append(gdspy.Rectangle((pixelx*j,-pixely*i),(pixelx*(j+1), -pixely*(i+1)), layer, datatype))
-                        rect = gdspy.Rectangle((pixelx*j,-pixely*i),(pixelx*(j+1), -pixely*(i+1)), layer, datatype)
-                        cell.add(rect)
-                   
-                writer.write_cell(cell)
+                        pols.append(gdspy.Rectangle((pixelx*j,-pixely*i),(pixelx*(j+1), -pixely*(i+1)), layer, datatype))
 
+            cell.add(pols)
+            writer.write_cell(cell)
+            del cell
             writer.close()
             cn = cn+1
 
-
-    print(cn)
+    #print(cn)
     print("Exported the image file "+str(infile) + " into " + str(outfile))
 
   
@@ -213,6 +211,8 @@ def grayim2gds_writer(infile, outfile, pixelx, pixely, cellname, level, layer=0,
     outfilen = outfile
     writer = gdspy.GdsWriter(outfilen,unit=1.0e-6,precision=1.0e-9)
     cell = lib.new_cell(cellname)
+
+    pols = []
     
     for hn, hi in enumerate(harray):
         if hn == (len(harray)-1):
@@ -235,14 +235,13 @@ def grayim2gds_writer(infile, outfile, pixelx, pixely, cellname, level, layer=0,
                     #and creating a GDS from a grayscale image 
                     if img[i][j] == int(level):
                         #rectangle takes the two  opposite corners 
-                        #pols.append(gdspy.Rectangle((pixelx*j,-pixely*i),(pixelx*(j+1), -pixely*(i+1)), layer, datatype))
-                        rect = gdspy.Rectangle((pixelx*j,-pixely*i),(pixelx*(j+1), -pixely*(i+1)), layer, datatype)
-                        
-                        cell.add(rect)
-                
-                writer.write_cell(cell)
+                        pols.append(gdspy.Rectangle((pixelx*j,-pixely*i),(pixelx*(j+1), -pixely*(i+1)), layer, datatype))
 
-        writer.close()
+    cell.add(pols)         
+    writer.write_cell(cell)
+    del cell 
+
+    writer.close()
 
     print("Exported the image file "+str(infile) + " into " + str(outfile))
 
