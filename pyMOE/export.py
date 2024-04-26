@@ -4,7 +4,7 @@ Module containing several functions to export masks to gds.
 
 """
 import cv2
-import gdspy 
+# import gdspy 
 import numpy as np 
     
     
