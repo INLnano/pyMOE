@@ -286,8 +286,8 @@ def plot_screen_YZ(screen, which='both', scale=None, colorbar=True, only_plot=Fa
         pcm = plt.pcolormesh(screen.z/scale_factor, screen.y/scale_factor, screen.amplitude[:,0])
         
         if not only_plot:
-            plt.xlabel("y [%sm]"%scale)
-            plt.ylabel("z [%sm]"%scale)
+            plt.xlabel("z [%sm]"%scale)
+            plt.ylabel("y [%sm]"%scale)
             if colorbar:
                 fig.colorbar(pcm, ax=ax1, label='Amplitude [a.u.]', shrink=0.6)
             else:
@@ -303,8 +303,8 @@ def plot_screen_YZ(screen, which='both', scale=None, colorbar=True, only_plot=Fa
         pcm = plt.pcolormesh(screen.z/scale_factor, screen.y/scale_factor, screen.phase[:,0])
     
         if not only_plot:
-            plt.xlabel("y [%sm]"%scale)
-            plt.ylabel("z [%sm]"%scale)
+            plt.xlabel("z [%sm]"%scale)
+            plt.ylabel("y [%sm]"%scale)
             if colorbar:
                 fig.colorbar(pcm, ax=ax2, label='Phase [rad]', shrink=0.6)
             else:
