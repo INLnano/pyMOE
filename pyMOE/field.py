@@ -219,6 +219,8 @@ class Screen:
         # self.pixel_x = self.x[1]-self.x[0]
         # self.pixel_y = self.y[1]-self.y[0]
         # self.pixel_z = self.z[1]-self.z[0]
+        
+        self.n = np.ones(self.XX.shape)
     
         self.screen = np.zeros(self.XX.shape, dtype=complex)
     @property
@@ -233,6 +235,9 @@ class Screen:
     @property 
     def intensity(self):
         return np.abs(self.screen)**2
+    @property
+    def nindex(self):
+        return self.n
     
 
     

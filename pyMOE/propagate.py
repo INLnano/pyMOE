@@ -192,7 +192,7 @@ def kernel_RS(field, k, x,y,z, simp2d=False):
     return Exyz
     
 
-def RS_integral(field, screen, wavelength, n=1, parallel_computing=True, simp2d=False):
+def RS_integral(field, screen, wavelength, n=None, parallel_computing=True, simp2d=False):
     """
     Calculates the Raleyigh Sommerfeld integral in the  of the first kind (Mahajan 2011 part II eq 1-20), receiving an input field and an observation screen plane on which to 
     calculate the integral.
@@ -211,7 +211,7 @@ def RS_integral(field, screen, wavelength, n=1, parallel_computing=True, simp2d=
 
     if (field.pixel_x > wavelength/2) or (field.pixel_y > wavelength/2):
         print("Warning: Sampling field pixel is larger than wavelength/2!")
-    k = 2* np.pi/(wavelength*n)
+    k = 2* np.pi/(wavelength)
 
     xlen,ylen,zlen = screen.XX.shape
 
@@ -227,6 +227,8 @@ def RS_integral(field, screen, wavelength, n=1, parallel_computing=True, simp2d=
                     y = screen.YY[x_i, y_i, z_i]
                     z = screen.ZZ[x_i, y_i, z_i]
                     
+                    if n is not None: 
+                        k = 2* np.pi**n[x_i,y_i,z_i]/(wavelength)
                     # the kernel is configured as a dask delayed task
                     result = kernel_RS(field, k ,x,y,z, simp2d)
 
@@ -253,6 +255,9 @@ def RS_integral(field, screen, wavelength, n=1, parallel_computing=True, simp2d=
                         x = screen.XX[x_i, y_i, z_i]
                         y = screen.YY[x_i, y_i, z_i]
                         z = screen.ZZ[x_i, y_i, z_i]
+                        
+                        if n is not None: 
+                            k = 2* np.pi*n[x_i,y_i,z_i]/(wavelength)
                         
                         result = kernel_RS(field, k ,x,y,z, simp2d).compute()
 
@@ -393,7 +398,7 @@ def RS_intZZ(zmin, zmax, nzs, xfixed, yfixed, mask, npixmask, pixsizemask, npixs
     
     
     #prop const
-    k = 2* np.pi/(wavelength*nind)
+    k = 2* np.pi*nind/(wavelength)
 
     #define the zpos of the mask at 0 
     zm =0 
@@ -487,7 +492,7 @@ def RS_intYZ(zmin, zmax, nzs, yfixed, mask, npixmask, pixsizemask, npixscreen, d
     dmask = 2*dxscreen
     
     #prop const
-    k = 2* np.pi/(wavelength*nind)
+    k = 2* np.pi*nind/(wavelength)
 
     #define the zpos of the mask at 0 
     zm =0 
