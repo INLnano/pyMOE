@@ -228,7 +228,7 @@ def RS_integral(field, screen, wavelength, n=None, parallel_computing=True, simp
                     z = screen.ZZ[x_i, y_i, z_i]
                     
                     if n is not None: 
-                        k = 2* np.pi**n[x_i,y_i,z_i]/(wavelength)
+                        k = 2* np.pi*n[x_i,y_i,z_i]/(wavelength)
                     # the kernel is configured as a dask delayed task
                     result = kernel_RS(field, k ,x,y,z, simp2d)
 
