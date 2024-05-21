@@ -5,6 +5,6 @@ Pillow==8.1.1
 scipy
 matplotlib
 numpy
-shapely==1.7.1
 dask  
 zernike
+shapely==1.7.1
