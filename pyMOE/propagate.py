@@ -168,20 +168,34 @@ def Fresnel_num(width, wavelength, zdist):
     NF = width**2 / (wavelength * zdist)
     return NF 
     
-def Fraunhofer_criterion(aperturesiz, wavelength): 
+
+def Fraunhofer_criterion(wavelength, radius):
     """
-    Calculation of "Fraunhofer distance" , Goodman exp 4-27  
+    Calculation of "Fraunhofer distance" , Goodman 4-27  
     
     Args:
-        :aperturesiz: size of the aperture in m 
-        :wavelength: wavelength of the aperture in m 
+        :wavelength: wavelength of the illumination m 
+        :radius: (max) radius of the aperture in m 
     
     Returns: 
         Fraunhofer distance 
     """
-    zfraun = 2 * aperturesiz**2 / wavelength 
+    z = (2*np.pi/wavelength)/2*radius**2
+    return z
+
+def Fresnel_criterion(wavelength, radius):
+    """
+    Calculation of "Fresnel distance" , Goodman 
     
-    return zfraun 
+    Args:
+        :wavelength: wavelength of the illumination m 
+        :radius: (max) radius of the aperture in m
+    
+    Returns: 
+        Fresnel distance 
+    """
+    z = ((np.pi/(4*wavelength))*radius**4)**(1/3)
+    return z
 
 
 
