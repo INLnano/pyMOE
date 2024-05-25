@@ -25,6 +25,34 @@ from dask.diagnostics import ProgressBar
 
 from pyMOE.utils import progress_bar, Timer
 
+
+
+def circ_zz24(aperture_rad, zdist, wavelength):
+    """
+    This function is the axial intensity for a circular aperture following 1992 JOSA 9(2) paper "Diffraction by a circular aperture: a generalization of Fresnel diffraction theory" , exp (24) 
+    
+    Args: 
+        :aperture_rad:  Radius of the circular aperture in m 
+        :zdist:         Distance of propagation
+        :wavelength:    Wavelength of incoming illumination in m
+
+    Returns: 
+        Propagated intensity to zdist 
+
+    """
+    import numpy as np 
+
+    k = 2*np.pi /wavelength 
+
+    izz1 = 1/(1+aperture_rad**2/zdist**2)
+    izz2 = 2/np.sqrt(1+aperture_rad**2/zdist**2)
+    izz3 = (k * aperture_rad**2/(zdist)) /(np.sqrt(1+aperture_rad**2/zdist**2)+1)
+    itot = 0.25*(1+izz1-izz2* np.cos(izz3))
+
+    return itot
+    
+    
+
 def fresnel(z, mask, npixmask, pixsizemask, npixscreen, dxscreen, dyscreen, wavelength):
     """
     Calculate Fresnel approximation, following Goodman exp 4-17 
