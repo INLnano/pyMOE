@@ -82,6 +82,9 @@ def fresnel(z, mask, npixmask, pixsizemask, npixscreen, dxscreen, dyscreen, wave
     
     dmask =   res * npm
     
+    if z < Fresnel_criterion(wavelength, dmask/2):
+        print("The propagation distance is too short for Fresnel propagation! Propagation results might be incorrect.")
+    
     xm1 = np.linspace(-dmask/2, dmask/2, npm)
     ym1 = np.linspace(-dmask/2, dmask/2, npm)
     (xm, ym) = np.meshgrid(xm1, ym1)
@@ -127,6 +130,9 @@ def fraunhofer(z, mask, npixmask, pixsizemask, npixscreen, dxscreen, dyscreen, w
     npm = npixmask 
     
     dmask = npixmask * npm  
+    
+    if z < Fraunhofer_criterion(wavelength, dmask/2):
+        print("The propagation distance is too short for Fraunhofer propagation! Propagation results might be incorrect.")
     
     xm1 = np.linspace(-dmask/2, dmask/2, npm)
     ym1 = np.linspace(-dmask/2, dmask/2, npm)
