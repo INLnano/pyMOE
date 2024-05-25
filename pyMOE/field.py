@@ -38,6 +38,7 @@ class Field:
         self.pixel_y = self.y[1]-self.y[0]
     
         self.field = np.zeros(self.XX.shape, dtype=complex)
+        
     @property
     def shape(self):
         return self.field.shape
@@ -162,7 +163,8 @@ def generate_uniform_field(field, E0=1 ):
 
 def generate_gaussian_field(field, E0, w0, center=(0,0) ):
     """
-    Generates a unifor, wavefront field with amplitude E
+    Generates a Gaussian beam amplitude (no imaginary part) 
+    **to be deprecated in favor of generate_gaussian_beam
 
     E = E0*exp(-r^2/w0^2)
     E0 - amplitude on axis
@@ -187,7 +189,38 @@ def generate_gaussian_field(field, E0, w0, center=(0,0) ):
 
 
 
+def generate_gaussian_beam(field, w0, z, wavelength, center=(0,0), E0=1 ):
+    """
+    Generates a Gaussian beam (with wimaginary part) https://spie.org/publications/spie-publication-resources/optipedia-free-optics-information/fg12_p18-19_gaussian_beams#_=_
+    
+    
+    Args:
+        :field: Input field object to add the flat field
+        :w0: Beam waist at z=0 
+        :z: Z-coordinate, with origin in minimum waist
+        :wavelength: Wavelength in meters 
+        :center: center in (x,y) plane, default (0,0) 
+        :E0: Amplitude of the electric field
+    Returns:
+        :field: returns the field.
+    """
+    assert type(field) is Field, "field must be of type Field. Field is type %s"%(type(field))
 
+    x0,y0 = center
+
+    k = 2*np.pi/wavelength
+    r2 = ((field.XX-x0)**2+(field.YY-y0)**2)
+    
+    zR = np.pi*w0**2/wavelength 
+    wz = w0*np.sqrt(1+(z/zR)**2)
+    Rz = z*(1+(zR/z)**2)
+    phi = k*z - np.arctan(z/zR)+ k* r2/(2*Rz)
+    
+    Exyz = E0 * np.exp(-r2/wz**2) * np.exp(1.0j * phi)
+    
+    field.field = Exyz
+
+    return field
 
 
 
