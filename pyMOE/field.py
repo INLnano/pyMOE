@@ -320,7 +320,7 @@ def create_screen_YZ(ymin, ymax, N_y, zmin, zmax, N_z, x=0):
 
 
     
-def create_screen_ZZ(zmin, zmax, N_z, x=0, y=0):
+def create_screen_ZZ(zmin, zmax, N_z, x=0, y=0, log=False):
     """
     Creates an empty screen of the mesh dimensions provided
     
@@ -334,6 +334,9 @@ def create_screen_ZZ(zmin, zmax, N_z, x=0, y=0):
         :screen: empty Screen
     """
     z = np.linspace(zmin, zmax, N_z)
+    
+    if log==True: 
+        z = np.logspace(zmin, zmax, N_z)
     y=y
     x=x
     
