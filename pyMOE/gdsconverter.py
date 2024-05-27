@@ -263,7 +263,7 @@ class GDSMask():
         
         
         if mode == "raster":
-            return self._create_layout_raster_pya(cellname=cellname, merge=merge, break_vertices=break_vertices)
+            return self._create_layout_raster_klayout(cellname=cellname, merge=merge, break_vertices=break_vertices)
         elif mode == "contour": 
             return self._create_layout_contour(cellname = cellname)
         else: 
@@ -438,13 +438,12 @@ class GDSMask():
 
 
     
-    def _create_layout_raster_pya(self, cellname='top', merge=True, break_vertices=250):
+    def _create_layout_raster_klayout(self, cellname='top', merge=True, break_vertices=250, layer_name_prefix="level"):
         """
         Creates the gds layout using raster mode where each data point is a pixel rectangle to
         be defined in the layout
         
         """
-        # self.gdslib = gdspy.GdsLibrary()
 
         import pya
         #initialize
@@ -492,7 +491,7 @@ class GDSMask():
 
                 # list_cells.append(cell)
 
-                layer_name = "layer%03d"%(layer)
+                layer_name = "%s%03d"%(layer_name_prefix,layer)
                 layer_i = layout.layer(layer_name)
 
 
@@ -556,7 +555,7 @@ class GDSMask():
                         region.merge()
                         mergedcell.shapes(layer_i).insert(region)
                     
-                    # deletes original cell from layout
+                    # deletes original cell from 
                     maskcell.clear()
                     maskcell.delete()
                     if self.verbose: 
