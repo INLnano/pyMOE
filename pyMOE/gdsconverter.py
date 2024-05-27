@@ -539,7 +539,7 @@ class GDSMask():
 
                 with Timer("Merging polygons"):
 
-
+                    # creates a merged cell to add the regions into
                     mergedcell = layout.create_cell('mask')
 
 
@@ -550,11 +550,13 @@ class GDSMask():
                         if self.verbose: 
                             progress_bar(layer_i/total_layers)
 
-
+                        # Creates a region of all polygons within a layer
                         region = pya.Region(maskcell.begin_shapes_rec(layer_i))
+                        # merges polygons in region
                         region.merge()
                         mergedcell.shapes(layer_i).insert(region)
                     
+                    # deletes original cell from layout
                     maskcell.clear()
                     maskcell.delete()
                     if self.verbose: 
