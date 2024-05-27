@@ -1,5 +1,5 @@
 """
-mask.py
+aperture.py
 
 
 Definition of Class Aperture
