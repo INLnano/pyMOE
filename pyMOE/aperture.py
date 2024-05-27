@@ -41,6 +41,8 @@ class Aperture:
         self.aperture_discretized = None
         self.discretized_flag = False
 
+        self.is_height = False
+
     @property
     def shape(self):
         return self.aperture.shape
@@ -56,15 +58,46 @@ class Aperture:
         self.aperture = levels[digitized]
         self.discretized_flag=True
 
-    def modulos(self, mod):
+    def modulos(self, mod, normalize_to_max=True):
         """Discretizes the aperture to the number of levels"""
         if self.aperture_original is None:
             self.aperture_original = np.copy(self.aperture)
 
         aux = self.aperture        
-        self.aperture = aux % (mod)
+        self.aperture = (aux-np.max(aux)) % (mod)
+
+    
+
+    def phase_unwrap(self):
+        """Unwraps the phase of the aperture"""
+        assert self.is_height is False, "Cannot unwrap height"
+            
+        self.aperture = np.unwrap(np.unwrap(self.aperture, axis=0), axis=1)
+        # self.aperture = np.apply_over_axes(np.unwrap, self.aperture, np.arange(len(self.aperture.shape)))
+        # self.aperture = np.apply_over_axes(np.unwrap, self.aperture, np.arange(len(self.aperture.shape)))
 
 
+    def phase2height(self, wavelength, n1, n0=1):
+        """Converts the phase to height
+        Args:
+            :wavelength:    Wavelength of the light
+            :n1:            Refractive index of the medium where the light is propagating
+            :n0:            Refractive index of the medium background"""
+        if self.is_height:
+            return
+        self.aperture = self.aperture * wavelength/(2*np.pi*(n1-n0))
+        self.is_height = True
+
+    def height2phase(self, wavelength, n1, n0=1):
+        """Converts the height to phase
+        Args:
+            :wavelength:    Wavelength of the light
+            :n1:            Refractive index of the medium where the light is propagating
+            :n0:            Refractive index of the medium background"""
+        if not self.is_height:
+            return
+        self.aperture = self.aperture * 2*np.pi*(n1-n0)/wavelength
+        self.is_height = False
 
 class ApertureField:
     """

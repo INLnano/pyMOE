@@ -9,7 +9,7 @@ import numpy as np
 # from zernike import RZern
 
 
-def fresnel_lens_phase(XX,YY,focal_length,wavelength): 
+def fresnel_lens_phase(XX,YY,focal_length,wavelength, phase_offset=np.pi): 
     """
     returns the COMPLEX PHASE of a fresnel lens with input meshgrid (x,y) with center at (x0,y0)
     
@@ -23,9 +23,9 @@ def fresnel_lens_phase(XX,YY,focal_length,wavelength):
     """
 
     rc = np.sqrt((XX)**2 + (YY)**2)
-    fresn = np.exp(1.0j*(focal_length-np.sqrt(focal_length**2 + rc**2))*(2*np.pi)/(wavelength))
+    fresn = np.exp(1.0j*((focal_length-np.sqrt(focal_length**2 + rc**2))*(2*np.pi)/(wavelength) + phase_offset))
     fresn = np.angle(fresn)
-    fresn = fresn-np.min(fresn)
+    # fresn = fresn-np.min(fresn)
     
     return fresn     
 
