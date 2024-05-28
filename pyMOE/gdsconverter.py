@@ -244,7 +244,9 @@ class GDSMask():
 
     def write_layout(self, filename):
         """ Writes layout togds file using klayout pya library"""
-        self.layout.write(filename,)
+        print("Saving file to %s"%(filename)
+        with Timer("Saving GDS file"):
+            self.layout.write(filename,)
         print("Saved %s"%(filename))
         
         
