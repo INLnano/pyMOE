@@ -836,7 +836,8 @@ class GrayscaleCalibration():
 
 
 
-    def calibrate_layer_names(self, ):
+
+    def calibrate_layer_names(self, force_naming=False, datatype=0):
         """
         Changes the layer names to the calibrated grayvalues
         """
@@ -846,21 +847,26 @@ class GrayscaleCalibration():
 
         for layer_i, layer in enumerate(self.layout.layer_infos()):
             layername = str(layer)
-            
-            if "Level" not in layername:
-                continue
-            prefix, height = layername.split("_")
-            _,idx = prefix.split("Level")
-            idx = int(idx)
-            ly = self.layout.layer(layername)
+            # print(layername)
+            if not force_naming:
+                if "Level" not in layername:
+                    continue
+                prefix, height = layername.split("_")
+                _,idx = prefix.split("Level")
+                idx = int(idx)
+                ly = self.layout.layer(layername)
+
+            else:
+                idx = layer_i
+                ly = self.layout.layer(idx, datatype )
+
             info = self.layout.get_info(ly)
             info.name = "layer%03d"%self.mask_grayvalues[idx]
-            # print(info)
-            self.layout.set_info(ly, info)
-            # print("Layer handle " + str(ly) + " refers to " + str(layout.get_info(ly)))
+            newinfo = pya.LayerInfo(info.name)
 
-        # outfile = gdsfile.replace(".dxf", "_grayscale.dxf")
-        # self.layout.write(outfile)
+            # print(info)
+            self.layout.set_info(ly, newinfo)
+            # print("Layer handle " + str(ly) + " refers to " + str(self.layout.get_info(ly)))
 
 
     
