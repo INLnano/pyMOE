@@ -862,8 +862,10 @@ class GrayscaleCalibration():
 
 
     
-    def save_calibrated_gdsfile(self, filename):
-        assert self.layer_names_calibrated == True, "Must calibrate layer names first"
+    def save_calibrated_gdsfile(self, filename, force_save=False):
+
+        if not force_save:
+            assert self.layer_names_calibrated == True, "Must calibrate layer names first"
         
 
         with Timer("Saving calibrated GDS file"):
