@@ -135,3 +135,18 @@ def simpson2d(f,ax,bx,ay,by):
     
     return tint
 
+
+
+def find_closest_indices(x, y):
+    from scipy.spatial.distance import cdist
+
+    # Reshape y to a column vector
+    y = y.reshape(-1, 1)
+
+    # Calculate the distances between each value of y and x
+    distances = cdist(y, x.reshape(-1, 1))
+
+    # Find the index of the closest value in x for each value of y
+    closest_indices = np.argmin(distances, axis=1)
+
+    return closest_indices

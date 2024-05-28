@@ -9,6 +9,11 @@ from pyMOE.aperture import Aperture
 from pyMOE.utils import progress_bar, Timer
 
 import matplotlib.pyplot as plt 
+from scipy.constants import milli, nano, micro
+
+from scipy.spatial.distance import cdist
+
+import pya
 
 
 def count_vertices(pols):
@@ -189,6 +194,7 @@ class GDSMask():
         self.verbose=verbose
         self._gdslib_init_error = "Error: gdsmask not created yet. Run GDSMask.create_layout()"
         self.layers = None
+        self.grayvalues = None
     
     @property
     def levels(self):
@@ -438,10 +444,17 @@ class GDSMask():
 
 
     
-    def _create_layout_raster_klayout(self, cellname='top', merge=True, break_vertices=250, layer_name_prefix="level"):
+    def _create_layout_raster_klayout(self, cellname='top', merge=True, break_vertices=250, layer_name_prefix="Level", 
+        level_scale=micro):
         """
         Creates the gds layout using raster mode where each data point is a pixel rectangle to
         be defined in the layout
+        Args:
+            :cellname:          name of the topcell to include all the merged polygons
+            :merge:             default False. If True, will merge the individual pixel polygons 
+            :break_vertices:    threshold value to speed up the merging of polygons
+            :layer_name_prefix: prefix of the layer name
+            :level_scale:       scaling factor to apply to the level value  (default 1e-6 for micro)
         
         """
 
@@ -483,15 +496,14 @@ class GDSMask():
         with Timer("Total time converting to GDS"):
             # Creates a list of cells where each cell will correspond to a layer, to enable merging afterwards.
             list_cells = []
-            for layer in self.layers:
-                # cellname = "tempcelllayer%d"%(layer)
+            # for layer in self.layers:
+            for layer,level in zip(self.layers, self.levels):
 
-                # cell = gdspy.Cell(cellname,exclude_from_current=True)
-                # cell = layout.create_cell(cellname)
 
-                # list_cells.append(cell)
 
-                layer_name = "%s%03d"%(layer_name_prefix,layer)
+                # layer_name = "%s%03d"%(layer_name_prefix,layer)
+                layer_name = "%s%03d_%0.3f"%(layer_name_prefix,layer, level/level_scale)
+                # layer_i = layout.layer(int(layer), datatype, layer_name)
                 layer_i = layout.layer(layer_name)
 
 
@@ -516,15 +528,9 @@ class GDSMask():
                             rectangle_second_corner = (x+half_pixel_x,y+half_pixel_y)
                             
                             # Creates rectangle and adds it to the cell corresponding to the current layer
-                            # rect = gdspy.Rectangle(rectangle_first_corner, rectangle_second_corner, current_layer, datatype)
                             
                             maskcell.shapes(current_layer).insert(pya.DBox(rectangle_first_corner[0],rectangle_first_corner[1],
                                                                     rectangle_second_corner[0],rectangle_second_corner[1]))
-
-                            # cell = list_cells[current_layer]
-                            
-                            # Saves each rectangle to a separate cell so we can merge more easily afterwards
-                            # cell.add(rect)
                         
                     if self.verbose:
                         progress_bar(current_point/total_points)
@@ -544,7 +550,7 @@ class GDSMask():
 
                     total_layers = len(layout.layer_infos())
                     for layer_i, layer in enumerate(layout.layer_infos()):
-                        # print(i, layer)
+
                       
                         if self.verbose: 
                             progress_bar(layer_i/total_layers)
@@ -573,60 +579,239 @@ class GDSMask():
             return self.layout 
         
 
+def find_closest_indices(x, y):
+    from scipy.spatial.distance import cdist
+
+    # Reshape y to a column vector
+    y = y.reshape(-1, 1)
+
+    # Calculate the distances between each value of y and x
+    distances = cdist(y, x.reshape(-1, 1))
+
+    # Find the index of the closest value in x for each value of y
+    closest_indices = np.argmin(distances, axis=1)
+
+    return closest_indices
 
 
-def merge_polygons_pya(polygons, layer=0, assume_non_overlap=True, break_vertices=250, verbose=True, ):
-    """
-    Merge polygons function receives a list of polygons or polygon set and 
-    will iteratively merge consecutive polygons, assuming to be in the same layer. If we assume that polygons are
-    sequentially located in the matrix, then it is expected that consecutive polygons
-    can be merged, while polygons far apart are probably not in the same cluster.
+def levels2grayvalue(levels, calibration_height, calibration_grayvalue, ):
+    idx = find_closest_indices(calibration_height, levels)
+
+    grayvalue = calibration_grayvalue[idx]
     
-    The boolean operation compares the new polygon with the existing operand, and it
-    becomes slower with more polyons/vertices already included in the merged set.
-    To optimize this, we consider a break_vertices threshold where the merged set of 
-    polygons is broken into a separate list to continue the merging. This will result 
-    in a merged set that could be smaller, but is much faster to execute, scaling with 
-    N instead of N^2.
+    return grayvalue
+
+
+def load_grayscale_contrast(filename):
+    grayvalue, height = np.loadtxt(filename, delimiter=',', unpack=True)
+    grayvalue = np.array(grayvalue).astype(int)
+    return grayvalue, height
+
+
+
+class GrayscaleCalibration():
+    """
+    Class GrayscaleCalibration:
+        Creates a class to integrate the GDS library and layout corresponding to a mask aperture.
+        Receives an aperture and provides methods to calculate the corresponding GDS layout
     
     Args:
-        :polygons:              must be a list of polygons, polygonset, rectangles etc that the boolean operation accepts
-        :layer:                 default 0 and ignored. The merged list of merged polygons will have the same layer as the input polygons (assumed the same for all)
-        :assume_non_overlap:    default True, if True the function will break the merged list of polygons when reaching break_vertices
-        :break_vertices:        approximate number of vertices to consider in the boolean operation before breaking the list.
-        :verbose:               default True. Prints the progress bar.
-        
-    Returns:
-        list of merged polygons or polygonsets.
-    """
-    
-    # TODO assert that polygons are list of polygons or polygonset etc...
-    
-    total_polygons = len(polygons)
-    merged = gdspy.PolygonSet([])
-    list_polygonsets = []
-    
-    restart_merge = True
-    for i,pol in enumerate(polygons):
+        :mask: aperture object
+        """
+    def __init__(self, mask_height_scale=micro, verbose=True):
+        self.calibration_grayvalue = None
+        self.calibration_height = None
+        self.calibration_height_range = None
+        self.layout = None
+        self.verbose = verbose
 
-        # pops one polygon to be considered in the next boolean operation
-        if restart_merge:
-            merged = pol
-            if verbose:
-                progress_bar(i/total_polygons)
-            restart_merge = False
-            continue
+        self.mask_heights = None
+        self.level_heights = None
+        self.level_height_offset = None
+        self.mask_height_normalization = None
+        self.mask_height_scale = mask_height_scale
+        self.mask_grayvalues = None
+        self.mask_height_range = None
         
-        layer = pol.layers[0]
-        merged = gdspy.boolean(merged, pol, "or", layer=layer)
+    def load_calibration(self, filename):
+        """
+        Loads the calibration file from a csv file with two columns, the first column with the grayscale value and the second column with the height value
         
-        if assume_non_overlap:
-            # Breaks the polygons considered for boolean operation
-            if (count_vertices(merged.polygons)>=break_vertices) & (i <total_polygons-2):
-                list_polygonsets.append(merged)
-                restart_merge = True
-    list_polygonsets.append(merged)
-    progress_bar(1)
+        Args:
+            :filename: string with the path to the calibration file
+        """
+        self.calibration_grayvalue, self.calibration_height = load_grayscale_contrast(filename)
+
+        self.calibration_height_range = np.ptp(self.calibration_height)
+        if self.verbose == True:
+            print("Grayscale calibration range is %0.3f um"%(self.calibration_height_range))
+
+
+
+    def load_gdsfile(self, gdsfile):
+        """
+        Loads the mask file
+        
+        Args:
+            :gdsfile: string with the path to the gds file
+        """
+        self.layout = pya.Layout()
+        self.layout.read(gdsfile)
+        
+        # extracting the level and height from mask
+        total_layers = len(self.layout.layer_infos())
+
+        heights = []
+        for layer_i, layer in enumerate(self.layout.layer_infos()):
+            layername = str(layer)
+            if "Level" not in layername:
+                continue
+            _, height = layername.split("_")
+            height = float(height)
+            heights.append(height)
+            # print(layer_i, layer, layername, height)
+
+        assert len(heights) >0, "No levels found in the mask. Check if the mask is correctly generated."
+
+        self.mask_heights = np.array(heights)
+
+        if self.verbose:
+            print("Loaded mask with %d levels"%len(self.mask_heights))
+            
+        self.mask_height_range = np.ptp(self.mask_heights)
+        if self.verbose == True:
+            print("Mask range is %0.3f um"%(self.mask_height_range))
+            if self.calibration_height_range is not None:
+                if self.mask_height_range>self.calibration_height_range:
+                    print("Warning! Calibration range is smaller than mask height range.")
+        
+        if self.calibration_grayvalue is not None:
+            # Adjusts the grayvalues of the mask to the calibration values
+            self.adjust_grayvalues( self.level_height_offset)
+
+    def plot_calibration(self):
+        assert self.calibration_grayvalue is not None, "No calibration data loaded."
+
+        plt.figure()
+        plt.plot(self.calibration_grayvalue, self.calibration_height)
+
+        if self.level_heights is not None:
+            for level in self.level_heights:
+                plt.axhline(level, color='Gray', linestyle='-', lw=1)
+        plt.scatter(self.mask_grayvalues, self.level_heights, s=4)
+        plt.xlabel("Grayvalue")
+        plt.ylabel("Height [um]")
+
+    def adjust_grayvalues(self, height_offset=None):
+        """
+        Adjusts the grayvalues of the mask to the calibration values
+        """
+        self.mask_height_normalization = np.max(self.mask_heights)-np.max(self.calibration_height) 
+        if height_offset is None:
+            height_offset = -self.mask_height_normalization
+        else:
+            height_offset = -self.mask_height_normalization+height_offset
+        self.level_height_offset = height_offset
+        self.level_heights = self.mask_heights+self.level_height_offset
+
+        self.mask_grayvalues = levels2grayvalue(self.level_heights, 
+                                                self.calibration_height, self.calibration_grayvalue)
+
+
+    def save_calibrated_gdsfile(self, filename):
+        """
+        Saves the calibrated layout to a gds file
+        
+        Args:
+            :filename: string with the path to the gds file
+        """
+
+        
+
+        for layer_i, layer in enumerate(self.layout.layer_infos()):
+            layername = str(layer)
+            
+            if "Level" not in layername:
+                continue
+            prefix, height = layername.split("_")
+            _,idx = prefix.split("Level")
+            idx = int(idx)
+            ly = self.layout.layer(layername)
+            info = self.layout.get_info(ly)
+            info.name = "layer%03d"%self.mask_grayvalues[idx]
+            # print(info)
+            self.layout.set_info(ly, info)
+            # print("Layer handle " + str(ly) + " refers to " + str(layout.get_info(ly)))
+
+        # outfile = gdsfile.replace(".dxf", "_grayscale.dxf")
+        # self.layout.write(outfile)
+        with Timer("Saving calibrated GDS file"):
+            self.layout.write(filename)
+        print("Saved %s"%(filename))
+
+
+
+# gdsfile = "testmask4.dxf"   #name of gds file 
+
+# filename = "Pyra2_E80_F-20_greylevels.csv"
+# calibration_grayvalue, calibration_height = load_grayscale_contrast(filename)
+# plt.plot(calibration_grayvalue, calibration_height)
+
+# import klayout
+# import pya
+
+
+# # Loads the mask file
+# layout = pya.Layout()
+# layout.read(gdsfile)
+
+
+
+# # extracting the level and height from mask
+# total_layers = len(layout.layer_infos())
+
+# heights = []
+# for layer_i, layer in enumerate(layout.layer_infos()):
+#     layername = str(layer)
+#     if "Level" not in layername:
+#         continue
+#     _, height = layername.split("_")
+#     height = float(height)
+#     heights.append(height)
+#     # print(layer_i, layer, layername, height)
+
+# assert len(heights) >0, "No levels found in the mask. Check if the mask is correctly generated."
+
+# heights = np.array(heights)
     
-    return list_polygonsets
+# plt.plot(calibration_grayvalue, calibration_height)
+# height_offset = -1.4
+# grayvalues = levels2grayvalue(heights, calibration_height, calibration_grayvalue, height_offset=height_offset)
+
+# for level in heights:
+#     plt.axhline(level+height_offset, color='red', linestyle='-', lw=1)
+# # plt.plot(mask1.levels, grayvalue)
+# grayvalues, heights
+
+
+
+# for layer_i, layer in enumerate(layout.layer_infos()):
+#     layername = str(layer)
     
+#     if "Level" not in layername:
+#         continue
+#     prefix, height = layername.split("_")
+#     _,idx = prefix.split("Level")
+#     idx = int(idx)
+#     print(idx)
+
+#     ly = layout.layer(layername)
+#     info = layout.get_info(ly)
+#     print(info)
+#     info.name = "layer%03d"%grayvalues[idx]
+#     # print(info)
+#     layout.set_info(ly, info)
+#     print("Layer handle " + str(ly) + " refers to " + str(layout.get_info(ly)))
+
+# outfile = gdsfile.replace(".dxf", "_grayscale.dxf")
+# layout.write(outfile)

@@ -99,6 +99,8 @@ class Aperture:
         self.aperture = self.aperture * 2*np.pi*(n1-n0)/wavelength
         self.is_height = False
 
+
+
 class ApertureField:
     """
     Class Aperture:
