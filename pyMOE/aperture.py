@@ -10,7 +10,7 @@ Definition of Class Aperture
 import numpy as np
 from pyMOE.utils import digitize_array_to_bins
 from pyMOE.utils import discretize_array
-from pyMOE.utils import phase2height, height2phase
+from pyMOE.sag_functions import phase2height, height2phase
 
 
 
