@@ -244,7 +244,7 @@ class GDSMask():
 
     def write_layout(self, filename):
         """ Writes layout togds file using klayout pya library"""
-        print("Saving file to %s"%(filename)
+        print("Saving file to %s"%(filename))
         with Timer("Saving GDS file"):
             self.layout.write(filename,)
         print("Saved %s"%(filename))
@@ -660,6 +660,16 @@ class GrayscaleCalibration():
         self.layout = pya.Layout()
         self.layout.read(gdsfile)
         
+
+    def get_levels_from_layer_names(self):
+        """
+        Extracts the levels from the layer names in the mask
+        Assumes that the layer name is "LevelDDD_xxx" where xxx is the height in um
+        """
+
+        assert self.layout is not None, "No layout loaded. Run load_gdsfile() first."
+
+
         # extracting the level and height from mask
         total_layers = len(self.layout.layer_infos())
 
@@ -690,6 +700,39 @@ class GrayscaleCalibration():
         if self.calibration_grayvalue is not None:
             # Adjusts the grayvalues of the mask to the calibration values
             self.adjust_grayvalues( self.level_height_offset)
+
+
+
+    def get_levels_from_height_range(self, mask_height_range, endpoint=True):
+        """
+        Extracts the levels from the given height range and number of layers on the mask
+
+        """
+
+        assert self.layout is not None, "No layout loaded. Run load_gdsfile() first."
+
+
+        # extracting the level and height from mask
+        total_layers = len(self.layout.layer_infos())
+
+        heights = np.linspace(0, -mask_height_range, total_layers, endpoint=endpoint)
+        self.mask_heights = np.array(heights)
+
+        if self.verbose:
+            print("Loaded mask with %d levels"%len(self.mask_heights))
+            
+        self.mask_height_range = np.ptp(self.mask_heights)
+        if self.verbose == True:
+            print("Mask range is %0.3f um"%(self.mask_height_range))
+            if self.calibration_height_range is not None:
+                if self.mask_height_range>self.calibration_height_range:
+                    print("Warning! Calibration range is smaller than mask height range.")
+        
+        if self.calibration_grayvalue is not None:
+            # Adjusts the grayvalues of the mask to the calibration values
+            self.adjust_grayvalues( self.level_height_offset)
+
+
 
     def plot_calibration(self):
         assert self.calibration_grayvalue is not None, "No calibration data loaded."
