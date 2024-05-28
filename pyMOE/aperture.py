@@ -10,6 +10,8 @@ Definition of Class Aperture
 import numpy as np
 from pyMOE.utils import digitize_array_to_bins
 from pyMOE.utils import discretize_array
+from pyMOE.utils import phase2height, height2phase
+
 
 
 class Aperture:
@@ -85,7 +87,7 @@ class Aperture:
             :n0:            Refractive index of the medium background"""
         if self.is_height:
             return
-        self.aperture = self.aperture * wavelength/(2*np.pi*(n1-n0))
+        self.aperture = phase2height(self.aperture)
         self.is_height = True
 
     def height2phase(self, wavelength, n1, n0=1):
@@ -96,7 +98,7 @@ class Aperture:
             :n0:            Refractive index of the medium background"""
         if not self.is_height:
             return
-        self.aperture = self.aperture * 2*np.pi*(n1-n0)/wavelength
+        self.aperture = height2phase(self.aperture)
         self.is_height = False
 
 

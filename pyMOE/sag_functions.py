@@ -9,6 +9,28 @@ import numpy as np
 # from zernike import RZern
 
 
+def phase2height(phase, wavelength, n1, n0=1):
+        """Converts the phase to height
+        Args:
+            :wavelength:    Wavelength of the light
+            :n1:            Refractive index of the medium where the light is propagating
+            :n0:            Refractive index of the medium background"""
+
+
+        height = phase * wavelength/(2*np.pi*(n1-n0))
+
+        return height
+
+def height2phase(height, wavelength, n1, n0=1):
+    """Converts the height to phase
+    Args:
+        :wavelength:    Wavelength of the light
+        :n1:            Refractive index of the medium where the light is propagating
+        :n0:            Refractive index of the medium background"""
+
+    phase = height * 2*np.pi*(n1-n0)/wavelength
+    return phase
+
 def fresnel_lens_phase(XX,YY,focal_length,wavelength, phase_offset=np.pi): 
     """
     returns the COMPLEX PHASE of a fresnel lens with input meshgrid (x,y) with center at (x0,y0)
@@ -30,6 +52,13 @@ def fresnel_lens_phase(XX,YY,focal_length,wavelength, phase_offset=np.pi):
     return fresn     
 
 
+def axicon(x,y,angle):
+    radius = np.sqrt(np.power(x,2)+np.power(y,2))
+
+    height = -radius*np.tan(angle)
+
+
+    return height
 
 
 def spiral(x,y,L):

@@ -81,7 +81,7 @@ def digitize_array_to_bins(array, levels):
     """    
     assert isinstance(levels, (np.ndarray, int)), "levels must be a scalar or numpy array"
     if isinstance(levels, int):
-        bins = np.linspace(array.min(), array.max() , levels, endpoint=False) 
+        bins = np.linspace(np.nanmin(array), np.nanmax(array) , levels, endpoint=False) 
     else:
         bins = levels
     
@@ -90,6 +90,7 @@ def digitize_array_to_bins(array, levels):
     # Everything below the minimum bin level is changed to the minimum level
     dig[dig==0] = 1
     dig = dig-1
+    # dig[np.isnan(array)] = np.nan
     return bins, dig
 
 
