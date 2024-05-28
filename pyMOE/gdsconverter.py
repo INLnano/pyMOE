@@ -744,7 +744,9 @@ class GrayscaleCalibration():
 
         heights = []
         for layer_i, layer in enumerate(self.layout.layer_infos()):
-            layername = str(layer)
+            layername = str(layer.name).replace('\'\'\n', '')
+            # print(layername)
+            # print(layer.name)
             if "Level" not in layername:
                 continue
             _, height = layername.split("_")
