@@ -611,6 +611,72 @@ def load_grayscale_contrast(filename):
 
 
 
+
+
+
+def create_poly_dicing_corner(length, width):
+    poly = pya.DPolygon([ 
+    pya.DPoint(0, 0), pya.DPoint(0, length),  pya.DPoint(width, length),
+    pya.DPoint(width, width),  pya.DPoint(length, width), pya.DPoint(length, width),
+    pya.DPoint(length, 0)
+    ])
+    return poly
+
+def create_corners_cell(layout, field_width, field_height, corner_length, corner_width, layer="layer127"):
+    cell_corner_single = layout.create_cell('corner_instance')
+
+    cell_corner = layout.create_cell('corners')
+    layer_corners = layout.layer(layer)
+    corner_polygon = create_poly_dicing_corner(corner_length, corner_width)
+
+    cell_corner_single.shapes(layer_corners).insert(corner_polygon)
+
+
+    instance = pya.DCellInstArray(cell_corner_single.cell_index(),
+                                pya.DTrans(pya.DTrans.R0, pya.DPoint(-field_width/2, -field_height/2))
+                                )
+    cell_corner.insert(instance)
+
+    instance = pya.DCellInstArray(cell_corner_single.cell_index(),
+                                pya.DTrans(pya.DTrans.R270, pya.DPoint(-field_width/2, field_height/2))
+                                )
+    cell_corner.insert(instance)
+
+
+    instance = pya.DCellInstArray(cell_corner_single.cell_index(),
+                                pya.DTrans(pya.DTrans.R180, pya.DPoint(field_width/2, field_height/2))
+                                )
+    cell_corner.insert(instance)
+
+    instance = pya.DCellInstArray(cell_corner_single.cell_index(),
+                                pya.DTrans(pya.DTrans.R90, pya.DPoint(field_width/2, -field_height/2))
+                                )
+    cell_corner.insert(instance)
+
+
+    cell_corner.flatten(-1, True)
+
+    return cell_corner
+
+
+
+def create_label_cell(layout, text, position=(0,0), rotate=True, mag=1000, layer="layer127"):
+    
+
+    cell_label = layout.create_cell('label')
+    layer_label = layout.layer(layer)
+
+
+    gen = pya.TextGenerator.default_generator()
+    
+    region = gen.text(text, layout.dbu, mag)
+    if rotate:
+        cell_label.shapes(layer_label).insert(region, pya.DTrans(pya.DTrans.R90,pya.DVector(position[0], position[1])))
+    else:
+        cell_label.shapes(layer_label).insert(region, pya.DTrans(pya.DVector(position[0], position[1])))
+    return cell_label
+
+
 class GrayscaleCalibration():
     """
     Class GrayscaleCalibration:
@@ -634,6 +700,9 @@ class GrayscaleCalibration():
         self.mask_height_scale = mask_height_scale
         self.mask_grayvalues = None
         self.mask_height_range = None
+
+
+        self.layer_names_calibrated = False
         
     def load_calibration(self, filename):
         """
@@ -763,15 +832,15 @@ class GrayscaleCalibration():
                                                 self.calibration_height, self.calibration_grayvalue)
 
 
-    def save_calibrated_gdsfile(self, filename):
+
+
+    def calibrate_layer_names(self, ):
         """
-        Saves the calibrated layout to a gds file
-        
-        Args:
-            :filename: string with the path to the gds file
+        Changes the layer names to the calibrated grayvalues
         """
 
-        
+        assert self.layer_names_calibrated == False, "Layer names already changed."
+        self.layer_names_calibrated = True
 
         for layer_i, layer in enumerate(self.layout.layer_infos()):
             layername = str(layer)
@@ -790,9 +859,37 @@ class GrayscaleCalibration():
 
         # outfile = gdsfile.replace(".dxf", "_grayscale.dxf")
         # self.layout.write(outfile)
+
+
+    
+    def save_calibrated_gdsfile(self, filename):
+        assert self.layer_names_calibrated == True, "Must calibrate layer names first"
+        
+
         with Timer("Saving calibrated GDS file"):
             self.layout.write(filename)
         print("Saved %s"%(filename))
+
+    def add_corners(self, field_width=10000, field_height=10000, corner_length=500, corner_width=100, layer="layer127"):
+        """ Adds corners around the mask
+        """
+        trans = pya.Trans(pya.Point(0,0))
+
+        top_cell = self.layout.top_cell()
+
+        cell_corner = create_corners_cell(self.layout, field_width, field_height, corner_length, corner_width, layer)
+        top_cell.insert(pya.DCellInstArray(cell_corner.cell_index(), trans))
+
+    def add_label(self, label, position=(-4000, -4000),rotate=True, mag=100, layer="layer127"):
+        """ Adds text label to the mask file
+        """
+        top_cell = self.layout.top_cell()
+        trans = pya.Trans(pya.Point(0,0))
+
+        cell_label = create_label_cell(self.layout, label, position,rotate, mag, layer)
+        top_cell.insert(pya.DCellInstArray(cell_label.cell_index(), trans))
+
+
 
 
 
