@@ -87,7 +87,7 @@ class Aperture:
             :n0:            Refractive index of the medium background"""
         if self.is_height:
             return
-        self.aperture = phase2height(self.aperture)
+        self.aperture = phase2height(self.aperture, wavelength, n1)
         self.is_height = True
 
     def height2phase(self, wavelength, n1, n0=1):
