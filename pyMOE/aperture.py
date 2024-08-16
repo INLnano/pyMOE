@@ -11,6 +11,7 @@ import numpy as np
 from pyMOE.utils import digitize_array_to_bins
 from pyMOE.utils import discretize_array
 from pyMOE.sag_functions import phase2height, height2phase
+from pyMOE.utils import progress_bar, Timer
 
 
 
@@ -68,7 +69,45 @@ class Aperture:
         aux = self.aperture        
         self.aperture = (aux-np.max(aux)) % (mod)
 
+    def pixelize(self, pixelize_x, pixelize_y, verbose=True):
+        """Pixelizes the aperture to the given pixelize_x in real space coordinates by averaging the data within the pixel, keeping same shape"""
+        assert pixelize_x > 0, "Pixel size must be greater than 0"
+        assert pixelize_y > 0, "Pixel size must be greater than 0"
+        # assert self.aperture_original is not None, "Original aperture not saved"
+        if self.aperture_original is None:
+            self.aperture_original = np.copy(self.aperture)
+        
+        aux_aperture = np.copy(self.aperture)
+        XX_copy = np.copy(self.XX)
+        YY_copy = np.copy(self.YY)
+
+        XX_copy = XX_copy//pixelize_x
+        YY_copy = YY_copy//pixelize_y
+
+        XX_copy = XX_copy*pixelize_x
+        YY_copy = YY_copy*pixelize_y
+
+
+        N_x = len(np.unique(XX_copy))
+        N_y = len(np.unique(YY_copy))
+
+        if verbose:
+            progress_bar(0/(N_x*N_y))
+        for i,x_val in enumerate(np.unique(XX_copy)):
+   
+
+            for j, y_val in enumerate(np.unique(YY_copy)):
+
+                self.aperture[(XX_copy==x_val) & (YY_copy==y_val)] = np.mean(aux_aperture[(XX_copy==x_val) & (YY_copy==y_val)])
+                if verbose:
+                    progress_bar((i*N_y+j)/(N_x*N_y))
+                    # print((i*N_y+j)/(N_x*N_y))
+        if verbose:
+            progress_bar(1)
+
     
+
+
 
     def phase_unwrap(self):
         """Unwraps the phase of the aperture"""
