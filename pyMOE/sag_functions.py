@@ -208,3 +208,50 @@ def dammann_2d(XX,YY,transitions_x=None, period_x=1, transitions_y=None, period_
 
 
 
+
+
+def theta_to_wavelength(theta, wavelengths, L_repetitions=1, ramp_up_down=True): 
+    """
+    Converts a theta map to the respetive wavelengths for axisimmetric fresnel phase
+
+    """
+    wavelength_range = wavelenghts
+
+    if ramp_up_down: 
+        wavelength_range = np.concatenate((wavelengths, np.flip(wavelengths)))
+    else:
+        wavelength_range = wavelenghts
+        wavelength_range = np.concatenate((wavelengths, []))
+
+
+    # theta_range = np.linspace(-np.pi, np.pi, len(wavelength_range))
+    # theta_range = np.linspace(0, 1, len(wavelength_range), endpoint=True)
+    theta_range = np.arange(0, 1, 1/len(wavelength_range))
+
+
+    theta_norm = np.mod(theta, 2*np.pi)/(2*np.pi)
+    theta_norm *= L_repetitions
+    theta_norm = np.mod(theta_norm, 1)
+
+    wavelength_interp = interpolate.interp1d(theta_range, wavelength_range, kind='previous',fill_value="extrapolate")
+
+    ramp_wavelength = wavelength_interp(theta_norm)
+
+    unique, counts = np.unique(ramp_wavelength, return_counts=True)
+    
+    print("Unique counts: ", unique, counts)
+    
+    return ramp_wavelength 
+
+def polychromatic_fresnel_phase_axisymmetric(XX,YY,focal_length,wavelengths, phase_offset=np.pi, L_repetitions=10, ramp_up_down=True): 
+
+
+    rc = np.sqrt((XX)**2 + (YY)**2)
+    theta = np.arctan2(YY,XX)
+    wavelength = theta_to_wavelength(theta, wavelengths, L_repetitions=L_repetitions, ramp_up_down=ramp_up_down)
+
+    fresn = np.exp(1.0j*((focal_length-np.sqrt(focal_length**2 + rc**2))*(2*np.pi)/(wavelength) + phase_offset))
+    fresn = np.angle(fresn)
+    # fresn = fresn-np.min(fresn)
+    
+    return fresn     
