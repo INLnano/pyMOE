@@ -7,7 +7,7 @@ Module containing several sag or phase functions for various optical elements
 
 import numpy as np
 # from zernike import RZern
-
+from scipy import interpolate
 
 def phase2height(phase, wavelength, n1, n0=1):
         """Converts the phase to height
@@ -215,12 +215,12 @@ def theta_to_wavelength(theta, wavelengths, L_repetitions=1, ramp_up_down=True):
     Converts a theta map to the respetive wavelengths for axisimmetric fresnel phase
 
     """
-    wavelength_range = wavelenghts
+    wavelength_range = wavelengths
 
     if ramp_up_down: 
         wavelength_range = np.concatenate((wavelengths, np.flip(wavelengths)))
     else:
-        wavelength_range = wavelenghts
+        wavelength_range = wavelengths
         wavelength_range = np.concatenate((wavelengths, []))
 
 
