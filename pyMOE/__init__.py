@@ -29,4 +29,4 @@ import pyMOE.generate as generate
 import pyMOE.sag_functions as sag
 
 
-__version__ = '1.4.1'
+__version__ = '1.4.2'
