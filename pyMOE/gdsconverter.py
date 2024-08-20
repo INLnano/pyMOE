@@ -251,7 +251,7 @@ class GDSMask():
         
         
 
-    def create_layout(self, mode="raster", cellname='TOP', merge=False, break_vertices=250):
+    def create_layout(self, mode="raster", cellname='TOP', merge=False, break_vertices=250,**kwargs):
         """
         Creates GDS layout of the discretized aperture
         
@@ -271,7 +271,7 @@ class GDSMask():
         
         
         if mode == "raster":
-            return self._create_layout_raster_klayout(cellname=cellname, merge=merge, break_vertices=break_vertices)
+            return self._create_layout_raster_klayout(cellname=cellname, merge=merge, break_vertices=break_vertices, **kwargs)
         elif mode == "contour": 
             return self._create_layout_contour(cellname = cellname)
         else: 
@@ -447,7 +447,8 @@ class GDSMask():
 
     
     def _create_layout_raster_klayout(self, cellname='top', merge=True, break_vertices=250, layer_name_prefix="Level", 
-        level_scale=micro):
+                                      layer_name_height=True,
+                            level_scale=micro):
         """
         Creates the gds layout using raster mode where each data point is a pixel rectangle to
         be defined in the layout
@@ -456,6 +457,7 @@ class GDSMask():
             :merge:             default False. If True, will merge the individual pixel polygons 
             :break_vertices:    threshold value to speed up the merging of polygons
             :layer_name_prefix: prefix of the layer name
+            :layer_name_height: if True, will append the height to the layer name
             :level_scale:       scaling factor to apply to the level value  (default 1e-6 for micro)
         
         """
@@ -502,11 +504,16 @@ class GDSMask():
             for layer,level in zip(self.layers, self.levels):
 
 
+                if layer_name_height:
+                    # layer_name = "%s%03d_%0.3f"%(layer_name_prefix,layer, level/level_scale)
+                    layer_name = "%s%03d_%0.3f"%(layer_name_prefix,layer, level/level_scale)
+                    # layer_i = layout.layer(int(layer), datatype, layer_name)
+                else:
+                    layer_name = "%s%03d"%(layer_name_prefix,layer)
+                    # layer_i = layout.layer(int(layer), datatype, layer_name)
 
-                # layer_name = "%s%03d"%(layer_name_prefix,layer)
-                layer_name = "%s%03d_%0.3f"%(layer_name_prefix,layer, level/level_scale)
-                # layer_i = layout.layer(int(layer), datatype, layer_name)
                 layer_i = layout.layer(layer_name)
+
 
 
             # Iterates to create a layout in each layer corresponding to one discretized level
