@@ -3,13 +3,17 @@ gdsconverter.py
 GDS converter module
 
 """
-import gdspy
 import numpy as np
 
 from pyMOE.aperture import Aperture
 from pyMOE.utils import progress_bar, Timer
 
 import matplotlib.pyplot as plt 
+from scipy.constants import milli, nano, micro
+
+from scipy.spatial.distance import cdist
+
+import pya
 
 
 def count_vertices(pols):
@@ -100,6 +104,7 @@ def cell_wpol_gdspy(cs, cellname, prec=1e-6, mpoints=1e9):
     
     ##By default the levels start at 0 and go to the number of levels in the contourplot 
     """
+    import gdspy
 
     #get collections from contour 
     collecs = cs.collections 
@@ -180,7 +185,8 @@ class GDSMask():
 
     """
     def __init__(self, mask, units=1e-6, precision=1e-9, verbose=True):
-        assert type(mask) is Aperture, "aperture must be of type Aperture"
+        print(type(mask ))
+        # assert type(mask) is Aperture, "aperture must be of type Aperture"
         self.mask = mask
         self.gdslib = None
         self.units = units
@@ -188,6 +194,7 @@ class GDSMask():
         self.verbose=verbose
         self._gdslib_init_error = "Error: gdsmask not created yet. Run GDSMask.create_layout()"
         self.layers = None
+        self.grayvalues = None
     
     @property
     def levels(self):
@@ -225,13 +232,26 @@ class GDSMask():
         gdspy.LayoutViewer(self.gdslib)
     
     def write_gds(self, filename, cells=None, timestamp=None, binary_cells=None):
-        """ Writes layout to gds file using gdspy library"""
-        self.gdslib.write_gds(filename, cells, timestamp, binary_cells)
+        """ Writes layout to gds file using gdspy library
+        
+        DEPRECATED """
+    #     self.gdslib.write_gds(filename, cells, timestamp, binary_cells)
+    #     print("Saved %s"%(filename))
+    
+    # def write_gds(self, filename, cells=None, timestamp=None, binary_cells=None):
+        self.write_layout(filename)        
+
+
+    def write_layout(self, filename):
+        """ Writes layout togds file using klayout pya library"""
+        print("Saving file to %s"%(filename))
+        with Timer("Saving GDS file"):
+            self.layout.write(filename,)
         print("Saved %s"%(filename))
         
         
 
-    def create_layout(self, mode="raster", cellname='TOP', merge=False, break_vertices=250):
+    def create_layout(self, mode="raster", cellname='TOP', merge=False, break_vertices=250,**kwargs):
         """
         Creates GDS layout of the discretized aperture
         
@@ -242,16 +262,16 @@ class GDSMask():
             :break_vertices: threshold value to speed up the merging of polygons
         
         Returns:
-            :gdslib: l      ibrary with topcell will update the class internal gdslib
+            # :gdslib: l      ibrary with topcell will update the class internal gdslib
         """
 
-        if self.gdslib is None:
-            self._init_layout()
+        # if self.gdslib is None:
+        #     self._init_layout()
         assert self.aperture is not None, "Cannot create_layout() as aperture is not yet discretized"
         
         
         if mode == "raster":
-            return self._create_layout_raster(cellname=cellname, merge=merge, break_vertices=break_vertices)
+            return self._create_layout_raster_klayout(cellname=cellname, merge=merge, break_vertices=break_vertices, **kwargs)
         elif mode == "contour": 
             return self._create_layout_contour(cellname = cellname)
         else: 
@@ -265,6 +285,8 @@ class GDSMask():
         be defined in the layout
         
         """
+        import gdspy
+
         self.gdslib = gdspy.GdsLibrary()
         
         cell = gdspy.Cell(cellname,exclude_from_current=True)
@@ -324,7 +346,7 @@ class GDSMask():
                             rectangle_second_corner = (x+half_pixel_x,y+half_pixel_y)
                             
                             #Creates rectangle and adds it to the cell corresponding to the current layer
-                            rect = gdspy.Rectangle(rectangle_first_corner, rectangle_second_corner,current_layer, datatype)
+                            rect = gdspy.Rectangle(rectangle_first_corner, rectangle_second_corner, current_layer, datatype)
                             cell = list_cells[current_layer]
                             
                             # Saves each rectangle to a separate cell so we can merge more easily afterwards
@@ -365,6 +387,8 @@ class GDSMask():
         """
         Creates the gds layout using contour mode via matplotlib library 
         """
+        import gdspy
+
         self.gdslib = gdspy.GdsLibrary()
         
         cell = gdspy.Cell(cellname,exclude_from_current=True)
@@ -408,3 +432,545 @@ class GDSMask():
            
 
             return self.gdslib
+        
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    def _create_layout_raster_klayout(self, cellname='top', merge=True, break_vertices=250, layer_name_prefix="Level", 
+                                      layer_name_height=True,
+                            level_scale=micro):
+        """
+        Creates the gds layout using raster mode where each data point is a pixel rectangle to
+        be defined in the layout
+        Args:
+            :cellname:          name of the topcell to include all the merged polygons
+            :merge:             default False. If True, will merge the individual pixel polygons 
+            :break_vertices:    threshold value to speed up the merging of polygons
+            :layer_name_prefix: prefix of the layer name
+            :layer_name_height: if True, will append the height to the layer name
+            :level_scale:       scaling factor to apply to the level value  (default 1e-6 for micro)
+        
+        """
+
+        import pya
+        #initialize
+        layout = pya.Layout()
+        top = layout.create_cell(cellname)
+        self.layout = layout
+        
+        # cell = gdspy.Cell(cellname,exclude_from_current=True)
+        
+        self.layers = np.arange(len(self.levels))
+        total_layers = len(self.layers)
+        total_points = self.mask.shape[0]*self.mask.shape[1]
+        
+        size_x, size_y = self.mask.shape
+        XX = self.mask.XX
+        YY = self.mask.YY
+
+        half_pixel_x = self.mask.pixel_x/2
+        half_pixel_y = self.mask.pixel_y/2
+
+        # normalize to units:
+        XX = XX/self.units
+        YY = YY/self.units
+        half_pixel_x = half_pixel_x/self.units
+        half_pixel_y = half_pixel_y/self.units
+        datatype = 0
+        
+        # Creates top cell that will reference the remaining cells
+        # topcell = gdspy.Cell(cellname, exclude_from_current=True)
+        maskcell = layout.create_cell('pixelmask')
+
+    
+        # Make evaluation of computational effort
+        if self.verbose:
+            print("Mask has %d number of points distributed in %d layers"%(total_points, total_layers))       
+
+        with Timer("Total time converting to GDS"):
+            # Creates a list of cells where each cell will correspond to a layer, to enable merging afterwards.
+            list_cells = []
+            # for layer in self.layers:
+            for layer,level in zip(self.layers, self.levels):
+
+
+                if layer_name_height:
+                    # layer_name = "%s%03d_%0.3f"%(layer_name_prefix,layer, level/level_scale)
+                    layer_name = "%s%03d_%0.3f"%(layer_name_prefix,layer, level/level_scale)
+                    # layer_i = layout.layer(int(layer), datatype, layer_name)
+                else:
+                    layer_name = "%s%03d"%(layer_name_prefix,layer)
+                    # layer_i = layout.layer(int(layer), datatype, layer_name)
+
+                layer_i = layout.layer(layer_name)
+
+
+
+            # Iterates to create a layout in each layer corresponding to one discretized level
+            if self.verbose:
+                print("Creating individual pixel polygons")
+            with Timer("Create Polygons"):
+                for i in range(size_x):
+                    for j in range(size_y):
+
+                        current_point = i*size_x+j
+                        aperture_value = self.aperture[i,j]
+                        
+                        if not np.isnan(aperture_value):
+                            current_layer = int(np.rint(aperture_value))
+                            # print('current layer', current_layer)
+                            x = XX[i,j]
+                            y = YY[i,j]
+                            
+                            # Creates corners of rectangle with center at the data value
+                            rectangle_first_corner = (x-half_pixel_x,y-half_pixel_y)
+                            rectangle_second_corner = (x+half_pixel_x,y+half_pixel_y)
+                            
+                            # Creates rectangle and adds it to the cell corresponding to the current layer
+                            
+                            maskcell.shapes(current_layer).insert(pya.DBox(rectangle_first_corner[0],rectangle_first_corner[1],
+                                                                    rectangle_second_corner[0],rectangle_second_corner[1]))
+                        
+                    if self.verbose:
+                        progress_bar(current_point/total_points)
+                        
+                if self.verbose: 
+                    progress_bar(1)
+
+            if merge:
+                if self.verbose:
+                    print("Merging polygons inside layers")
+
+                with Timer("Merging polygons"):
+
+                    # creates a merged cell to add the regions into
+                    mergedcell = layout.create_cell('mask')
+
+
+                    total_layers = len(layout.layer_infos())
+                    for layer_i, layer in enumerate(layout.layer_infos()):
+
+                      
+                        if self.verbose: 
+                            progress_bar(layer_i/total_layers)
+
+                        # Creates a region of all polygons within a layer
+                        region = pya.Region(maskcell.begin_shapes_rec(layer_i))
+                        # merges polygons in region
+                        region.merge()
+                        mergedcell.shapes(layer_i).insert(region)
+                    
+                    # deletes original cell from 
+                    maskcell.clear()
+                    maskcell.delete()
+                    if self.verbose: 
+                        progress_bar(1)
+                    trans = pya.Trans(pya.Point(0,0))
+                    
+                    new_instance = pya.DCellInstArray(mergedcell.cell_index(), trans, pya.Vector(50, 0 ), pya.Vector(0, 50), 1,1)
+            else:
+                new_instance = pya.DCellInstArray(maskcell.cell_index(), trans, pya.Vector(50, 0 ), pya.Vector(0, 50), 1,1)
+
+            top.insert(new_instance)
+
+
+
+            return self.layout 
+        
+
+def find_closest_indices(x, y):
+    from scipy.spatial.distance import cdist
+
+    # Reshape y to a column vector
+    y = y.reshape(-1, 1)
+
+    # Calculate the distances between each value of y and x
+    distances = cdist(y, x.reshape(-1, 1))
+
+    # Find the index of the closest value in x for each value of y
+    closest_indices = np.argmin(distances, axis=1)
+
+    return closest_indices
+
+
+def levels2grayvalue(levels, calibration_height, calibration_grayvalue, ):
+    idx = find_closest_indices(calibration_height, levels)
+
+    grayvalue = calibration_grayvalue[idx]
+    
+    return grayvalue
+
+
+def load_grayscale_contrast(filename):
+    grayvalue, height = np.loadtxt(filename, delimiter=',', unpack=True)
+    grayvalue = np.array(grayvalue).astype(int)
+    return grayvalue, height
+
+
+
+
+
+
+def create_poly_dicing_corner(length, width):
+    poly = pya.DPolygon([ 
+    pya.DPoint(0, 0), pya.DPoint(0, length),  pya.DPoint(width, length),
+    pya.DPoint(width, width),  pya.DPoint(length, width), pya.DPoint(length, width),
+    pya.DPoint(length, 0)
+    ])
+    return poly
+
+def create_corners_cell(layout, field_width, field_height, corner_length, corner_width, layer="layer127"):
+    cell_corner_single = layout.create_cell('corner_instance')
+
+    cell_corner = layout.create_cell('corners')
+    layer_corners = layout.layer(layer)
+    corner_polygon = create_poly_dicing_corner(corner_length, corner_width)
+
+    cell_corner_single.shapes(layer_corners).insert(corner_polygon)
+
+
+    instance = pya.DCellInstArray(cell_corner_single.cell_index(),
+                                pya.DTrans(pya.DTrans.R0, pya.DPoint(-field_width/2, -field_height/2))
+                                )
+    cell_corner.insert(instance)
+
+    instance = pya.DCellInstArray(cell_corner_single.cell_index(),
+                                pya.DTrans(pya.DTrans.R270, pya.DPoint(-field_width/2, field_height/2))
+                                )
+    cell_corner.insert(instance)
+
+
+    instance = pya.DCellInstArray(cell_corner_single.cell_index(),
+                                pya.DTrans(pya.DTrans.R180, pya.DPoint(field_width/2, field_height/2))
+                                )
+    cell_corner.insert(instance)
+
+    instance = pya.DCellInstArray(cell_corner_single.cell_index(),
+                                pya.DTrans(pya.DTrans.R90, pya.DPoint(field_width/2, -field_height/2))
+                                )
+    cell_corner.insert(instance)
+
+
+    cell_corner.flatten(-1, True)
+
+    return cell_corner
+
+
+
+def create_label_cell(layout, text, position=(0,0), rotate=True, mag=1000, layer="layer127"):
+    
+
+    cell_label = layout.create_cell('label')
+    layer_label = layout.layer(layer)
+
+
+    gen = pya.TextGenerator.default_generator()
+    
+    region = gen.text(text, layout.dbu, mag)
+    if rotate:
+        cell_label.shapes(layer_label).insert(region, pya.DTrans(pya.DTrans.R90,pya.DVector(position[0], position[1])))
+    else:
+        cell_label.shapes(layer_label).insert(region, pya.DTrans(pya.DVector(position[0], position[1])))
+    return cell_label
+
+
+class GrayscaleCalibration():
+    """
+    Class GrayscaleCalibration:
+        Creates a class to integrate the GDS library and layout corresponding to a mask aperture.
+        Receives an aperture and provides methods to calculate the corresponding GDS layout
+    
+    Args:
+        :mask: aperture object
+        """
+    def __init__(self, mask_height_scale=micro, verbose=True):
+        self.calibration_grayvalue = None
+        self.calibration_height = None
+        self.calibration_height_range = None
+        self.layout = None
+        self.verbose = verbose
+
+        self.mask_heights = None
+        self.level_heights = None
+        self.level_height_offset = None
+        self.mask_height_normalization = None
+        self.mask_height_scale = mask_height_scale
+        self.mask_grayvalues = None
+        self.mask_height_range = None
+
+
+        self.layer_names_calibrated = False
+        
+    def load_calibration(self, filename):
+        """
+        Loads the calibration file from a csv file with two columns, the first column with the grayscale value and the second column with the height value
+        
+        Args:
+            :filename: string with the path to the calibration file
+        """
+        self.calibration_grayvalue, self.calibration_height = load_grayscale_contrast(filename)
+
+        self.calibration_height_range = np.ptp(self.calibration_height)
+        if self.verbose == True:
+            print("Grayscale calibration range is %0.3f um"%(self.calibration_height_range))
+
+
+
+    def load_gdsfile(self, gdsfile):
+        """
+        Loads the mask file
+        
+        Args:
+            :gdsfile: string with the path to the gds file
+        """
+        self.layout = pya.Layout()
+        self.layout.read(gdsfile)
+        
+
+    def get_levels_from_layer_names(self):
+        """
+        Extracts the levels from the layer names in the mask
+        Assumes that the layer name is "LevelDDD_xxx" where xxx is the height in um
+        """
+
+        assert self.layout is not None, "No layout loaded. Run load_gdsfile() first."
+
+
+        # extracting the level and height from mask
+        total_layers = len(self.layout.layer_infos())
+
+        heights = []
+        for layer_i, layer in enumerate(self.layout.layer_infos()):
+            layername = str(layer.name).replace('\'\'\n', '')
+            # print(layername)
+            # print(layer.name)
+            if "Level" not in layername:
+                continue
+            _, height = layername.split("_")
+            height = float(height)
+            heights.append(height)
+            # print(layer_i, layer, layername, height)
+
+        assert len(heights) >0, "No levels found in the mask. Check if the mask is correctly generated."
+
+        self.mask_heights = np.array(heights)
+
+        if self.verbose:
+            print("Loaded mask with %d levels"%len(self.mask_heights))
+            
+        self.mask_height_range = np.ptp(self.mask_heights)
+        if self.verbose == True:
+            print("Mask range is %0.3f um"%(self.mask_height_range))
+            if self.calibration_height_range is not None:
+                if self.mask_height_range>self.calibration_height_range:
+                    print("Warning! Calibration range is smaller than mask height range.")
+        
+        if self.calibration_grayvalue is not None:
+            # Adjusts the grayvalues of the mask to the calibration values
+            self.adjust_grayvalues( self.level_height_offset)
+
+
+
+    def get_levels_from_height_range(self, mask_height_range, endpoint=True):
+        """
+        Extracts the levels from the given height range and number of layers on the mask
+
+        """
+
+        assert self.layout is not None, "No layout loaded. Run load_gdsfile() first."
+
+
+        # extracting the level and height from mask
+        total_layers = len(self.layout.layer_infos())
+
+        heights = np.linspace(0, -mask_height_range, total_layers, endpoint=endpoint)
+        self.mask_heights = np.array(heights)
+
+        if self.verbose:
+            print("Loaded mask with %d levels"%len(self.mask_heights))
+            
+        self.mask_height_range = np.ptp(self.mask_heights)
+        if self.verbose == True:
+            print("Mask range is %0.3f um"%(self.mask_height_range))
+            if self.calibration_height_range is not None:
+                if self.mask_height_range>self.calibration_height_range:
+                    print("Warning! Calibration range is smaller than mask height range.")
+        
+        if self.calibration_grayvalue is not None:
+            # Adjusts the grayvalues of the mask to the calibration values
+            self.adjust_grayvalues( self.level_height_offset)
+
+
+
+    def plot_calibration(self):
+        assert self.calibration_grayvalue is not None, "No calibration data loaded."
+
+        plt.figure()
+        plt.plot(self.calibration_grayvalue, self.calibration_height)
+
+        if self.level_heights is not None:
+            for level in self.level_heights:
+                plt.axhline(level, color='Gray', linestyle='-', lw=1)
+        plt.scatter(self.mask_grayvalues, self.level_heights, s=4)
+        plt.xlabel("Grayvalue")
+        plt.ylabel("Height [um]")
+
+    def adjust_grayvalues(self, height_offset=None):
+        """
+        Adjusts the grayvalues of the mask to the calibration values
+        """
+        self.mask_height_normalization = np.max(self.mask_heights)-np.max(self.calibration_height) 
+        if height_offset is None:
+            height_offset = -self.mask_height_normalization
+        else:
+            height_offset = -self.mask_height_normalization+height_offset
+        self.level_height_offset = height_offset
+        self.level_heights = self.mask_heights+self.level_height_offset
+
+        self.mask_grayvalues = levels2grayvalue(self.level_heights, 
+                                                self.calibration_height, self.calibration_grayvalue)
+
+
+
+
+
+    def calibrate_layer_names(self, force_naming=False, datatype=0):
+        """
+        Changes the layer names to the calibrated grayvalues
+        """
+
+        assert self.layer_names_calibrated == False, "Layer names already changed."
+        self.layer_names_calibrated = True
+
+        for layer_i, layer in enumerate(self.layout.layer_infos()):
+            layername = str(layer)
+            # print(layername)
+            if not force_naming:
+                if "Level" not in layername:
+                    continue
+                prefix, height = layername.split("_")
+                _,idx = prefix.split("Level")
+                idx = int(idx)
+                ly = self.layout.layer(layername)
+
+            else:
+                idx = layer_i
+                ly = self.layout.layer(idx, datatype )
+
+            info = self.layout.get_info(ly)
+            info.name = "layer%03d"%self.mask_grayvalues[idx]
+            newinfo = pya.LayerInfo(info.name)
+
+            # print(info)
+            self.layout.set_info(ly, newinfo)
+            # print("Layer handle " + str(ly) + " refers to " + str(self.layout.get_info(ly)))
+
+
+    
+    def save_calibrated_gdsfile(self, filename, force_save=False):
+
+        if not force_save:
+            assert self.layer_names_calibrated == True, "Must calibrate layer names first"
+        
+
+        with Timer("Saving calibrated GDS file"):
+            self.layout.write(filename)
+        print("Saved %s"%(filename))
+
+    def add_corners(self, field_width=10000, field_height=10000, corner_length=500, corner_width=100, layer="layer127"):
+        """ Adds corners around the mask
+        """
+        trans = pya.Trans(pya.Point(0,0))
+
+        top_cell = self.layout.top_cell()
+
+        cell_corner = create_corners_cell(self.layout, field_width, field_height, corner_length, corner_width, layer)
+        top_cell.insert(pya.DCellInstArray(cell_corner.cell_index(), trans))
+
+    def add_label(self, label, position=(-4000, -4000),rotate=True, mag=100, layer="layer127"):
+        """ Adds text label to the mask file
+        """
+        top_cell = self.layout.top_cell()
+        trans = pya.Trans(pya.Point(0,0))
+
+        cell_label = create_label_cell(self.layout, label, position,rotate, mag, layer)
+        top_cell.insert(pya.DCellInstArray(cell_label.cell_index(), trans))
+
+
+
+
+
+# gdsfile = "testmask4.dxf"   #name of gds file 
+
+# filename = "Pyra2_E80_F-20_greylevels.csv"
+# calibration_grayvalue, calibration_height = load_grayscale_contrast(filename)
+# plt.plot(calibration_grayvalue, calibration_height)
+
+# import klayout
+# import pya
+
+
+# # Loads the mask file
+# layout = pya.Layout()
+# layout.read(gdsfile)
+
+
+
+# # extracting the level and height from mask
+# total_layers = len(layout.layer_infos())
+
+# heights = []
+# for layer_i, layer in enumerate(layout.layer_infos()):
+#     layername = str(layer)
+#     if "Level" not in layername:
+#         continue
+#     _, height = layername.split("_")
+#     height = float(height)
+#     heights.append(height)
+#     # print(layer_i, layer, layername, height)
+
+# assert len(heights) >0, "No levels found in the mask. Check if the mask is correctly generated."
+
+# heights = np.array(heights)
+    
+# plt.plot(calibration_grayvalue, calibration_height)
+# height_offset = -1.4
+# grayvalues = levels2grayvalue(heights, calibration_height, calibration_grayvalue, height_offset=height_offset)
+
+# for level in heights:
+#     plt.axhline(level+height_offset, color='red', linestyle='-', lw=1)
+# # plt.plot(mask1.levels, grayvalue)
+# grayvalues, heights
+
+
+
+# for layer_i, layer in enumerate(layout.layer_infos()):
+#     layername = str(layer)
+    
+#     if "Level" not in layername:
+#         continue
+#     prefix, height = layername.split("_")
+#     _,idx = prefix.split("Level")
+#     idx = int(idx)
+#     print(idx)
+
+#     ly = layout.layer(layername)
+#     info = layout.get_info(ly)
+#     print(info)
+#     info.name = "layer%03d"%grayvalues[idx]
+#     # print(info)
+#     layout.set_info(ly, info)
+#     print("Layer handle " + str(ly) + " refers to " + str(layout.get_info(ly)))
+
+# outfile = gdsfile.replace(".dxf", "_grayscale.dxf")
+# layout.write(outfile)

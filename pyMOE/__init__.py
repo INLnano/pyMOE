@@ -21,6 +21,7 @@ from pyMOE.field import Screen
 from pyMOE.aperture import ApertureField
 
 from pyMOE.gdsconverter import GDSMask
+from pyMOE.gdsconverter import GrayscaleCalibration
 
 import pyMOE.plotting as plotting
 import pyMOE.utils as utils
