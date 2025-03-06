@@ -12,6 +12,8 @@ from gdspy import FlexPath
 from shapely.geometry import MultiPolygon, Polygon
 import pickle 
 import cv2 
+from pyMOE.generate import create_empty_aperture
+from pyMOE.aperture import Aperture
 
 # from gdshelpers.geometry.chip import Cell
 
@@ -383,3 +385,101 @@ def gds2img(infile,outfile,norm, rescaled=0, verbose=False):
     
     print("Imported file "+infile+" and exported into "+outfile+ " with size "+ str(int(xmx)) + " x " + str(int(ymx)) + " pixels.")
     
+    
+
+def import_img(inputfile, width_file, height_file, aperture=None, center=None, corner = None):
+    """    
+    Import file to aperture 
+    
+    Args: 
+        :inputfile:                   input image file
+        :width_file, height_file:     width and height of the rectangle
+        :aperture:                    if given, sets the aperture 
+        :center:                      if given, sets the center mask 
+        :corner:                      if given, sets the corner
+        
+    Returns:
+        aperture with image information
+    """
+   
+    im = cv2.imread(inputfile, cv2.IMREAD_GRAYSCALE)
+    
+    im_shape = np.shape(im) 
+    
+    pix_size_x = width_file/im_shape[0]
+    pix_size_y = height_file/im_shape[1]
+
+    
+    dims = -width_file/2, width_file/2, -height_file/2, height_file/2
+    
+    #if aperture is given 
+    if aperture is not None: 
+        assert type(aperture) is Aperture, "aperture must be of type Aperture"
+
+        canvas_width = np.max(aperture.x)-np.min(aperture.x)
+        canvas_height = np.max(aperture.y)-np.min(aperture.y)
+        
+        #The nr of pixels is not very relevant, unless the elements to be inserted have stringent requirements
+        npixs1 = int(np.round(width_file/pix_size_x,0) +1),  int(np.round(height_file/pix_size_y,0)+1)
+        npixs2 = int(np.round(canvas_width/pix_size_x,0)+1 ),  int(np.round(canvas_height/pix_size_y,0)+1)
+        
+        #if the pixel size of the canvas aperture is different than the imported file, create new canvas 
+        if (np.round(pix_size_x,8)!=np.round(aperture.pixel_x,8)) or (np.round(pix_size_y,8)!=np.round(aperture.pixel_y,8)): 
+            print("The pixel size in the destination aperture is "+str(np.round(pix_size_x,8))+"m...")
+            print("Creating new canvas aperture with "+str(np.round(aperture.pixel_x,8))+"m.")
+            aperture_blank = create_empty_aperture(-canvas_width/2, canvas_width/2, npixs2[0], \
+                                                            -canvas_height/2, canvas_height/2, npixs2[1])
+            aperture = aperture_blank
+    
+    #if aperture is not given 
+    else: 
+        canvas_width = width_file 
+        canvas_height= height_file
+        
+        #The nr of pixels is not very relevant, unless the elements to be inserted have stringent requirements
+        npixs1 = int(np.round(width_file/pix_size_x,0) +1),  int(np.round(height_file/pix_size_y,0)+1)
+        npixs2 = int(np.round(canvas_width/pix_size_x,0)+1 ),  int(np.round(canvas_height/pix_size_y,0)+1)
+        
+        #create an aperture with same pixel size as the image and same size as the image
+        aperture_blank = create_empty_aperture(-canvas_width/2, canvas_width/2, npixs2[0], \
+                                                            -canvas_height/2, canvas_height/2, npixs2[1])
+        aperture = aperture_blank
+        
+        
+    if corner is not None:
+        assert (type(corner)==tuple) and (len(corner) == 2)
+        x0,y0 = corner
+    if center is not None:
+        assert (type(center)==tuple) and (len(center) == 2)
+        xc, yc = center
+        x0 = xc-width_file/2
+        y0 = yc-height_file/2
+    if (corner is None) and (center is None):
+        xc = np.mean(aperture.x)
+        yc = np.mean(aperture.y)
+        x0 = xc - width_file/2
+        y0 = yc - height_file/2
+
+    mask = aperture.aperture
+    
+    #initialize extent 
+    extent = (0,0)
+
+    try: 
+        xmin, xmax, ymin, ymax = np.min(np.where(aperture.x>=x0)) , np.max(np.where(aperture.x<=x0+width_file)) , \
+                                np.min(np.where(aperture.y>=y0)) , np.max(np.where(aperture.y<=y0+height_file))
+        #check extent 
+        extent = np.shape(mask[ymin : ymax, xmin : xmax])
+        
+    except: 
+        print("You are importing a file to a region outside the field of view, check the center/corner coordinates and size of the imported element.")
+        return 
+    
+    mask[ymin : ymax, xmin : xmax ] =  np.array(np.flip(np.flip(im[0:extent[0],0:extent[1]], axis=1)), dtype=np.float) 
+
+    aperture.aperture = mask
+
+    return aperture
+
+    
+
