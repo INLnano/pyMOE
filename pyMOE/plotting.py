@@ -9,10 +9,10 @@ import matplotlib.pyplot as plt
 import cv2 
 import numpy as np
 
-from pyMOE import Aperture
-from pyMOE import Field
-from pyMOE import Screen
-from pyMOE import ApertureField
+from pyMOE.aperture import Aperture
+from pyMOE.field import Field
+from pyMOE.field import Screen
+from pyMOE.aperture import ApertureField
 
 
 def save_mask_plot(maskcir, xsize, ysize, filename):
