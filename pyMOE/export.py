@@ -6,6 +6,7 @@ Module containing several functions to export masks to gds.
 import cv2
 # import gdspy 
 import numpy as np 
+from pyMOE.aperture import Aperture
     
     
 ###Function exports an image file (converted to gray) into a gds file 
@@ -347,3 +348,34 @@ def grayim2gds_writer_klops(infile,  output_filename , pixelx, pixely, cellname,
     #write to gds
     layout.write(output_filename)
     print("Done")
+
+
+
+def export_img(aperture, outfile, nbits=8):
+    """    
+    Export aperture as a grayscale image file 
+    
+    Args: 
+        :aperture:          mask of type Aperture
+        :outfile:           output file name (string), e.g. "img.bmp" 
+        :nbits:             default = 8. You can use larger than 8, if you use TIFF files 
+        
+    Returns:
+        none 
+    """
+
+    assert type(aperture) is Aperture, "aperture must be of type Aperture"
+    
+    aperture.aperture = np.flip(np.flip(aperture.aperture), axis=1)
+    
+    im = aperture.aperture *(2**nbits-1) /np.max(aperture.aperture)
+    
+    
+    img = np.zeros((len(aperture.y), len(aperture.x), 3), np.uint8)
+    img[:, :, 0] = im[:,:]  # Set the blue channel 
+    img[:, :, 1] = im[:,:]  # Set the green channel 
+    img[:, :, 2] = im[:,:]  # Set the red channel 
+
+    cv2.imwrite(outfile, im)
+    
+    print("Saved aperture into a grayscale image "+outfile)
