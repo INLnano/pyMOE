@@ -5,6 +5,7 @@ aperture.py
 Definition of Class Aperture
 
 
+
 """
 
 import numpy as np
@@ -44,8 +45,7 @@ class Aperture:
         self.aperture_discretized = None
         self.discretized_flag = False
 
-        self.is_height = False
-
+        
     @property
     def shape(self):
         return self.aperture.shape
@@ -124,10 +124,8 @@ class Aperture:
             :wavelength:    Wavelength of the light
             :n1:            Refractive index of the medium where the light is propagating
             :n0:            Refractive index of the medium background"""
-        if self.is_height:
-            return
+    
         self.aperture = phase2height(self.aperture, wavelength, n1, n0)
-        self.is_height = True
 
     def height2phase(self, wavelength, n1, n0=1):
         """Converts the height to phase
@@ -135,11 +133,9 @@ class Aperture:
             :wavelength:    Wavelength of the light
             :n1:            Refractive index of the medium where the light is propagating
             :n0:            Refractive index of the medium background"""
-        if not self.is_height:
-            return
+       
         self.aperture = height2phase(self.aperture, wavelength, n1, n0)
-        self.is_height = False
-
+       
 
 
 class ApertureField:
