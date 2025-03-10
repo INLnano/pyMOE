@@ -44,7 +44,6 @@ class Aperture:
         self.aperture_discretized = None
         self.discretized_flag = False
 
-        self.is_height = False
 
     @property
     def shape(self):
@@ -61,13 +60,13 @@ class Aperture:
         self.aperture = levels[digitized]
         self.discretized_flag=True
 
-    def modulos(self, mod, normalize_to_max=True):
+    def modulos(self, mod, normalize_to_max=True,mod_tolerance=1e-64):
         """Discretizes the aperture to the number of levels"""
         if self.aperture_original is None:
             self.aperture_original = np.copy(self.aperture)
 
         aux = self.aperture        
-        self.aperture = (aux-np.max(aux)) % (mod)
+        self.aperture = (aux-np.max(aux)-mod_tolerance) % (mod)
 
     def pixelize(self, pixelize_x, pixelize_y, verbose=True):
         """Pixelizes the aperture to the given pixelize_x in real space coordinates by averaging the data within the pixel, keeping same shape"""
@@ -124,10 +123,10 @@ class Aperture:
             :wavelength:    Wavelength of the light
             :n1:            Refractive index of the medium where the light is propagating
             :n0:            Refractive index of the medium background"""
-        if self.is_height:
-            return
+        # assert self.is_height is False, "Cannot unwrap height"
+
+
         self.aperture = phase2height(self.aperture, wavelength, n1, n0)
-        self.is_height = True
 
     def height2phase(self, wavelength, n1, n0=1):
         """Converts the height to phase
@@ -135,10 +134,8 @@ class Aperture:
             :wavelength:    Wavelength of the light
             :n1:            Refractive index of the medium where the light is propagating
             :n0:            Refractive index of the medium background"""
-        if not self.is_height:
-            return
+
         self.aperture = height2phase(self.aperture, wavelength, n1, n0)
-        self.is_height = False
 
 
 
