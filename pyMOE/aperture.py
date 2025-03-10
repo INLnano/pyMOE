@@ -1,5 +1,5 @@
 """
-mask.py
+aperture.py
 
 
 Definition of Class Aperture
@@ -10,6 +10,9 @@ Definition of Class Aperture
 import numpy as np
 from pyMOE.utils import digitize_array_to_bins
 from pyMOE.utils import discretize_array
+from pyMOE.sag_functions import phase2height, height2phase
+from pyMOE.utils import progress_bar, Timer
+
 
 
 class Aperture:
@@ -41,6 +44,7 @@ class Aperture:
         self.aperture_discretized = None
         self.discretized_flag = False
 
+
     @property
     def shape(self):
         return self.aperture.shape
@@ -56,13 +60,82 @@ class Aperture:
         self.aperture = levels[digitized]
         self.discretized_flag=True
 
-    def modulos(self, mod):
+    def modulos(self, mod, normalize_to_max=True,mod_tolerance=1e-64):
         """Discretizes the aperture to the number of levels"""
         if self.aperture_original is None:
             self.aperture_original = np.copy(self.aperture)
 
         aux = self.aperture        
-        self.aperture = aux % (mod)
+        self.aperture = (aux-np.max(aux)-mod_tolerance) % (mod)
+
+    def pixelize(self, pixelize_x, pixelize_y, verbose=True):
+        """Pixelizes the aperture to the given pixelize_x in real space coordinates by averaging the data within the pixel, keeping same shape"""
+        assert pixelize_x > 0, "Pixel size must be greater than 0"
+        assert pixelize_y > 0, "Pixel size must be greater than 0"
+        # assert self.aperture_original is not None, "Original aperture not saved"
+        if self.aperture_original is None:
+            self.aperture_original = np.copy(self.aperture)
+        
+        aux_aperture = np.copy(self.aperture)
+        XX_copy = np.copy(self.XX)
+        YY_copy = np.copy(self.YY)
+
+        XX_copy = XX_copy//pixelize_x
+        YY_copy = YY_copy//pixelize_y
+
+        XX_copy = XX_copy*pixelize_x
+        YY_copy = YY_copy*pixelize_y
+
+
+        N_x = len(np.unique(XX_copy))
+        N_y = len(np.unique(YY_copy))
+
+        if verbose:
+            progress_bar(0/(N_x*N_y))
+        for i,x_val in enumerate(np.unique(XX_copy)):
+   
+
+            for j, y_val in enumerate(np.unique(YY_copy)):
+
+                self.aperture[(XX_copy==x_val) & (YY_copy==y_val)] = np.mean(aux_aperture[(XX_copy==x_val) & (YY_copy==y_val)])
+                if verbose:
+                    progress_bar((i*N_y+j)/(N_x*N_y))
+                    # print((i*N_y+j)/(N_x*N_y))
+        if verbose:
+            progress_bar(1)
+
+    
+
+
+
+    def phase_unwrap(self):
+        """Unwraps the phase of the aperture"""
+        assert self.is_height is False, "Cannot unwrap height"
+            
+        self.aperture = np.unwrap(np.unwrap(self.aperture, axis=0), axis=1)
+        # self.aperture = np.apply_over_axes(np.unwrap, self.aperture, np.arange(len(self.aperture.shape)))
+        # self.aperture = np.apply_over_axes(np.unwrap, self.aperture, np.arange(len(self.aperture.shape)))
+
+
+    def phase2height(self, wavelength, n1, n0=1):
+        """Converts the phase to height
+        Args:
+            :wavelength:    Wavelength of the light
+            :n1:            Refractive index of the medium where the light is propagating
+            :n0:            Refractive index of the medium background"""
+        # assert self.is_height is False, "Cannot unwrap height"
+
+
+        self.aperture = phase2height(self.aperture, wavelength, n1, n0)
+
+    def height2phase(self, wavelength, n1, n0=1):
+        """Converts the height to phase
+        Args:
+            :wavelength:    Wavelength of the light
+            :n1:            Refractive index of the medium where the light is propagating
+            :n0:            Refractive index of the medium background"""
+
+        self.aperture = height2phase(self.aperture, wavelength, n1, n0)
 
 
 

@@ -21,6 +21,7 @@ from pyMOE.field import Screen
 from pyMOE.aperture import ApertureField
 
 from pyMOE.gdsconverter import GDSMask
+from pyMOE.gdsconverter import GrayscaleCalibration
 
 import pyMOE.plotting as plotting
 import pyMOE.utils as utils
@@ -29,4 +30,4 @@ import pyMOE.generate as generate
 import pyMOE.sag_functions as sag
 
 
-__version__ = '1.4.2'
+__version__ = '1.5'

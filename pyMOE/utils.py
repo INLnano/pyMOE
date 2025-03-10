@@ -81,7 +81,7 @@ def digitize_array_to_bins(array, levels):
     """    
     assert isinstance(levels, (np.ndarray, int)), "levels must be a scalar or numpy array"
     if isinstance(levels, int):
-        bins = np.linspace(array.min(), array.max() , levels, endpoint=False) 
+        bins = np.linspace(np.nanmin(array), np.nanmax(array) , levels, endpoint=False) 
     else:
         bins = levels
     
@@ -90,6 +90,7 @@ def digitize_array_to_bins(array, levels):
     # Everything below the minimum bin level is changed to the minimum level
     dig[dig==0] = 1
     dig = dig-1
+    # dig[np.isnan(array)] = np.nan
     return bins, dig
 
 
@@ -135,3 +136,18 @@ def simpson2d(f,ax,bx,ay,by):
     
     return tint
 
+
+
+def find_closest_indices(x, y):
+    from scipy.spatial.distance import cdist
+
+    # Reshape y to a column vector
+    y = y.reshape(-1, 1)
+
+    # Calculate the distances between each value of y and x
+    distances = cdist(y, x.reshape(-1, 1))
+
+    # Find the index of the closest value in x for each value of y
+    closest_indices = np.argmin(distances, axis=1)
+
+    return closest_indices
