@@ -6,6 +6,8 @@ Module containing several functions to export masks to gds.
 import cv2
 # import gdspy 
 import numpy as np 
+import gdspy
+
     
     
 ###Function exports an image file (converted to gray) into a gds file 
