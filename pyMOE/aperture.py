@@ -110,7 +110,7 @@ class Aperture:
 
     def phase_unwrap(self):
         """Unwraps the phase of the aperture"""
-        assert self.is_height is False, "Cannot unwrap height"
+        #assert self.is_height is False, "Cannot unwrap height"
             
         self.aperture = np.unwrap(np.unwrap(self.aperture, axis=0), axis=1)
         # self.aperture = np.apply_over_axes(np.unwrap, self.aperture, np.arange(len(self.aperture.shape)))
