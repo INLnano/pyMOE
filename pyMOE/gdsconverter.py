@@ -231,23 +231,35 @@ class GDSMask():
         assert self.gdslib is not None, "Must create_layout() from discretized aperture first"
         gdspy.LayoutViewer(self.gdslib)
     
-    def write_gds(self, filename, cells=None, timestamp=None, binary_cells=None):
+    def write_gds(self, filename, mode="raster", cells=None, timestamp=None, binary_cells=None):
         """ Writes layout to gds file using gdspy library
         
         DEPRECATED """
-    #     self.gdslib.write_gds(filename, cells, timestamp, binary_cells)
-    #     print("Saved %s"%(filename))
     
+
+        if mode=="raster":
+            self.write_layout(filename)
+            mode = "contour"
+        elif mode =="contour": 
+            self.gdslib.write_gds(filename, cells, timestamp, binary_cells)
+            print("Saved %s"%(filename))
+        else: 
+            print("Unsupported mode (mode must be either raster or contour).")
+        
     # def write_gds(self, filename, cells=None, timestamp=None, binary_cells=None):
-        self.write_layout(filename)        
+       
 
 
     def write_layout(self, filename):
         """ Writes layout togds file using klayout pya library"""
         print("Saving file to %s"%(filename))
+        
         with Timer("Saving GDS file"):
-            self.layout.write(filename,)
-        print("Saved %s"%(filename))
+            try: 
+                self.layout.write(filename)
+                print("Saved %s"%(filename))
+            except: 
+                print("Failed! Probably you are in contour mode, but forgot to specify it, please check!")
         
         
 
@@ -432,23 +444,9 @@ class GDSMask():
            
 
             return self.gdslib
-        
-
-
-
-
-
-
-
-
-
-
-
 
     
-    def _create_layout_raster_klayout(self, cellname='top', merge=True, break_vertices=250, layer_name_prefix="Level", 
-                                      layer_name_height=True,
-                            level_scale=micro):
+    def _create_layout_raster_klayout(self, cellname='top', merge=True, break_vertices=250, layer_name_prefix="Level", layer_name_height=True, level_scale=micro):
         """
         Creates the gds layout using raster mode where each data point is a pixel rectangle to
         be defined in the layout
@@ -579,6 +577,7 @@ class GDSMask():
                     
                     new_instance = pya.DCellInstArray(mergedcell.cell_index(), trans, pya.Vector(50, 0 ), pya.Vector(0, 50), 1,1)
             else:
+                trans = pya.Trans(pya.Point(0,0))
                 new_instance = pya.DCellInstArray(maskcell.cell_index(), trans, pya.Vector(50, 0 ), pya.Vector(0, 50), 1,1)
 
             top.insert(new_instance)
@@ -884,7 +883,9 @@ class GrayscaleCalibration():
         
 
         with Timer("Saving calibrated GDS file"):
+
             self.layout.write(filename)
+            
         print("Saved %s"%(filename))
 
     def add_corners(self, field_width=10000, field_height=10000, corner_length=500, corner_width=100, layer="layer127"):
@@ -908,69 +909,3 @@ class GrayscaleCalibration():
 
 
 
-
-
-# gdsfile = "testmask4.dxf"   #name of gds file 
-
-# filename = "Pyra2_E80_F-20_greylevels.csv"
-# calibration_grayvalue, calibration_height = load_grayscale_contrast(filename)
-# plt.plot(calibration_grayvalue, calibration_height)
-
-# import klayout
-# import pya
-
-
-# # Loads the mask file
-# layout = pya.Layout()
-# layout.read(gdsfile)
-
-
-
-# # extracting the level and height from mask
-# total_layers = len(layout.layer_infos())
-
-# heights = []
-# for layer_i, layer in enumerate(layout.layer_infos()):
-#     layername = str(layer)
-#     if "Level" not in layername:
-#         continue
-#     _, height = layername.split("_")
-#     height = float(height)
-#     heights.append(height)
-#     # print(layer_i, layer, layername, height)
-
-# assert len(heights) >0, "No levels found in the mask. Check if the mask is correctly generated."
-
-# heights = np.array(heights)
-    
-# plt.plot(calibration_grayvalue, calibration_height)
-# height_offset = -1.4
-# grayvalues = levels2grayvalue(heights, calibration_height, calibration_grayvalue, height_offset=height_offset)
-
-# for level in heights:
-#     plt.axhline(level+height_offset, color='red', linestyle='-', lw=1)
-# # plt.plot(mask1.levels, grayvalue)
-# grayvalues, heights
-
-
-
-# for layer_i, layer in enumerate(layout.layer_infos()):
-#     layername = str(layer)
-    
-#     if "Level" not in layername:
-#         continue
-#     prefix, height = layername.split("_")
-#     _,idx = prefix.split("Level")
-#     idx = int(idx)
-#     print(idx)
-
-#     ly = layout.layer(layername)
-#     info = layout.get_info(ly)
-#     print(info)
-#     info.name = "layer%03d"%grayvalues[idx]
-#     # print(info)
-#     layout.set_info(ly, info)
-#     print("Layer handle " + str(ly) + " refers to " + str(layout.get_info(ly)))
-
-# outfile = gdsfile.replace(".dxf", "_grayscale.dxf")
-# layout.write(outfile)
