@@ -236,7 +236,6 @@ def metasurface_from_phase_instances (xsiz, ysiz, pixelx, pixely, p, aperture_va
     Returns:
         None
     """   
-    from gdspy import Polygon, PolygonSet 
     from pyMOE.utils import Timer, progress_bar
     
     #total number of elements count
@@ -245,8 +244,6 @@ def metasurface_from_phase_instances (xsiz, ysiz, pixelx, pixely, p, aperture_va
     #some global variables 
     tolerance, nr_points, mindim, smallerdim = 0.001, 15, 0.05, 0
 
-    #Start the metasurface library  
-    lib = gdspy.GdsLibrary()
     
     if largest_phase is None: 
         largest_phase = np.max(aperture_vals)
@@ -324,7 +321,8 @@ def metasurface_from_phase_instances (xsiz, ysiz, pixelx, pixely, p, aperture_va
                 if scaling_flag: 
                     print("By default all pillars have "+str(diameter)+" um diameter without scaling. Not sure this is was what is wanted.")
 
-                gdspyelements = gdspy.Round((0, 0), diameter/2, tolerance = tolerance, number_of_points = nr_points, max_points=100)
+                gdspyelements = pya.DPolygon.ellipse(pya.DBox(1, 1, 0, 0), 4)
+                
                 pflag = 0 
             
             else: 
@@ -344,10 +342,10 @@ def metasurface_from_phase_instances (xsiz, ysiz, pixelx, pixely, p, aperture_va
     print("Total of "+str(len(phase_array))+" layers.")
     
     with Timer():
-        layout = pya.Layout()
+        layout2 = pya.Layout()
 
         #create cell at top 
-        top = layout.create_cell(topcellname)
+        top = layout2.create_cell(topcellname)
    
         for ids, phase in enumerate(phase_array): 
             first = 1 
@@ -383,30 +381,34 @@ def metasurface_from_phase_instances (xsiz, ysiz, pixelx, pixely, p, aperture_va
                             scaling_array[ids] = smallerdim
  
                         if infile is None: 
-                            lib = gdspy.GdsLibrary()
-                            gdspy.current_library = gdspy.GdsLibrary()                                    
-
+                            layout3 = pya.Layout()
+                            
                             if first==1:
-                                writer = gdspy.GdsWriter(tempfile, unit=1.0e-6, precision=1.0e-9) #the precision could be passed as argument if needed 
-
-                                cell = lib.new_cell(tempcellname) 
+                                cell = layout3.create_cell(tempcellname)
+                                layer = layout3.layer(0,0)
+                                cell_index1 = layout3.cell(tempcellname).cell_index()
+ 
                                 newpolygon, newpolygon2 = [], []
-                                cell.remove_polygons(lambda pts, layer, datatype: layer == 0)
 
                                 if pflag==2:
                                     newpolygon = gdspyelements[ids]
                                 else:
                                     newpolygon = gdspyelements
 
-                                newpolygon2 = gdspy.copy(newpolygon)
-                                cell.add(newpolygon2)
+                                newpolygon2 = newpolygon
+                                
+                                cell.shapes(cell_index1).insert(newpolygon2)
 
-                                writer.write_cell(cell)
-                                writer.close()
+                                cell.write(tempfile)
+
                                 first = 0 
+                                
+                                #define load opt for the next gds file with fst layer map (better to have...)
+                                load_layout_options = pya.LoadLayoutOptions()
 
-                                layout.read(tempfile)
-                                cell_index1 = layout.cell(tempcellname).cell_index()
+                                layout2.read(tempfile, load_layout_options)
+                                layout2.layer(0,0)
+                                cell_index1 = layout2.cell(tempcellname).cell_index()
 
                                 
                             tot_meta = tot_meta + 1
@@ -416,13 +418,13 @@ def metasurface_from_phase_instances (xsiz, ysiz, pixelx, pixely, p, aperture_va
 
                         else: 
                             if first==1: 
-                                layout.read(infile)
+                                layout2.read(infile)
 
                                 rotate_layout(infile, tempcellname, angle, tempfile, transx =0, transy=0)
                                 first = 0 
 
-                                layout.read(tempfile)
-                                cell_index2 = layout.cell(tempcellname).cell_index()
+                                layout2.read(tempfile)
+                                cell_index2 = layout2.cell(tempcellname).cell_index()
 
                             if cell_index2 is not None:    
                                 new_instance1 = pya.DCellInstArray(cell_index2 , pya.DCplxTrans(scaling_factor, angle, False, pya.DVector(float(hi),float(wi))))
@@ -430,7 +432,7 @@ def metasurface_from_phase_instances (xsiz, ysiz, pixelx, pixely, p, aperture_va
 
                                 tot_meta = tot_meta + 1
                     
-                    layout.write(outfilen)
+                    layout2.write(outfilen)
             progress_bar(1)      
             print("So far "+str(tot_meta)+" elements and counting.")
             
