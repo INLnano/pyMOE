@@ -147,11 +147,18 @@ def metasurface_from_phase(xsiz, ysiz, pixelx, pixely, p, aperture_vals, topcell
     print("Total of "+str(len(phase_array))+" layers.")
     
     with Timer():
-        gdspy.current_library = gdspy.GdsLibrary() 
-        writer = gdspy.GdsWriter(outfilen,unit=1.0e-6,precision=1.0e-9)
-        cell = lib.new_cell(topcellname)
+        layout2 = pya.Layout()
+
+        #create cell at top 
+        cell = layout2.create_cell(topcellname)
+        layer = layout2.layer(0,0)
+        cell_index1 = layout2.cell(topcellname).cell_index()
+        
+        layout2.dbu = 0.001
    
-        for ids, phase in enumerate(phase_array):          
+        for ids, phase in enumerate(phase_array):
+            first = 1 
+            
             angle  = rotation_array[ids]
             scaling_factor = scaling_array[ids]
             
@@ -169,39 +176,50 @@ def metasurface_from_phase(xsiz, ysiz, pixelx, pixely, p, aperture_vals, topcell
                 selection_ids = np.where(aperture_vals.ravel()==phase)
                 harray = positions_xv[selection_ids]
                 warray = positions_yv[selection_ids]
+                
+            rect = pya.DPolygon()
 
             with Timer():
                 if (scaling_array[ids] >0) and (phase<=largest_phase):# & (scaling_array[ids] < p): 
                     for hn, (hi, wi) in enumerate(zip(harray,warray)):  
-                        if verbose == True:                         
-                            progress_bar(hn/len(harray))
+                        #print(hi,wi)
+                        if first==1: 
+                            if verbose == True:                         
+                                progress_bar(hn/len(harray))
+
+                            #avoid features with scaling smaller than mindim, setting them to smallerdim(=0) 
+                            if scaling_array[ids] < mindim: 
+                                scaling_array[ids] = smallerdim
+
+                            newpolygon, newpolygon2 = pya.DPolygon(), pya.DPolygon()
+
+                            if pflag==2:
+                                newpolygon = elements[ids]
+                            elif pflag==0:
+                                newpolygon = elements
+
+                            t = pya.DCplxTrans(float(scaling_factor), float(angle), False, pya.DVector(float(hi/dbu),float(wi/dbu)))
                             
-                        #avoid features with scaling smaller than mindim, setting them to smallerdim(=0) 
-                        if scaling_array[ids] < mindim: 
-                            scaling_array[ids] = smallerdim
- 
-                        newpolygon, newpolygon2 = [], []
-                        cell.remove_polygons(lambda pts, layer, datatype: layer == 0)
+                            newpolygon2 = newpolygon.dup()
+                            newpolygon2.transform(t)
 
-                        if pflag==2:
-                            newpolygon = gdspyelements[ids]
-                        elif pflag==0:
-                            newpolygon = gdspyelements
+                            cell.shapes(cell_index1).insert(newpolygon2)
+                            
+                        else: 
+                            t = pya.DCplxTrans(float(scaling_factor), float(angle), False, pya.DVector(float(hi/dbu),float(wi/dbu)))
 
-                        newpolygon2 = gdspy.copy(newpolygon)
-                        newpolygon2 = newpolygon2.scale(scaling_factor)
-                        newpolygon2 = newpolygon2.rotate(angle)
-                        newpolygon2 = newpolygon2.translate(hi, wi) 
-                        cell.add(newpolygon2)
+                            newpolygon2 = newpolygon.dup()
+                            newpolygon2.transform(t)
+
+                            cell.shapes(cell_index1).insert(newpolygon2)
 
                         tot_meta = tot_meta + 1
-                        writer.write_cell(cell)
+            
+                        layout2.write(outfilen)
                     
                     progress_bar(1)
                     if verbose == True:    
-                        print("So far "+str(tot_meta)+" elements and counting.")
-                    
-        writer.close() 
+                        print("So far "+str(tot_meta)+" elements and counting.") 
         
     print("\n Saved the metasurface mask with "+str(tot_meta)+" meta-elements in the file "+str(outfilen))
     
@@ -321,7 +339,7 @@ def metasurface_from_phase_instances (xsiz, ysiz, pixelx, pixely, p, aperture_va
                 if scaling_flag: 
                     print("By default all pillars have "+str(diameter)+" um diameter without scaling. Not sure this is was what is wanted.")
 
-                gdspyelements = pya.DPolygon.ellipse(pya.DBox(1, 1, 0, 0), 4)
+                elements = pya.DPolygon.ellipse(pya.DBox(-0.5, -0.5, 0.5, 0.5), nr_points)
                 
                 pflag = 0 
             
@@ -413,7 +431,8 @@ def metasurface_from_phase_instances (xsiz, ysiz, pixelx, pixely, p, aperture_va
                                 
                             tot_meta = tot_meta + 1
 
-                            new_instance1 = pya.DCellInstArray(cell_index1 , pya.DCplxTrans(scaling_factor, angle, False, pya.DVector(float(hi),float(wi))))
+                            new_instance1 = pya.DCellInstArray(cell_index1 , pya.DCplxTrans(float(scaling_factor),  \
+                            float(angle), False, pya.DVector(float(hi),float(wi))))
                             top.insert( new_instance1 ) 
 
                         else: 
@@ -427,7 +446,7 @@ def metasurface_from_phase_instances (xsiz, ysiz, pixelx, pixely, p, aperture_va
                                 cell_index2 = layout2.cell(tempcellname).cell_index()
 
                             if cell_index2 is not None:    
-                                new_instance1 = pya.DCellInstArray(cell_index2 , pya.DCplxTrans(scaling_factor, angle, False, pya.DVector(float(hi),float(wi))))
+                                new_instance1 = pya.DCellInstArray(cell_index2 , pya.DCplxTrans(float(scaling_factor), float(angle), False, pya.DVector(float(hi),float(wi))))
                                 top.insert( new_instance1 ) 
 
                                 tot_meta = tot_meta + 1
