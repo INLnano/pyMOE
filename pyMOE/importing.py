@@ -7,14 +7,11 @@ Module containing functions to import gds files, inspect them in matplotlib and 
 
 import numpy as np 
 import matplotlib.pyplot as plt 
-import gdspy 
+import gdspy as gdspy
 from gdspy import FlexPath
 from shapely.geometry import MultiPolygon, Polygon
 import pickle 
 import cv2 
-
-# from gdshelpers.geometry.chip import Cell
-
  
  
 def makesubplot(x,y, *argv, **kwargs):
@@ -250,18 +247,20 @@ def inspect_gds2layersplt(filename, norm, rescale=0, verbose = False, **kwargs )
     n=0
 
     #while it is empty read again 
-    while main_cell.polygons ==[]:
-        #lib = gdspy.GdsLibrary(infile=filename)
-        try:
-            lib = gdspy.read_gds(infile=filename)
-        except: 
-            continue 
+    if main_cell.polygons ==[]:
+        lib = gdspy.GdsLibrary(infile=filename)
+        #try:
+        #    lib = gdspy.read_gds(infile=filename)
+        #except: 
+        #    continue 
             
         main_cell = lib.top_level()[0]
-        n=n+1 #just a control to avoid infinite loop 
-        if n==10: #if we got to 10 trials 
+        
+        try: 
+            pol_dict = main_cell.get_polygons(by_spec=True) 
+        except: 
             print("Cannot read polygons in this GDS file after "+str(n)+" trials.")
-            break 
+        
     else: 
         if main_cell.polygons !=[]: 
             print(str(np.size(main_cell.polygons))+" polygons found...")
