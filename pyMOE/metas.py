@@ -6,7 +6,6 @@ Module containing functions to create metasurfaces from phase masks
 """
 
 import cv2
-import gdspy 
 import numpy as np 
 from pyMOE.utils import progress_bar, Timer
 from pyMOE.gds_klops import rescale_layout, rotate_layout
@@ -14,9 +13,9 @@ from pyMOE.gds_klops import rescale_layout, rotate_layout
 import pya
 
 
-def metasurface_from_phase(xsiz, ysiz, pixelx, pixely, p, aperture_vals, topcellname, outfilen, gdspyelements='pillar', \
+def metasurface_from_phase(xsiz, ysiz, pixelx, pixely, p, aperture_vals, topcellname, outfilen, elements='pillar', \
                            verbose=False, rotation=None, scaling=None, grid='square', mindim = 0.05, smallerdim =0, \
-                           largest_phase=None): 
+                           largest_phase=None, dbu=1): 
     """
     Transform a 2D array (aperture_vals) representing the phase into a 2D metasurface and saves it to gds 
     
@@ -29,19 +28,19 @@ def metasurface_from_phase(xsiz, ysiz, pixelx, pixely, p, aperture_vals, topcell
         :aperture_vals:    2D array with the phase  
         :topcellname:      string with name of top cell, e.g. 'TOP'
         :oufilen:          string filename of output gds
-        :gdspyelements:    gdspy element to be used as individual meta-element (also accepts array of such elements for iteration, with same dimension as unique values in aperture_vals). If == 'pillar' (default) -> gdspy circle with 1 um diameter 
+        :elements:    ´    element (as klayout polygon) to be used as individual meta-element (also accepts array of such elements for iteration, with same dimension as unique values in aperture_vals). If == 'pillar' (default) -> circle with 1 um diameter 
         :verbose:          if True, prints during execution 
-        :rotation:         array with the rotation angles of unique meta-elements (1:1 correspondence with unique aperture_vals values!), Rotation angle is anti-clockwise in radians. If None (default), sets the rotation angle = 0 for all elements. 
+        :rotation:         array with the rotation angles of unique meta-elements (1:1 correspondence with unique aperture_vals values!), Rotation angle is anti-clockwise in degrees. If None (default), sets the rotation angle = 0 for all elements. 
         :scaling:          array with the scaling factor of unique meta-element (1:1 correspondence with unique aperture_vals values!), Scaling factor is with respect to the dimension of the individual meta-element. If None (default), sets scaling factor to 1.0 for all elements.  
-        :grid:             Type of grid, options are 'square' or 'hex'. Default is 'square'. Please make sure the aperture_vals have been evaluated in an hexagonal grid, to make sure the values match. 
+        :grid:             Type of grid, options are 'square' or 'hex'. Default is 'square'. Please make sure the aperture_vals have been evaluated in an hexagonal grid, to make sure the values match, and that the pixely is given for an hexagonal lattice
         :mindim:           clipping scaling factor (cannot scale below a certain value, to avoid very small elements)
         :smallerdim:       lowest scaling factor
         :largest_phase:    largest phase in the phase mask. If None, takes the maximum of aperture_vals  
+        :dbu:              scaling because of a particular dbu 
     
     Returns:
         None
-    """  
-    from gdspy import Polygon, PolygonSet 
+    """   
     from pyMOE.utils import Timer, progress_bar
     
     #total number of elements count
@@ -88,7 +87,8 @@ def metasurface_from_phase(xsiz, ysiz, pixelx, pixely, p, aperture_vals, topcell
     
     #################################
     if grid == 'square':
-        xv, yv = np.meshgrid(np.arange(0, xsiz, pixelx, dtype=float), np.arange(0, ysiz, pixely, dtype=float))
+        xv, yv = np.meshgrid(np.arange(0, xsiz, pixelx, dtype=float), 
+                             np.arange(0, ysiz, pixely, dtype=float))
         positions = np.array([xv.ravel(), yv.ravel()])
         positions_xv = positions[0]
         positions_yv = positions[1]
@@ -98,6 +98,7 @@ def metasurface_from_phase(xsiz, ysiz, pixelx, pixely, p, aperture_vals, topcell
         y= np.arange(0, ysiz, pixely, dtype=float) # arange is preferred over linspace because it keeps the pixel size! 
         xv, yv = np.meshgrid(x,y)
         xv[::2, :] += pixelx/2
+        #yv = yv*np.cos(np.radians(30))
         positions = np.array([xv.ravel(), yv.ravel()])
         positions_xv = positions[0]
         positions_yv = positions[1]
@@ -107,38 +108,38 @@ def metasurface_from_phase(xsiz, ysiz, pixelx, pixely, p, aperture_vals, topcell
     #################################
     ###elements options:
     pflag = 3 
-    if type(gdspyelements) is not str:
+    if type(elements) is not str:
         print("Custom metasurface")
         
-        #print(np.asarray(gdspyelements).size)
+        #print(np.asarray(elements).size)
                 
-        if np.asarray(gdspyelements).size>1:
-            assert len(gdspyelements)==len(phase_array), "The length of unique phase values and gdspyelements argument array is different." 
+        if np.asarray(elements).size>1:
+            assert len(elements)==len(phase_array), "The length of unique phase values and elements argument array is different." 
             pflag = 2
-        elif np.asarray(gdspyelements).size==1: 
-            print("Single gdspyelement element")
+        elif np.asarray(elements).size==1: 
+            print("Single element provided.")
             pflag =0
 
-    elif type(gdspyelements) is str: ###This corresponds to the default
-        if gdspyelements=='pillar':  
+    elif type(elements) is str: ###This corresponds to the default
+        if elements=='pillar':  
             print("Pillar metasurface")
             diameter = 1 #standard 1 um 
             if scaling_flag: 
                 print("By default all pillars have "+str(diameter)+" um diameter without scaling. Not sure this is was what is wanted.")
 
-            gdspyelements = gdspy.Round((0, 0), diameter/2, tolerance = tolerance, number_of_points = nr_points, max_points=100)
+            elements = pya.DPolygon.ellipse(pya.DBox(-0.5, -0.5, 0.5, 0.5), nr_points)
             pflag = 0 
         
         else: 
             pflag = 1 
     else: 
-        if gdspyelements is None: 
+        if elements is None: 
             pflag = 4
         else: 
             pflag = 1
         
     if pflag==1: 
-        print("Unsuported gdspyelements argument!")  
+        print("Unsuported elements argument!")  
     ######################################################################################################
     #####--------------------------------
     print("Building the metasurface...")
@@ -222,8 +223,9 @@ def metasurface_from_phase(xsiz, ysiz, pixelx, pixely, p, aperture_vals, topcell
     print("\n Saved the metasurface mask with "+str(tot_meta)+" meta-elements in the file "+str(outfilen))
     
     
+      
 
-def metasurface_from_phase_instances (xsiz, ysiz, pixelx, pixely, p, aperture_vals, topcellname, outfilen, gdspyelements='pillar', \
+def metasurface_from_phase_instances (xsiz, ysiz, pixelx, pixely, p, aperture_vals, topcellname, outfilen, elements='pillar', \
                                       infile=None, verbose=False, rotation=None, scaling=None, grid='square',\
                                       mindim = 0.05, smallerdim =0, tempfile="temp.gds", largest_phase=None): 
     """
@@ -238,12 +240,12 @@ def metasurface_from_phase_instances (xsiz, ysiz, pixelx, pixely, p, aperture_va
         :aperture_vals:     2D array with the phase  
         :topcellname:       string with name of top cell, e.g. 'TOP'
         :oufilen:           string filename of output gds
-        :gdspyelements:     gdspy element to be used as individual meta-element (also accepts array of such elements for iteration, with same dimension as unique values in aperture_vals). If == 'pillar' (default) -> gdspy circle with 1 um diameter. If 'infile' is provided, ignores this design. 
+        :elements:    ´     element (as klayout polygon) to be used as individual meta-element (also accepts array of such elements for iteration, with same dimension as unique values in aperture_vals). If == 'pillar' (default) -> circle with 1 um diameter  
         :infile:            string with filename to be used as meta-element
         :verbose:           if True, prints during execution 
-        :rotation:          array with the rotation angles of unique meta-elements (1:1 correspondence with unique aperture_vals values!), Rotation angle is anti-clockwise in radians. If None (default), sets the rotation angle = 0 for all elements. 
+        :rotation:          array with the rotation angles of unique meta-elements (1:1 correspondence with unique aperture_vals values!), Rotation angle is anti-clockwise in degrees. If None (default), sets the rotation angle = 0 for all elements. 
         :scaling:           array with the scaling factor of unique meta-element (1:1 correspondence with unique aperture_vals values!), Scaling factor is with respect to the dimension of the individual meta-element. If None (default), sets scaling factor to 1.0 for all elements.  
-        :grid:              Type of grid, options are 'square' or 'hex'. Default is 'square'. Please make sure the aperture_vals have been evaluated in an hexagonal grid, to make sure the values match. 
+        :grid:             Type of grid, options are 'square' or 'hex'. Default is 'square'. Please make sure the aperture_vals have been evaluated in an hexagonal grid, to make sure the values match, and that the pixely is given for an hexagonal lattice
         :mindim:            clipping scaling factor (cannot scale below a certain value, to avoid very small elements)
         :smallerdim:        lowest scaling factor
         :tempfile:          string with name of a temporary file that will be used to have the individual elements and make the instances 
@@ -308,6 +310,7 @@ def metasurface_from_phase_instances (xsiz, ysiz, pixelx, pixely, p, aperture_va
         y= np.arange(0, ysiz, pixely, dtype=float) # arange is preferred over linspace because it keeps the pixel size! 
         xv, yv = np.meshgrid(x,y)
         xv[::2, :] += pixelx/2
+        #yv = yv*np.cos(np.radians(30))
         positions = np.array([xv.ravel(), yv.ravel()])
         positions_xv = positions[0]
         positions_yv = positions[1]
@@ -318,20 +321,20 @@ def metasurface_from_phase_instances (xsiz, ysiz, pixelx, pixely, p, aperture_va
     ###elements options:
     pflag = 3
     if infile is None: 
-        if type(gdspyelements) is not str:
+        if type(elements) is not str:
             print("Custom metasurface")
             
-            #print(np.asarray(gdspyelements).size)
+            #print(np.asarray(elements).size)
                     
-            if np.asarray(gdspyelements).size>1:
-                assert len(gdspyelements)==len(phase_array), "The length of unique phase values and gdspyelements argument array is different." 
+            if np.asarray(elements).size>1:
+                assert len(elements)==len(phase_array), "The length of unique phase values and elements argument array is different." 
                 pflag = 2
-            elif np.asarray(gdspyelements).size==1: 
-                print("Single gdspyelement element")
+            elif np.asarray(elements).size==1: 
+                print("Single element provided.")
                 pflag =0
 
-        elif type(gdspyelements) is str: ###This corresponds to the default
-            if gdspyelements=='pillar':  
+        elif type(elements) is str: ###This corresponds to the default
+            if elements=='pillar':  
                 print("Pillar metasurface")
                 diameter = 1 #standard 1 um 
                 if scaling_flag: 
@@ -344,13 +347,13 @@ def metasurface_from_phase_instances (xsiz, ysiz, pixelx, pixely, p, aperture_va
             else: 
                 pflag = 1 
         else: 
-            if gdspyelements is None: 
+            if elements is None: 
                 pflag = 4
             else: 
                 pflag = 1
     
     if pflag==1: 
-        print("Unsuported gdspyelements argument!")              
+        print("Unsuported elements argument!")              
 
     ########################################################################################################
     #####--------------------------------
@@ -397,18 +400,18 @@ def metasurface_from_phase_instances (xsiz, ysiz, pixelx, pixely, p, aperture_va
  
                         if infile is None: 
                             layout3 = pya.Layout()
-                            
+
                             if first==1:
                                 cell = layout3.create_cell(tempcellname)
                                 layer = layout3.layer(0,0)
                                 cell_index1 = layout3.cell(tempcellname).cell_index()
- 
+
                                 newpolygon, newpolygon2 = [], []
 
                                 if pflag==2:
-                                    newpolygon = gdspyelements[ids]
+                                    newpolygon = elements[ids]
                                 else:
-                                    newpolygon = gdspyelements
+                                    newpolygon = elements
 
                                 newpolygon2 = newpolygon
                                 
