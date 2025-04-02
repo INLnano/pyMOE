@@ -50,9 +50,7 @@ def metasurface_from_phase(xsiz, ysiz, pixelx, pixely, p, aperture_vals, topcell
     #some global variables 
     tolerance, nr_points, mindim, smallerdim = 0.001, 15, 0.05, 0
 
-    #Start the metasurface library  
-    lib = gdspy.GdsLibrary()
-
+    
     if largest_phase is None: 
         largest_phase = np.max(aperture_vals)
     
@@ -367,9 +365,8 @@ def metasurface_from_phase_instances (xsiz, ysiz, pixelx, pixely, p, aperture_va
    
         for ids, phase in enumerate(phase_array): 
             first = 1 
-            cell_index2 = None 
             
-            angle  = np.degrees(rotation_array[ids])
+            angle  = rotation_array[ids]
             scaling_factor = scaling_array[ids]
             fvalue = phase 
             
