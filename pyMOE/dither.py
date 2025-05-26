@@ -23,7 +23,7 @@ def floyd_steinberg(input_img , plot = False ):
     
     h,w = img_gray_eq.shape
 
-    img_dither = np.zeros((h+1, w+1), dtype=np.float)
+    img_dither = np.zeros((h+1, w+1), dtype=np.float64)
     
     threshold = 128
 
