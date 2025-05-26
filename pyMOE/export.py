@@ -9,8 +9,7 @@ import numpy as np
 import gdspy
 
     
-    
-###Function exports an image file (converted to gray) into a gds file 
+
 def grayim2gds(infile, outfile, pixelx, pixely, cellname, level, layer=0, datatype=0, verbose=False):
     """
     (void) Transforms one image (converted to grayscale) into a gds, using cv2 
