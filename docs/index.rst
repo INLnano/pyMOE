@@ -5,7 +5,7 @@
 
 	
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 6
 
 
 Welcome to pyMOE's documentation!
