@@ -7,7 +7,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'pyMOE'
-copyright = '2023-2024, J. Cunha, D. E. Aguiam'
+copyright = '2023 - now, J. Cunha, D. E. Aguiam'
 author = 'J. Cunha, D. E. Aguiam'
 release = 'v1.4.2'
 import os               # line 13
