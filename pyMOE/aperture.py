@@ -66,7 +66,7 @@ class Aperture:
             self.aperture_original = np.copy(self.aperture)
 
         aux = self.aperture        
-        self.aperture = (aux-np.max(aux)-mod_tolerance) % (np.float(mod))
+        self.aperture = (aux-np.max(aux)-mod_tolerance) % (float(mod))
 
     def pixelize(self, pixelize_x, pixelize_y, verbose=True):
         """Pixelizes the aperture to the given pixelize_x in real space coordinates by averaging the data within the pixel, keeping same shape"""
