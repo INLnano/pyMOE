@@ -227,7 +227,25 @@ def generate_gaussian_beam(field, w0, z, wavelength, center=(0,0), E0=1 ):
     return field
 
 
+def oblique(field, wavelength, thetax, thetay): 
+    """
+    Transform the normal incident field into an oblique incidence by angles (thetax, thetay) defined against aperture normal
+    
+    Args: 
+        :thetax: Angle between surface normal and x axis (radians)
+        :thetay: Angle between surface normal and y axis (radians)
+        
+    Returns: 
+        :field: returns the oblique field 
+    """
+    
+    k= 2*np.pi/(wavelength)
+    phasey = np.exp(1.j*k*np.sin(thetay)*field.y)
+    phasex = np.exp(1.j*k*np.sin(thetax)*field.x)
 
+    field.field = ((field.field*phasey).T)*phasex
+    
+    return field
 
 
 class Screen:
