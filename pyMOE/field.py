@@ -249,17 +249,30 @@ class Screen:
 
     """
     def __init__(self, x, y, z):
-        self.x = x
-        self.y = y
-        self.z = z
-        self.XX, self.YY, self.ZZ = np.meshgrid(x, y, z)#, indexing='ij')
-        # self.pixel_x = self.x[1]-self.x[0]
-        # self.pixel_y = self.y[1]-self.y[0]
-        # self.pixel_z = self.z[1]-self.z[0]
+        self.x = np.array(x)
+        self.y = np.array(y)
+        self.z = np.array(z)
+        
+        self.Nx, self.Ny, self.Nz = self.x.size, self.y.size, self.z.size
+        
+        self.XX, self.YY, self.ZZ = np.meshgrid(x, y, z, indexing='xy')
+    
+        if self.Nx!=1: 
+            self.pixel_x = np.diff(self.x)[0]
+            self.fx = sfft.fftshift(sfft.fftfreq(self.Nx, d=self.pixel_x) )
+        if self.Ny!=1:        
+            self.pixel_y = np.diff(self.y)[0]
+            self.fy = sfft.fftshift(sfft.fftfreq(self.Ny, d=self.pixel_y) )
+        if self.Nz!=1:        
+            self.pixel_z = np.diff(self.z)[0]
         
         self.n = np.ones(self.XX.shape)
-    
+        
+        if (self.Nx !=1) and (self.Ny!=1):
+            self.FX, self.FY = np.meshgrid(self.fx, self.fy, indexing='xy')
+        
         self.screen = np.zeros(self.XX.shape, dtype=complex)
+        
     @property
     def shape(self):
         return self.screen.shape
