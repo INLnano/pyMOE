@@ -12,6 +12,8 @@ import numpy as np
 
 from pyMOE.aperture import Aperture
 
+import scipy.fftpack as sfft 
+
 
 
 class Field:
@@ -159,9 +161,8 @@ def generate_uniform_field(field, E0=1 ):
     """
     assert type(field) is Field, "field must be of type Field"
 
-    field.field = np.ones(field.XX.shape)*E0
+    field.field = (np.ones(field.XX.shape)*E0)
     
-
     return field
 
 def generate_gaussian_field(field, E0, w0, center=(0,0) ):
