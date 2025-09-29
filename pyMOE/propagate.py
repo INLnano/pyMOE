@@ -315,7 +315,492 @@ def RS_integral(field, screen, wavelength, n=None, parallel_computing=True, simp
 
     return screen
 
+    
+    
+def bluestein_czt(x, f1, f2, fs, mout):
+    """
+    Bluestein from Hu et al. 2020 
+    x =  field.field  * F  
+    
+    TO COMPLETE
+    """
+    import numpy as np 
+    
+    m, n = x.shape #m = x, n = y 
+    
+    f11 = f1 + (mout * fs + f2 - f1) / (2 * mout)
+    f22 = f2 + (mout * fs + f2 - f1) / (2 * mout)
+    
+    #Eq S15, complex starting point 
+    a = np.exp(1j * 2 * np.pi * f11 / fs)
+    #Eq S16, complex point spacing
+    w = np.exp(-1j * 2 * np.pi / ((mout * fs) /((f22 - f11) )))
+    
+    
+    #calculation of the size of the tile N
+    mp = m + mout - 1
+    N = 2 ** int(np.ceil(np.log2(mp)))
 
+    #defining the number of vals where to evaluate the czt, from -m +1 to m -1  (2m-1 size)
+    h = np.arange(-m + 1, max(mout, m) )
+    
+    # W^(m^2 /2) 
+    h_vals = w ** ((h ** 2) / 2)
+
+    
+    # W^(-m^2 /2) #all m, but cropped to N after 
+    hin = 1 / h_vals[0:mp+1]
+    
+    ### fft ( W^(-m^2 /2) )
+    ft = sfft.fft(hin , N, norm="ortho") #if N>len(hin) zero pads the rest, increases the pad with mout 
+
+    #b is A^(-m) * W^(m^2 /2) , positive m 
+    b = a ** (-(np.arange(0,m))) * h_vals[m -1 : 2 * m-1]
+    
+    #apply the b in each tile * field 
+    x_t = x * np.tile(b[:, np.newaxis], (1, n))
+    
+    ###fft ( field * A^(-m) * W^(m^2 /2)  )
+    b_fft = sfft.fft(np.array(x_t), N, axis=0, norm="ortho")
+
+    ###convolution: ifft( fft[ field * A^(-m) * W^(m^2 /2)] * fft (W^(-m^2/2)) ) * W^(m^2/2)
+    b_ifft = sfft.ifft(b_fft * np.tile(ft[:, np.newaxis], (1, n)), axis=0, norm="ortho")
+    bconv = b_ifft[m - 1:mp, :].T * np.tile(h_vals[m - 1:mp], (n, 1)) #positive m until mp, not 2m-1 
+    
+    #Eq S18, but in center of tiles 
+    Mshift = (-m / 2) +  0.5 
+
+    #Eq S19 , phase shift
+    Pshift = np.exp(-1j * 2 * np.pi * (np.linspace(0, mout - 1, mout) * (f22 - f11) + mout *f11 ) * (Mshift) / (mout*fs))
+    
+    #tile over 
+    Mshift_til = np.tile(Pshift, (n, 1))
+    bout = bconv * Mshift_til 
+    
+    return bout
+    
+    
+    
+def scalar_bluestein(field, screen, d, wavelength):
+    """
+    Scalar diffraction computation using Bluestein's method.
+
+    Args: 
+            :field:         input Field
+            :screen:        Observation Screen
+            :d:             Observation distance z of the the Screen position 
+            :wavelength:    Wavelength
+            
+    Returns:
+            :screen:    Returns the screen populated with the result
+    """
+    k = 2 * np.pi / wavelength  
+
+    xstart, xend = np.min(screen.x), np.max(screen.x)
+    ystart, yend = np.min(screen.y), np.max(screen.y)
+    
+    x0, y0 = field.XX, field.YY
+    x1, y1 = screen.XX[:,:,-1], screen.YY[:,:,-1]
+    
+    #Eqs 4 &5 
+    F0 = np.exp(1j * k * d) / (1j * wavelength * d) * np.exp(1j * k / (2 * d) * (x1**2 + y1**2))
+    F = np.exp(1j * k / (2 * d) * (x0**2 + y0**2))
+
+    #arg of Eq 6 
+    gout = field.field  * F
+    
+    #args for bluestein 
+    fsx = wavelength * d / field.pixel_x
+    fsy = wavelength * d / field.pixel_y
+    
+    mxout, myout = len(screen.x), len(screen.y)
+
+    #apply calc to obtain the CZT 
+    # Y-direction 
+    fy1 = ystart + fsy/ 2
+    fy2 = yend + fsy / 2
+    gout = bluestein_czt(gout, fy1, fy2, fsy, myout)
+
+    # X-direction 
+    fx1 = xstart + fsx / 2
+    fx2 = xend + fsx / 2
+    gout = bluestein_czt(gout, fx1, fx2, fsx, mxout)
+      
+    #Eq 6, now gout is the result of the CZT
+    gout = F0 * gout
+
+    return gout
+    
+    
+
+def Bluestein(field, screen, wavelength, n=None):
+    """
+    Implements the Bluestein propagation 
+    
+    Args: 
+        
+        :field:     input Field
+        :screen:    Observation Screen
+        :wavelength:    wavelength to consider
+        :n:         refractive index of the propagation medium (default=1 for vacuum/air)
+    Returns:
+        :screen:    Returns the screen populated with the result
+    """
+    
+    xlen,ylen,zlen = screen.XX.shape
+
+    with Timer():
+        for z_i in range(zlen):
+            z = screen.ZZ[:, :, z_i][-1][0]
+
+            g1  = scalar_bluestein(field, screen, z, wavelength)
+            
+            screen.screen[:, :, z_i] = g1
+
+    return screen
+    
+    
+def zero_pad(arr, pad_factor=2):
+    H, W = arr.shape
+    H_new, W_new = pad_factor * H, pad_factor * W
+    out = np.zeros((H_new, W_new), dtype=arr.dtype)
+    start_H = (H_new - H) // 2
+    start_W = (W_new - W) // 2
+    out[start_H:start_H + H, start_W:start_W + W] = arr
+    return out
+
+def crop_to_physical_size(arr, dx_out, desired_size_meters):
+    """
+    Center crop an array based on physical size and pixel spacing.
+    """
+    N_total = arr.shape[0]
+    crop_size = int(desired_size_meters / dx_out)
+    if crop_size % 2 == 0:
+        crop_size -= 1  # force odd for center alignment
+        
+    start = (N_total - crop_size) // 2
+    return arr[start:start+crop_size, start:start+crop_size]
+    
+    
+
+
+def resize_field_to_shape(field, output_shape):
+    """
+    Resize a 2D complex array to the desired output shape by
+    resizing real and imaginary parts separately.
+    """
+    from skimage.transform import resize 
+    
+    amplitude = np.abs(field)
+    phase = np.angle(field)
+
+    amp_resized = resize(amplitude, output_shape, mode='constant', anti_aliasing=True)
+    phase_resized = resize(phase, output_shape, mode='constant', anti_aliasing=True)
+
+    return amp_resized * np.exp(1j * phase_resized)
+    
+def scalable_angular_spectrum_method(field, screen, z, wavelength, pad_factor=2, skip_final_phase=True, crop=False):
+    """
+    kernel based on Heintzmann et al. 2023  
+    """
+    
+    N = field.field.shape[0]
+    L = np.max(field.x) - np.min(field.x) #assuming square.. 
+    
+    L_new = pad_factor * L
+    N_new = pad_factor * N
+    psi_p = zero_pad(field.field, pad_factor=pad_factor)
+    
+    
+    z_limit = (- 4 * L * np.sqrt(8*L**2 / N**2 + wavelength**2) * np.sqrt(L**2 * 1 / (8 * L**2 + N**2 * wavelength**2))\
+               / (wavelength * (-1+2 * np.sqrt(2) * np.sqrt(L**2 * 1 / (8 * L**2 + N**2 * wavelength**2)))))
+    
+    z_limit = (-4 * L_new * np.sqrt(8 * L_new**2 / N_new**2 + wavelength**2)
+           * np.sqrt(L_new**2 / (8 * L_new**2 + N_new**2 * wavelength**2)) /
+           (wavelength * (-1 + 2 * np.sqrt(2) * np.sqrt(L_new**2 / (8 * L_new**2 + N_new**2 * wavelength**2)))))
+    
+    if z > z_limit:
+        print("Zlimit is " +str(z_limit)+" but z is "+str(z) )
+        
+
+    k = 2 * np.pi / wavelength
+    df = 1 / L_new
+    Lf = N_new * df
+
+    fx = np.fft.fftfreq(N_new, d=1/Lf)
+    fy = np.fft.fftfreq(N_new, d=1/Lf)
+    FX, FY = np.meshgrid(fx, fy, indexing='ij')
+
+    x = np.fft.ifftshift(np.linspace(-L_new/2, L_new/2, N_new, endpoint=False))
+    y = x.copy()
+    X, Y = np.meshgrid(x, y, indexing='ij')
+
+    cx = wavelength * FX
+    cy = wavelength * FY
+    tx = L_new / (2 * z) + np.abs(cx)
+    ty = L_new / (2 * z) + np.abs(cy)
+
+    W = ((cx**2 * (1 + tx**2) / tx**2 + cy**2 <= 1) *
+         (cy**2 * (1 + ty**2) / ty**2 + cx**2 <= 1))
+
+    H_AS = np.sqrt(np.clip(1 - (cx)**2 - (cy)**2, 0, None))
+    H_Fr = 1 - (cx)**2 / 2 - (cy)**2 / 2
+    delta_H = W * np.exp(1j * k * z * (H_AS - H_Fr))
+
+    psi_fft = np.fft.fft2(np.fft.ifftshift(psi_p))
+    psi_precomp = np.fft.ifft2(psi_fft * delta_H)
+
+    dq = wavelength * z / L_new
+    Q = dq * N * pad_factor
+
+    q = np.fft.ifftshift(np.linspace(-Q/2, Q/2, N_new, endpoint=False))
+    QX, QY = np.meshgrid(q, q, indexing='ij')
+
+    H_1 = np.exp(1j * k / (2 * z) * (X**2 + Y**2))
+
+    if skip_final_phase:
+        psi_p_final = np.fft.fftshift(np.fft.fft2(H_1 * psi_precomp))
+    else:
+        H_2 = np.exp(1j * k * z) * np.exp(1j * k / (2 * z) * (QX**2 + QY**2))
+        psi_p_final = np.fft.fftshift(H_2 * np.fft.fft2(H_1 * psi_precomp))
+
+    #psi_final = zero_unpad(psi_p_final, field.field.shape, pad_factor=pad_factor)
+    #psi_final = psi_p_final
+    # After propagation:
+    dx_out = wavelength * z / L_new  # new pixel size
+    desired_output_size = np.max(screen.x) - np.min(screen.x) # e.g. 5 mm screen
+
+    if crop ==True: 
+        psi_final = crop_to_physical_size(psi_p_final, dx_out, desired_output_size)
+        print(psi_final.shape)
+        psi_final = resize_field_to_shape(psi_final, (N,N) )
+    else:
+        psi_final = psi_p_final
+
+    return psi_final
+
+
+def SASM(field, screen, wavelength, pad_factor = 2, crop = False):
+    """
+    Implements the Scalale Angular Spectrum Method propagation (Heintzmann et al. )
+    
+    Args: 
+        :field:     input Field
+        :screen:    Observation Screen
+        :wavelength:    wavelength to consider
+        :n:         refractive index of the propagation medium (default=1 for vacuum/air)
+    Returns:
+        :screen:    Returns the screen populated with the result
+    """
+    
+    xlen,ylen,zlen = screen.XX.shape
+    
+    g0  = scalable_angular_spectrum_method(field, screen, screen.z[0], wavelength, pad_factor= pad_factor, crop=crop)
+    
+    #print(np.shape(g0))
+    
+    x1 = np.linspace(np.min(screen.x), np.max(screen.x), np.shape(g0)[0])
+    y1 = np.linspace(np.min(screen.y), np.max(screen.y), np.shape(g0)[1])
+    #z = np.linspace(wavelength, 3500*micro, 100)
+    z1 = screen.z
+    
+    #print(z1)
+
+    newscreen = Screen(x1,y1,z1)
+
+    with Timer():
+        for z_i in range(zlen):
+            z = screen.ZZ[:, :, z_i][-1][0]
+
+            g1  = scalable_angular_spectrum_method(field, screen, z, wavelength, pad_factor= pad_factor, crop = crop)
+            
+            #print(np.shape(g1))
+            
+            newscreen.screen[:, :, z_i] = g1
+
+    return newscreen
+    
+    
+def propagate_through_ensemble(ensemble,  wavelength , xar_plus_z=None, propagation_methods_array=None): 
+    """
+    Propagates though Ensemble object (various MOE surfaces)  
+    
+    Args:
+        :ensemble:                   Ensemble object 
+        :wavelength:                 Propagation wavelength
+        :xar_plus_z:                 Array with optimization variables (and optionally z position as variable) 
+        :propagation_methods_array:  Propagation method 
+    Returns:
+        :overall_field_at_screen:    Returns a screen concatenating both 
+    """
+    #initial aperture (the rest will be inside a loop)
+    
+    fieldi = ensemble.input_light_field 
+    ensemble.field_array[0] = fieldi
+    
+    field0 = modulate_field(fieldi, amplitude_mask = ensemble.aperture_array_amp[0],\
+                                      phase_mask=ensemble.aperture_array_phase[0])
+    
+    plt.figure()
+    plt.imshow(np.abs(field0.field))
+    plt.show()
+    
+    plt.figure()
+    plt.imshow(np.angle(field0.field))
+    plt.show()
+    plt.savefig("modulation.png", dpi=600)
+    
+    screen0 = ensemble.screen_array[0]
+    print(np.max(screen0.z))
+    
+    if propagation_methods_array==None:
+        propagation_methods_array= ["bluestein" for i in ensemble.screen_array]
+    
+    
+    if propagation_methods_array[0]=="bluestein":
+        EXYZ0 = Bluestein(field0, screen0, wavelength)
+        ensemble.field_array[1].field = EXYZ0.screen[:,:, -1]/np.max(EXYZ0.screen[:,:, 0])
+        
+        EXYZ = EXYZ0
+    
+        ensemble.screen_array[0]= EXYZ
+
+        print(EXYZ.screen.shape)
+        
+        overall_field_at_screen = screen0
+        overall_field_at_screen.screen = EXYZ.screen
+        
+    elif propagation_methods_array[0]=="rayleigh-sommerfeld":
+        screen_XY = create_screen_XY(np.min(screen0.x), np.max(screen0.x), len(screen0.x), 
+                                        np.min(screen0.y), np.max(screen0.y), len(screen0.y), 
+                                        z=np.max(screen0.z) )
+
+        EXYZ0 = RS_integral(field0, screen_XY, wavelength, simp2d=True)
+        ensemble.field_array[1].field = EXYZ0.screen[:,:,0]/np.max(EXYZ0.screen[:,:, 0])
+    
+        overall_field_at_screen = screen0
+        overall_field_at_screen.screen[:,:,-1] = EXYZ0.screen[:,:,0]/np.max(EXYZ0.screen[:,:, 0])
+        
+        print("RS only calculated correctly the XY at the end Z, the other values of the screen object (e.g. YZ plane) have been repeated")
+    
+    EXYZ = EXYZ0
+    
+    #to the rest for all 
+    for i in np.arange(1,len(ensemble.aperture_array_phase)): 
+        print(i)
+        
+        #ensemble.field_array[i].field = EXYZ.screen[:,:, -1]/np.max(EXYZ.screen[:,:, -1])
+        
+        field = ensemble.field_array[i]
+        
+        aperture_amp = ensemble.aperture_array_amp[i]
+        aperture_phase = ensemble.aperture_array_phase[i]
+    
+        field = modulate_field(field, amplitude_mask = aperture_amp, phase_mask=aperture_phase)
+        
+        plt.figure()
+        plt.imshow(np.abs(field.field))
+        plt.show()
+        
+        plt.figure()
+        plt.imshow(np.angle(field.field))
+        plt.show()
+        plt.savefig("modulation.png", dpi=600)
+    
+    
+        ensemble.field_array[i].field = field
+        
+        screen = ensemble.screen_array[i]
+        
+        if propagation_methods_array[i]=="bluestein":
+            EXYZ0 = Bluestein(field, screen, wavelength)
+            if i<len(ensemble.aperture_array_phase)-1 : 
+                ensemble.field_array[i+1].field = EXYZ0.screen[:,:, -1]/np.max(EXYZ0.screen[:,:, -1])
+            
+            EXYZ = EXYZ0
+            
+            ensemble.screen_array[i]= EXYZ
+
+            overall_field_at_screen = screen
+            overall_field_at_screen.screen = EXYZ.screen
+            
+        
+        elif propagation_methods_array[i]=="rayleigh-sommerfeld":
+            if i==len(ensemble.aperture_array_phase)-1:
+                print("YZ")
+                screen_YZ = create_screen_YZ(np.min(screen.y), np.max(screen.y), len(screen.y), 
+                                            np.min(screen.z), np.max(screen.z), len(screen.z), 
+                                            #z=np.max(screen0.z) )
+                                            x=0 )
+                
+                plt.figure()
+                plt.imshow(np.abs(field.field))
+                plt.show()
+                
+                plt.figure()
+                plt.imshow(np.angle(field.field))
+                plt.show()
+        
+                EXYZ0 = RS_integral(field, screen_YZ, wavelength, simp2d=True)
+                
+                if i<len(ensemble.aperture_array_phase)-1 :
+                    ensemble.field_array[i+1].field = EXYZ0.screen[:,:,-1]/np.max(EXYZ0.screen[:,:, -1])
+
+                overall_field_at_screen = screen
+                overall_field_at_screen.screen[int(len(screen0.x)/2),:,:] = EXYZ0.screen[:,0,:]
+ 
+                EXYZ = screen
+
+                
+            else:  
+                print("XY")
+                screen_XY = create_screen_XY(np.min(screen.x), np.max(screen0.x), len(screen0.x), 
+                                                np.min(screen0.y), np.max(screen0.y), len(screen0.y), 
+                                                z=np.max(screen0.z) )
+                                                
+                plt.figure()
+                plt.imshow(np.abs(field.field))
+                plt.show()
+                
+                plt.figure()
+                plt.imshow(np.angle(field.field))
+                plt.show()
+                plt.savefig("modulation.png", dpi=600)
+                
+
+                EXYZ0 = RS_integral(field, screen_XY, wavelength, simp2d=True)
+                
+                print(np.shape(EXYZ0.screen[:,:,0]), np.shape(EXYZ0.screen))
+                
+                if i<len(ensemble.aperture_array_phase)-1 :
+                    ensemble.field_array[i+1].field = EXYZ0.screen[:,:,0]/np.max(EXYZ0.screen[:,:, -1])
+
+                overall_field_at_screen = screen
+                overall_field_at_screen.screen[:,:,-1] = EXYZ0.screen[:,:,0]
+
+                #attributing this as screen to avoid dimension errors, however ONLY the XY is meaningful!
+                #might be fixed 
+                EXYZ = screen
+
+                print("RS only calculated correctly the XY at the end Z, the other values of the screen object (e.g. YZ plane) have been repeated")
+        
+        del field 
+
+        ensemble.screen_array[i] = EXYZ
+        
+        #print(EXYZ.screen.shape)        
+        #overall_field_at_screen = screen0
+        #overall_field_at_screen.screen = EXYZ.screen
+        if i==1: 
+            overall_field_at_screen = np.dstack(np.array([overall_field_at_screen.screen, EXYZ.screen]) )
+        else: 
+            print(np.shape(EXYZ.screen), np.shape(overall_field_at_screen))
+            overall_field_at_screen = np.dstack(np.array([overall_field_at_screen, EXYZ.screen]) )
+        
+
+    return overall_field_at_screen 
+
+    
     
     
 ##################################################
