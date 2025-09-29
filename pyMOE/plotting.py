@@ -72,7 +72,7 @@ def plot_aperture(aperture, scale=None, colorbar=True, only_plot=False, filename
     
     plt.sca(ax)
     ax.set_aspect(1)
-    pcm = plt.pcolormesh(aperture.x/scale_factor, aperture.y/scale_factor, aperture.aperture,)
+    pcm = plt.pcolormesh(aperture.x/scale_factor, aperture.y/scale_factor, aperture.aperture)
     
     if not only_plot:
         plt.xlabel("x [%sm]"%scale)
@@ -209,7 +209,7 @@ def plot_screen_XY(screen, which='both', scale=None, colorbar=True, only_plot=Fa
     if which in ["both", "amplitude"]:
         plt.sca(ax1)
         ax1.set_aspect(1)
-        pcm = plt.pcolormesh(screen.x/scale_factor, screen.y/scale_factor, screen.amplitude.reshape((len(screen.x),len(screen.y))))
+        pcm = plt.pcolormesh(screen.x/scale_factor, screen.y/scale_factor, screen.amplitude.reshape((len(screen.y),len(screen.x))))
         
         if not only_plot:
             plt.xlabel("x [%sm]"%scale)
@@ -226,7 +226,7 @@ def plot_screen_XY(screen, which='both', scale=None, colorbar=True, only_plot=Fa
     if which in ["both", "phase"]:
         plt.sca(ax2)
         ax2.set_aspect(1)
-        pcm = plt.pcolormesh(screen.x/scale_factor, screen.y/scale_factor, screen.phase.reshape((len(screen.x),len(screen.y))))
+        pcm = plt.pcolormesh(screen.x/scale_factor, screen.y/scale_factor, screen.phase.reshape((len(screen.y),len(screen.x))))
     
         if not only_plot:
             plt.xlabel("x [%sm]"%scale)
