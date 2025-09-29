@@ -14,11 +14,13 @@ import pyMOE.importing as importing
 import pyMOE.metas as metas 
 import pyMOE.propagate as propagate
 import pyMOE.field as field
+import pyMOE.ensemble as ensemble
 
 from pyMOE.aperture import Aperture
 from pyMOE.field import Field
 from pyMOE.field import Screen
 from pyMOE.aperture import ApertureField
+from pyMOE.ensemble import Ensemble
 
 from pyMOE.gdsconverter import GDSMask
 from pyMOE.gdsconverter import GrayscaleCalibration
@@ -28,6 +30,8 @@ import pyMOE.utils as utils
 import pyMOE.holograms as holograms
 import pyMOE.generate as generate
 import pyMOE.sag_functions as sag
+import pyMOE.metrics as metrics
+import pyMOE.optimizer as optimizer
 
 
-__version__ = '1.5'
+__version__ = '2.0'
