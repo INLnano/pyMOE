@@ -102,7 +102,7 @@ def create_empty_field_from_aperture(aperture):
     return Field(aperture.x, aperture.y)
 
 
-def modulate_field(field, amplitude_mask=None, phase_mask=None):
+def modulate_field(field, amplitude_mask=None, phase_mask=None, autograd=False):
     """
     Modulates the input field with the given amplitude or phase mask.
     If amplitude_mask is not given, it assumes an amplitude of 1 for the amplitude modulatiom.
@@ -117,18 +117,22 @@ def modulate_field(field, amplitude_mask=None, phase_mask=None):
         :field: returns the modulated field.
     """
     assert type(field) is Field, "field must be of type Field"
+    
+    if autograd==True: 
+        import jax.numpy as np
+    else: 
+        import numpy as np 
 
-
-    modulation_amplitude = np.ones(field.XX.shape)
-    modulation_phase = np.zeros(field.XX.shape)
+    modulation_amplitude = (np.ones(field.XX.shape))
+    modulation_phase = (np.zeros(field.XX.shape))
 
     if amplitude_mask is not None:
         assert type(amplitude_mask) is Aperture, "amplitude_mask must be of type Aperture"
-        assert np.all(amplitude_mask.XX == field.XX) and np.all(amplitude_mask.YY == field.YY), "Spatial dimensions of field and amplitude_mask must be the same"
+        #assert np.all(amplitude_mask.XX == field.XX) and np.all(amplitude_mask.YY == field.YY), "Spatial dimensions of field and amplitude_mask must be the same"
         modulation_amplitude = amplitude_mask.aperture
     if phase_mask is not None:
         assert type(phase_mask) is Aperture, "phase_mask must be of type Aperture"
-        assert np.all(phase_mask.XX == field.XX) and np.all(phase_mask.YY == field.YY), "Spatial dimensions of field and phase_mask must be the same"
+        #assert np.all(phase_mask.XX == field.XX) and np.all(phase_mask.YY == field.YY), "Spatial dimensions of field and phase_mask must be the same"
         modulation_phase = phase_mask.aperture
 
     # Creates a new empty field to store the modulated field
@@ -139,7 +143,6 @@ def modulate_field(field, amplitude_mask=None, phase_mask=None):
 
     # Modulates the input field
     modulated_field.field = field.field*modulation
-    
 
     return modulated_field
 
