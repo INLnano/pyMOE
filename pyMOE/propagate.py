@@ -9,11 +9,11 @@ Here, "propopt" code has been modified and extended for use with apertures and m
 """
 
 import numpy as np
-import scipy.fftpack as sfft 
+import scipy.fft as sfft 
 
 import decimal
 
-from pyMOE.utils import simpson2d 
+from pyMOE.utils import simpson2d, qmc_2d
 
 from scipy import integrate
 
@@ -24,6 +24,11 @@ import dask.bag as db
 from dask.diagnostics import ProgressBar
 
 from pyMOE.utils import progress_bar, Timer
+from pyMOE.field import Screen, create_screen_XY, create_screen_YZ, modulate_field
+
+#from pyMOE.plotting import plot_field 
+
+import matplotlib.pyplot as plt 
 
 
 
@@ -207,7 +212,7 @@ def Fresnel_criterion(wavelength, radius):
 
 
 @dask.delayed
-def kernel_RS(field, k, x,y,z, simp2d=False):
+def kernel_RS(field, k, x,y,z, simp2d=False, method=False, sampler=None):
     """
     Calculates the RS kernel integral from a field input aperture, assumed to be at z=0
     and returns the calculated E field
@@ -219,6 +224,8 @@ def kernel_RS(field, k, x,y,z, simp2d=False):
         :k:         Calculated wavenumber k=2pi/(wl*n)
         :x,y,z:     x, y, z coordinates of the screen point being evaluated
         :simp2d:    Defaults False, if True uses the simpson2d function
+        :method     Choose between "simp2d", "qmc" or "trap", or defults to scipy simpson 
+        :sampler:   Integer sampler for the QMC, e.g. sampler.integers(l_bounds=0, u_bounds=n, n=n) where n is side lenth 
     Returns:
         :E:         Calculated field
     """
@@ -232,15 +239,23 @@ def kernel_RS(field, k, x,y,z, simp2d=False):
     propE = field.field * prop1 * prop2
 
     # integrate over the input field and return field
-    if simp2d==True: 
+    if simp2d==True or method=="simp2d": 
         Exyz = simpson2d(propE,field.x[0], field.x[-1], field.y[0], field.y[-1]) /(2*np.pi)
+        #print("Simpson 2D method")
+    elif method=="qmc":
+        if sampler is None: 
+            print("Please add a sample selection of points, e.g. Sobol.")
+        Exyz = qmc_2d(propE,field.x[0], field.x[-1], field.y[0], field.y[-1], sampler) /(2*np.pi)
+        #print("QMC 2D method")
+    elif method=="trap":
+        Exyz = np.trapz(np.trapz(propE, x=field.x, axis=0), x=field.y, axis=0)
     else: 
         Exyz = integrate.simpson(integrate.simpson(propE, field.x),field.y)/(2*np.pi) 
 
     return Exyz
     
 
-def RS_integral(field, screen, wavelength, n=None, parallel_computing=True, simp2d=False):
+def RS_integral(field, screen, wavelength, n=None, parallel_computing=True, simp2d=False, sampler=None, method=None):
     """
     Calculates the Raleyigh Sommerfeld integral in the  of the first kind (Mahajan 2011 part II eq 1-20), receiving an input field and an observation screen plane on which to 
     calculate the integral.
@@ -278,7 +293,7 @@ def RS_integral(field, screen, wavelength, n=None, parallel_computing=True, simp
                     if n is not None: 
                         k = 2* np.pi*n[x_i,y_i,z_i]/(wavelength)
                     # the kernel is configured as a dask delayed task
-                    result = kernel_RS(field, k ,x,y,z, simp2d)
+                    result = kernel_RS(field, k ,x,y,z, simp2d, method, sampler)
 
                     delayed_tasks.append(result)
                     # screen.screen[x_i, y_i, z_i] = a
@@ -307,7 +322,7 @@ def RS_integral(field, screen, wavelength, n=None, parallel_computing=True, simp
                         if n is not None: 
                             k = 2* np.pi*n[x_i,y_i,z_i]/(wavelength)
                         
-                        result = kernel_RS(field, k ,x,y,z, simp2d).compute()
+                        result = kernel_RS(field, k ,x,y,z, simp2d, method, sampler).compute()
 
                         screen.screen[x_i, y_i, z_i] = result
                         progress_bar((x_i*zlen*ylen+y_i*zlen+z_i)/(xlen*ylen*zlen))
