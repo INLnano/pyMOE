@@ -17,8 +17,8 @@ from pyMOE.propagate import Bluestein
 import numpy as np
 import matplotlib.pyplot as plt 
 
-import jax.numpy.fft as sfft
-import jax 
+#import jax.numpy.fft as sfft
+#import jax 
 
 from pyMOE.utils import progress_bar, Timer
 
