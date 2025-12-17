@@ -41,6 +41,18 @@ class Field:
     
         self.field = np.zeros(self.XX.shape, dtype=complex)
         
+        self.Nx, self.Ny = self.x.size, self.y.size
+        
+        if self.Nx!=1: 
+            self.pixel_x = np.diff(self.x)[0]
+            self.fx = sfft.fftshift(sfft.fftfreq(self.Nx, d=self.pixel_x) )
+        if self.Ny!=1:        
+            self.pixel_y = np.diff(self.y)[0]
+            self.fy = sfft.fftshift(sfft.fftfreq(self.Ny, d=self.pixel_y) )
+       
+        if (self.Nx !=1) and (self.Ny!=1):
+            self.FX, self.FY = np.meshgrid(self.fx, self.fy, indexing='xy')
+            
     @property
     def shape(self):
         return self.field.shape
