@@ -472,6 +472,9 @@ def Bluestein(field, screen, wavelength, n=None):
             g1  = scalar_bluestein(field, screen, z, wavelength)
             
             screen.screen[:, :, z_i] = g1
+            
+            progress_bar((z_i)/(zlen))
+        progress_bar(1)
 
     return screen
     
@@ -496,9 +499,6 @@ def crop_to_physical_size(arr, dx_out, desired_size_meters):
         
     start = (N_total - crop_size) // 2
     return arr[start:start+crop_size, start:start+crop_size]
-    
-    
-
 
 def resize_field_to_shape(field, output_shape):
     """
@@ -514,6 +514,7 @@ def resize_field_to_shape(field, output_shape):
     phase_resized = resize(phase, output_shape, mode='constant', anti_aliasing=True)
 
     return amp_resized * np.exp(1j * phase_resized)
+    
     
 def scalable_angular_spectrum_method(field, screen, z, wavelength, pad_factor=2, skip_final_phase=True, crop=False):
     """
@@ -617,7 +618,6 @@ def SASM(field, screen, wavelength, pad_factor = 2, crop = False):
     
     x1 = np.linspace(np.min(screen.x), np.max(screen.x), np.shape(g0)[0])
     y1 = np.linspace(np.min(screen.y), np.max(screen.y), np.shape(g0)[1])
-    #z = np.linspace(wavelength, 3500*micro, 100)
     z1 = screen.z
     
     #print(z1)
