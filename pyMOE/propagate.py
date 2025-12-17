@@ -9,13 +9,14 @@ Here, "propopt" code has been modified and extended for use with apertures and m
 """
 
 import numpy as np
+import scipy 
 import scipy.fft as sfft 
+from scipy import integrate
 
 import decimal
 
 from pyMOE.utils import simpson2d, qmc_2d
 
-from scipy import integrate
 
 import dask
 import dask.array as da
@@ -24,7 +25,7 @@ import dask.bag as db
 from dask.diagnostics import ProgressBar
 
 from pyMOE.utils import progress_bar, Timer
-from pyMOE.field import Screen, create_screen_XY, create_screen_YZ, modulate_field
+from pyMOE.field import Field, Screen, create_screen_XY, create_screen_YZ, modulate_field
 
 #from pyMOE.plotting import plot_field 
 
