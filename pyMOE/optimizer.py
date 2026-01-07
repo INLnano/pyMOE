@@ -402,6 +402,7 @@ def scalable_angular_spectrum_method_jax(field, screen, z, wavelength, pad_facto
 
     if crop ==True: 
         psi_final = crop_to_physical_size_jax(psi_p_final, dx_out, desired_output_sizex, dy_out, desired_output_sizey)
+        psi_final = resize_field_to_shape_jax(psi_final, (N,N) )
     else:
         psi_final = psi_p_final
 
