@@ -159,16 +159,6 @@ def Bluestein_jax (field, screen, wavelength, n=None):
     
     screen_field = jnp.zeros_like(screen.XX, dtype=jnp.complex64)  # or screen.screen if initialized
 
-    def update_screen_slice(screen, g1, z_i):
-        # screen: (H, W, Z), g1: (H, W)
-        H, W, Z = screen.shape
-        # Make g1 shape (H, W, 1) to match the 3D screen
-        g1_3d = jnp.expand_dims(g1, axis=-1)
-        
-        # Update screen at slice [:, :, z_i] using dynamic_update_slice
-        return lax.dynamic_update_slice(screen, g1_3d, (0, 0, z_i))
-
-
     xlen,ylen,zlen = screen.XX.shape
 
     with Timer():
@@ -450,18 +440,7 @@ def SASM_jax(field, screen, wavelength, pad_factor = 2, crop =True ):
     import jax.numpy as jnp
     from jax import lax
     
-    screen_field = jnp.zeros_like(screen.XX, dtype=jnp.complex64)
-    
-    def update_screen_slice(screen, g1, z_i):
-        from jax import lax 
-        # screen: (H, W, Z), g1: (H, W)
-        H, W, Z = screen.shape
-        g1 = jnp.transpose(g1)
-        # Make g1 shape (H, W, 1) to match the 3D screen
-        g1_3d = jnp.expand_dims(g1, axis=-1)
-        
-        # Update screen at slice [:, :, z_i] using dynamic_update_slice
-        return lax.dynamic_update_slice(screen, g1_3d, (0, 0, z_i))
+    #screen_field = jnp.zeros_like(screen.XX, dtype=jnp.complex64)
     
     xlen,ylen,zlen = screen.XX.shape
     
