@@ -416,9 +416,26 @@ def scalable_angular_spectrum_method_jax(field, screen, z, wavelength, pad_facto
         psi_final = psi_p_final
 
     return psi_final
+    
+
+def update_screen_slice(screen, g1, z_i):
+    from jax import lax 
+    import jax.numpy as jnp
+
+    # screen: (H, W, Z), g1: (H, W)
+    H, W, Z = screen.shape
+    
+    #g1 = jnp.transpose(g1)
+    
+    # Make g1 shape (H, W, 1) to match the 3D screen
+    g1_3d = jnp.expand_dims(g1, axis=-1)
+    
+    # Update screen at slice [:, :, z_i] using dynamic_update_slice
+    return lax.dynamic_update_slice(screen, g1_3d, (0, 0, z_i))
+        
 
 
-def SASM_jax(field, screen, wavelength, pad_factor = 2, crop = False):
+def SASM_jax(field, screen, wavelength, pad_factor = 2, crop =True ):
     """
     Implements the Scalale Angular Spectrum Method propagation (Heintzmann et al. )
     
