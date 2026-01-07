@@ -487,19 +487,339 @@ def SASM_jax(field, screen, wavelength, pad_factor = 2, crop =True ):
             #print(np.shape(g1))
             
             #newscreen.screen[:, :, z_i] = g1
-            newscreen.screen = update_screen_slice(newscreen.screen, g1, z_i)
+            #newscreen.screen = update_screen_slice(newscreen.screen, g1, z_i)
+            screen_field = update_screen_slice(screen.screen, g1, z_i) 
 
             
-    return newscreen
+    return screen_field
     
+
+        
+
+def ASM_kernel_jax(field, z, wavelength, input_extent, input_df, n = 1.0,  bandlimit = True, shift_yx = (0.0, 0.0),  kykx = (0.0, 0.0)):
+    """
+    Compute the ASM propagation kernel H(kx, ky)
+
+    Args: 
+        :field:        Input Field
+        :z:            Distance to Screen plane 
+        :wavelength:   Wavelength
+        :input_extent: Spatial extent of the input field (might be already padded) 
+        :n:            Refractive index of the propagation medium (default=1 for vacuum/air)
+        :bandlimit:    Boolean, default False, if True enforces band limit filters akin Matushima & Shimobaba
+        :shift_yx:     tuple (shift_y, shift_x) with shift at the output screen plane, default (0.,0.)  
+        :kykx:         tuple (ky,kx) angular input direction, default = (0.,0.) 
+    Returns:
+        :H field kernel:        Returns the kernel 
+        
+    """
+    import jax.numpy.fft as sfft
+    import jax.numpy as jnp
     
-def propagate(xar, aperture, screen, wavelength, mask_amp = None, circ_radius=None, input_field="uniform", E0=1, propagation_method="bluestein", pad_factor=2): 
+    axes = (-2, -1) 
+    
+    Ny, Nx = field.Nx, field.Ny
+    dy, dx = field.pixel_y, field.pixel_x
+    fx, fy = field.fx, field.fy 
+    
+    fx_grid, fy_grid = field.FX, field.FY
+    f_grid = jnp.stack((fx_grid, fy_grid), axis=-1)
+    
+    kykx_arr = jnp.asarray(kykx) / (2 * jnp.pi) 
+    f_shifted = f_grid - kykx_arr
+    f2_shifted = jnp.sum(f_shifted**2, axis=-1)
+    
+    phase_delay = jnp.sqrt(jnp.complex128(1 - (wavelength / n)**2 * f2_shifted))
+        
+    # shift in output plane
+    shift_yx = jnp.asarray(shift_yx)
+    out_shift = 2 * jnp.pi * jnp.sum(f_grid * shift_yx, axis=-1)
+    
+    phase = (2 * jnp.pi * (n / wavelength) * jnp.abs(z) * phase_delay) + out_shift
+    
+    propagator_field = jnp.where(z >= 0, jnp.exp(1j * phase), np.conj(jnp.exp(1j * phase)))
+    
+    if bandlimit:
+        # Bandlimit (Matsushima & Shimobaba)
+        z_arr = jnp.array(z)
+        shift_yx_grid = shift_yx[jnp.newaxis, jnp.newaxis, :]
+        input_extent_grid = input_extent[jnp.newaxis, jnp.newaxis, :]
+        input_df_grid = input_df[jnp.newaxis, jnp.newaxis, :]
+
+        k_limit_p = (
+            ((shift_yx_grid + 1 / (2 * input_df_grid) ) ** -2 * z_arr**2 + 1) ** (-1 / 2)
+        ) / wavelength * n
+        
+        k_limit_n = (
+            ((shift_yx_grid - 1 / (2 * input_df_grid) ) ** -2 * z_arr**2 + 1) ** (-1 / 2)
+        ) / wavelength * n
+
+        # k0: Center of the bandlimit filter 
+        k0 = (1 / 2) * (
+            jnp.sign(shift_yx_grid + input_extent_grid) * k_limit_p
+            + jnp.sign(shift_yx_grid - input_extent_grid) * k_limit_n
+        )
+        
+        # k_width: Width of the bandlimit filter 
+        k_width = (
+            jnp.sign(shift_yx_grid + input_extent_grid) * k_limit_p
+            - jnp.sign(shift_yx_grid - input_extent_grid) * k_limit_n
+        )
+        
+        k_max = k_width / 2 # Half the width
+        
+        # H band limit filter 
+        H_filter_yx = jnp.abs(f_grid - k0) <= k_max
+        H_filter = H_filter_yx[..., 0] * H_filter_yx[..., 1]
+        
+        propagator_field = propagator_field * H_filter
+        
+    return sfft.ifftshift(propagator_field, axes=axes)
+
+
+def czt_jax(x, m,  w, a, axis = -1):
+    import jax.numpy.fft as sfft
+    import jax.numpy as jnp
+    
+    n = x.shape[axis]
+    n_czt = m + n - 1
+    k = jnp.arange(n_czt)
+    wk2 = w ** (k**2 / 2)
+    Awk2 = a ** -k[:n] * wk2[:n]
+    Fwk2 = sfft.fft(1 / jnp.hstack((wk2[n - 1 : 0 : -1], wk2[:m])), n_czt)
+    wk2 = wk2[:m]
+
+    x = jnp.moveaxis(x, axis, -1)
+    y = sfft.ifft(sfft.fft(x * Awk2, n_czt, axis=-1) * Fwk2, axis=-1)
+    y = y[..., n - 1 : n + m - 1] * wk2
+    y = jnp.moveaxis(y, -1, axis)
+    return y
+
+
+def ASM_propagate_jax(field, screen, z, wavelength, pad_width, n = 1.0, mode = None, bl = True, shift = None, kykx = (0.0, 0.0)):
+    """
+    Angular Spectrum Method (ASM) propagation computation.
+
+    Args: 
+        :field:       Input Field
+        :screen:      Observation Screen
+        :z:           Distance to Screen plane 
+        :wavelength:  Wavelength
+        :pad_width:   Padding around area of interest (assumed constant all around), in nr. of pixels  
+        :n:           refractive index of the propagation medium (default=1 for vacuum/air)
+        :mode:        ASM mode, options: None (default) = convetional ASM; "czt" = Chirp Z-Transform; "BLAS" = Band-Limited ASM
+        :bl:          Boolean, default False, if True enforces band limit filters akin Matushima & Shimobaba
+        :shift:       tuple (shift_y, shift_x) with shift at the output screen plane, default None = calculates the shift from screen limits. If mode="czt" shift is not used. 
+        :kykx:        tuple (ky,kx) angular input direction, default = (0.,0.) 
+    Returns:
+        :field:       Returns the calculated field
+    """
+    import jax.numpy.fft as sfft
+    import jax.numpy as jnp
+    
+    # zero pad the field  --- asssumes symmetric padding!
+    padding = ((pad_width, pad_width), (pad_width, pad_width))
+    padded_vals = jnp.pad(field.field, padding, mode='constant', constant_values=0)
+
+    #print(padded_vals.shape)
+
+    paddedx = jnp.linspace(field.x.min() - pad_width*field.pixel_x, field.x.max() + pad_width*field.pixel_x, len(field.x) + 2*pad_width )
+    paddedy = jnp.linspace(field.y.min() - pad_width*field.pixel_y, field.y.max() + pad_width*field.pixel_y, len(field.y) + 2*pad_width )
+
+    #print(field.x, paddedx, field.x.shape, paddedx.shape)
+    #print(field.y, paddedy, field.y.shape, paddedy.shape)
+    
+    padded_field = Field(paddedx, paddedy)
+    
+    padded_field.field = padded_vals
+    
+    axes = (-2, -1)  #define axes as last two dims for generalization, although with 2D does not make a difference
+    spatial_shape = jnp.array(padded_field.shape)
+    
+    input_dx = np.array([field.pixel_y, field.pixel_x])
+    mask_field_extent = input_dx * spatial_shape 
+    input_df = 1.0 / mask_field_extent 
+    
+
+    # Handle shifts from screen coordinates or given by user 
+    # NOTE, czt mode does not take shifts
+    if (shift is None) & (mode != "czt"):
+        ymin, ymax = jnp.min(screen.y), jnp.max(screen.y)
+        xmin, xmax = jnp.min(screen.x), jnp.max(screen.x)
+
+        shift_y = (ymax + ymin)/2
+        shift_x = (xmax + xmin)/2
+        
+        shift_yx_for_kernel = (shift_y, shift_x) 
+    
+    elif (shift is None) & (mode == "czt"):
+        shift_yx_for_kernel = (0.,0.) 
+    elif (shift is not None):
+        shift_yx_for_kernel = shift
+    else: 
+        shift_yx_for_kernel = (0.,0.)
+
+    # Compute kernel H(kx, ky)
+    kernel_H = ASM_kernel_jax(padded_field, z, wavelength, input_extent=mask_field_extent, \
+                          input_df=input_df, shift_yx = shift_yx_for_kernel, bandlimit = bl, n = n, kykx=kykx )
+    
+    # APPLY KERNEL FORWARD TRANSFORM 
+    field_transform = sfft.fftshift(sfft.fft2(sfft.ifftshift(padded_field.field, axes=axes), axes=axes) * kernel_H, axes=axes)
+
+    # INVERSE TRANSFORM
+    if mode=="czt":
+        output_shape = jnp.array(screen.shape)
+        ymin, ymax = screen.y.min(), screen.y.max()
+        xmin, xmax = screen.x.min(), screen.x.max()
+        
+        output_dx = jnp.array([ (ymax - ymin) / (output_shape[0] - 1), (xmax - xmin) / (output_shape[1] - 1) ])
+                
+        # Scaling factor: alpha = output_dx / input_df
+        alpha = output_dx / input_df 
+
+        limits_min = [ymin, xmin]
+        limits_max = [ymax, xmax]
+        
+        for d, axis in enumerate(axes):
+            m = output_shape[d]
+            
+            # czt parameters, 
+            # a: starting point on the circle (related to the min limit) w: angular step/ratio (related to the span/range)
+            a_czt = jnp.exp(-1j * 2 * jnp.pi / mask_field_extent[d] * limits_min[d])
+            w_czt = jnp.exp(1j * (2 * jnp.pi / mask_field_extent[d]) * (limits_max[d] - limits_min[d]) / (m - 1))
+
+            # apply the czt
+            field_czt = czt_jax(field_transform, m, w_czt, a_czt, axis=axis)
+            
+            # Ensure complex type just to be sure
+            field_transform = field_czt.astype(field_transform.dtype)
+            
+            center = (m - 1) // 2 
+            
+            # phase compensation/modulation factor after the czt
+            compensation = w_czt ** (-center * np.arange(m)) * (a_czt**center)
+            
+            field_transform = jnp.moveaxis(field_transform, axis, -1)
+            field_transform = field_transform * compensation 
+            field_transform = jnp.moveaxis(field_transform, -1, axis)
+        
+        # Apply the final scaling factor
+        final_scaling = jnp.prod(1.0 / alpha)
+        field_transform = field_transform * final_scaling
+        
+    elif (mode == "BLAS") & (bl==True):
+        fx_grid, fy_grid = padded_field.FX, padded_field.FY
+        f_grid = jnp.stack((fx_grid, fy_grid), axis=-1)
+            
+        output_shape = jnp.array(screen.shape)
+        ymin, ymax = screen.y.min(), screen.y.max()
+        xmin, xmax = screen.x.min(), screen.x.max()
+        
+        output_dx_y = (ymax - ymin) / (output_shape[0] - 1)
+        output_dx_x = (xmax - xmin) / (output_shape[1] - 1)
+
+        output_dx = jnp.array([output_dx_y, output_dx_x])
+        
+        # Scaling factor: alpha = output_dx / input_df (Eq 7)
+        alpha = output_dx / input_df
+        
+        # Eq 9 of "Band-limited angular spectrum numerical propagation method
+        # with selective scaling of observation window size and sample number"
+        # (2012)
+        wn = alpha * f_grid 
+        
+        # f = kernel for convolution, Eq 9 first term
+        f = jnp.prod(jnp.exp(-1j * np.pi / alpha * wn**2), axis=-1)
+        # B = modulated k-space field, Eq 9 second term
+        B = field_transform * jnp.prod( (1 / alpha) * jnp.exp(1j * jnp.pi / alpha * wn**2), axis=-1)
+
+        prefactor = jnp.prod( output_dx * jnp.exp(1j * jnp.pi / alpha * f_grid**2),axis=-1,)
+        
+        field_transform = prefactor * jax.scipy.signal.fftconvolve(B, f, mode="same", axes=axes)
+    
+        # crop to unpadded 
+        y_slice = slice(int(padded_field.Ny/2) - int(screen.Ny/2),  int(padded_field.Ny/2) - int(screen.Ny/2) + screen.Ny)
+        x_slice = slice(int(padded_field.Nx/2) - int(screen.Nx/2),  int(padded_field.Nx/2) - int(screen.Nx/2) + screen.Nx)
+        field_transform = field_transform[y_slice, x_slice]
+
+    else:   
+        # just IFFT 
+        propagated_field = sfft.fftshift(sfft.ifft2(sfft.ifftshift(field_transform, axes=axes), axes=axes), axes=axes)
+
+        #fig = plt.figure() 
+        #plt.imshow(np.abs(propagated_field))
+
+        scaling_x = screen.pixel_x / padded_field.pixel_x
+        scaling_y = screen.pixel_y / padded_field.pixel_y
+
+        y_slice = slice(int(padded_field.Ny/2) - int(screen.Ny/2 *scaling_y),  \
+                        int(padded_field.Ny/2) - int(screen.Ny/2 *scaling_y) + int(screen.Ny*scaling_y) )
+        x_slice = slice(int(padded_field.Nx/2) - int(screen.Ny/2 *scaling_y), \
+                        int(padded_field.Nx/2) - int(screen.Ny/2 *scaling_y) + int(screen.Nx*scaling_x) )
+        field_transform = propagated_field[y_slice, x_slice]
+
+        #fig = plt.figure() 
+        #plt.imshow(np.abs(psi_final))
+        
+        if (screen.Nx != field.Nx) or (screen.Ny != field.Ny):
+            field_transform = resize_field_to_shape(field_transform, (screen.Nx,screen.Ny) )
+        else: 
+            field_transform = resize_field_to_shape(field_transform, (field.Nx,field.Ny) )
+        
+    #print(field_transform.shape)
+        
+    return field_transform
+
+
+def ASM_jax(field, screen, wavelength, pad, n = 1.0, mode = None, bl = True, shift = None, kykx = (0.,0.) ):
+    """
+    Implements the Angular Spectrum Method (ASM), with czt and bandlimit options.
+
+    Args: 
+        :field:       Input Field
+        :screen:      Observation Screen
+        :wavelength:  Wavelength
+        :pad:         Padding around area of interest (assumed constant all around), in nr. of pixels  
+        :n:           refractive index of the propagation medium (default=1 for vacuum/air)
+        :mode:        ASM mode, options: None (default) = convetional ASM; "czt" = Chirp Z-Transform; "BLAS" = Band-Limited ASM
+        :bl:          Boolean, default False, if True enforces band limit filters akin Matushima & Shimobaba
+        :shift:       tuple (shift_y, shift_x) with shift at the output screen plane, default None = calculates the shift from screen limits. If mode="czt" shift is not used. 
+        :kykx:        tuple (ky,kx) angular input direction, default = (0.,0.) 
+    Returns:
+        :screen:      Returns the screen populated with the result   
+    """
+    import jax.numpy as jnp
+        
+    xlen, ylen, zlen = screen.Nx, screen.Ny, screen.Nz
+
+    screen_field = jnp.zeros_like(screen.XX, dtype=jnp.complex64)  # or screen.screen if initialized
+    
+    with Timer():
+        for z_i, z in enumerate(screen.z):
+    
+            g1 = ASM_propagate_jax(field, screen, z, wavelength, pad, n=n, mode=mode, bl=bl, shift=shift, kykx=kykx)
+            
+            if screen.Ny == 1:
+                screen.screen = np.reshape(update_screen_slice(screen.screen, g1, z_i), (screen.Ny, screen.Nx))
+            else:
+                screen_field = update_screen_slice(screen.screen, g1, z_i)
+            
+            #progress_bar((z_i) / (zlen))
+        #progress_bar(1)
+
+    return screen_field    
+
+    
+def propagate(xar, aperture, screen, wavelength, mask_amp = None, circ_radius=None, input_field="uniform", E0=1, \
+    propagation_method="bluestein", pad_factor=2, modedef = "czt" ): 
     """
     This function is wrapper of propagate module functionalities, by default employing bluestein method
-    to obtain the field at a screen. The field is propagated from aperture populated with xar phase values 
+    to obtain the field at a 2D screen at the furthest z value (most common). 
+    The field is propagated from the aperture populated with xar phase values.
     These xar will change during optimization depending on a loss function being minimized.     
-    
-    TODO: Add ASM propagator 
+
+    TODO: not restrict to the propagation to just the last 2D screen at z value, but use the 
+          full calculated Screen(x,y,z) - although this could be also done without any problem at each loss function definition 
     
     Args: 
         :xar:                2D real mesh grid of the phase values to populate the XY aperture phase values 
