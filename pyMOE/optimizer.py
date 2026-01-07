@@ -8,17 +8,16 @@ Module for optimization functionalities
     
 from scipy.optimize import leastsq, least_squares, differential_evolution, basinhopping, dual_annealing, minimize
 
-
 from pyMOE.generate import create_empty_aperture, create_empty_aperture_from_aperture, circular_aperture
-from pyMOE.field import Screen, create_empty_field_from_aperture, create_empty_field_from_field, generate_uniform_field, modulate_field
+from pyMOE.field import Field, Screen, create_empty_field_from_aperture, create_empty_field_from_field, generate_uniform_field, modulate_field
 from pyMOE.plotting import plot_field 
 from pyMOE.propagate import Bluestein
 
 import numpy as np
 import matplotlib.pyplot as plt 
 
-#import jax.numpy.fft as sfft
-#import jax 
+import jax.numpy.fft as sfft
+import jax 
 
 from pyMOE.utils import progress_bar, Timer
 
@@ -26,9 +25,6 @@ from pyMOE.utils import progress_bar, Timer
 def bluestein_czt_jax(x, f1, f2, fs, mout):
     """
     Bluestein from Hu et al. 2020 
-    x =  field.field  * F  
-    
-    TO COMPLETE
     """
     import jax.numpy.fft as sfft
     import jax.numpy as jnp
@@ -191,6 +187,7 @@ def kernel_RS(field, k, x,y,z, simp2d=False, method=False, sampler=None):
         :E:         Calculated field
     """
     import jax.numpy as np 
+    from scipy import integrate 
 
     z_field = 0 # the field source is assumed at z=0
     r = np.sqrt( (field.XX-x)**2 + (field.YY-y)**2 + (z_field-z)**2)
@@ -302,8 +299,9 @@ def resize_field_to_shape_jax(field, output_shape, method="linear"):
     return amp_resized * jnp.exp(1j * phase_resized)
     
     
+    
 def scalable_angular_spectrum_method_jax(field, screen, z, wavelength, pad_factor, skip_final_phase=True, \
-                                     crop=False):
+                                     crop=True):
     """
     kernel based on Heintzmann et al. 2023  
     """
@@ -311,13 +309,12 @@ def scalable_angular_spectrum_method_jax(field, screen, z, wavelength, pad_facto
     import jax.numpy as jnp
     
     Nx, Ny = field.field.shape
-    N = max([Nx,Ny])
+    N = max([Nx,Ny]) #assuming... 
     
     Lx = field.pixel_x * field.field.shape[0]  # Nx
     Ly = field.pixel_y * field.field.shape[1]  # Ny
 
-
-    L = max([Lx, Ly])
+    L = max([Lx, Ly]) #assuming... 
 
     L_newx = pad_factor * Lx
     L_newy = pad_factor * Ly
@@ -838,7 +835,6 @@ def propagate(xar, aperture, screen, wavelength, mask_amp = None, circ_radius=No
         # Generate a uniform field
         field = generate_uniform_field(field, E0=E0)
         
-        
         #print(aperture1.aperture.shape, aperture3.aperture.shape)
 
         # Modulates the field 
@@ -854,7 +850,7 @@ def propagate(xar, aperture, screen, wavelength, mask_amp = None, circ_radius=No
     
     #Propagate field to screen 
     if propagation_method=="nojax": 
-        # Bluestein 
+        # Bluestein, no jax, just for debugging purposes 
         EXYZ = Bluestein(field, screen, wavelength)
         
         #XY plane field -> In principle can be XYZ screen 
@@ -862,7 +858,7 @@ def propagate(xar, aperture, screen, wavelength, mask_amp = None, circ_radius=No
         
     #Propagate field to screen 
     if propagation_method=="bluestein": 
-        # Bluestein 
+        # Bluestein jax
         EXYZ = Bluestein_jax(field, screen, wavelength)
         
         #XY plane field -> In principle can be XYZ screen 
