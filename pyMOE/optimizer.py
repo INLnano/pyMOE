@@ -869,15 +869,25 @@ def propagate(xar, aperture, screen, wavelength, mask_amp = None, circ_radius=No
         
     #Propagate field to screen 
     if propagation_method=="SASM": 
-        # Bluestein 
+        # SASM
         EXYZ = SASM_jax(field, screen, wavelength, pad_factor=pad_factor, crop =True)
         
         #XY plane field -> In principle can be XYZ screen 
-        EXY= EXYZ.screen[:, :, -1] 
+        EXY= EXYZ[:, :, -1] 
+    
+    
+    #Propagate field to screen 
+    if propagation_method=="ASM": 
+        # ASM
+        EXYZ = ASM_jax(field, screen, wavelength, pad=pad_factor, n = 1.0, mode = modedef, bl = True, shift = None, kykx = (0.,0.) )
+        
+        #XY plane field -> In principle can be XYZ screen 
+        EXY= EXYZ[:, :, -1] 
+        
         
     if propagation_method=="RS": 
         # RS TO FIX 
-        EXYZ = RS_integral_jax(field, screen, wavelength, parallel_computing = False, method="trap")
+        EXYZ = RS_integral_jax(field, screen, wavelength)
         EXY= EXYZ[:, :, -1] 
     
     ### TODO: OTHER PROPAGATION METHODS 
