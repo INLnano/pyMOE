@@ -589,7 +589,7 @@ def scalable_angular_spectrum_method(field, screen, z, wavelength, pad_factor=2,
 
     if crop ==True: 
         psi_final = crop_to_physical_size(psi_p_final, dx_out, desired_output_size)
-        print(psi_final.shape)
+        #print(psi_final.shape)
         psi_final = resize_field_to_shape(psi_final, (N,N) )
     else:
         psi_final = psi_p_final
@@ -604,10 +604,11 @@ def SASM(field, screen, wavelength, pad_factor = 2, crop = False):
     Implements the Scalable Angular Spectrum Method propagation (Heintzmann et al. )
     
     Args: 
-        :field:     input Field
-        :screen:    Observation Screen
+        :field:         input Field
+        :screen:        Observation Screen
         :wavelength:    wavelength to consider
-        :n:         refractive index of the propagation medium (default=1 for vacuum/air)
+        :pad_factor:    zero padding factor all around (integrer multiple of the side pixel size) 
+        :crop:          boolean, if True, crops the size to the non zero pixels 
     Returns:
         :screen:    Returns the screen populated with the result
     """
@@ -728,7 +729,7 @@ def ASM_propagate(field, screen, z, wavelength, pad_width, n = 1.0, mode = None,
         :screen:      Observation Screen
         :z:           Distance to Screen plane 
         :wavelength:  Wavelength
-        :pad_width:   Padding around area of interest (assumed constant all around), in nr. of pixels  
+        :pad_width:   Padding around area of interest (assumed constant =0 all around), in nr. of pixels  
         :n:           refractive index of the propagation medium (default=1 for vacuum/air)
         :mode:        ASM mode, options: None (default) = convetional ASM; "czt" = Chirp Z-Transform; "BLAS" = Band-Limited ASM
         :bl:          Boolean, default False, if True enforces band limit filters akin Matushima & Shimobaba
@@ -899,7 +900,7 @@ def ASM(field, screen, wavelength, pad, n = 1.0, mode = None, bl = False, shift 
         :field:       Input Field
         :screen:      Observation Screen
         :wavelength:  Wavelength
-        :pad:         Padding around area of interest (assumed constant all around), in nr. of pixels  
+        :pad:         Padding around area of interest (assumed constant =0 all around), in nr. of pixels  
         :n:           refractive index of the propagation medium (default=1 for vacuum/air)
         :mode:        ASM mode, options: None (default) = convetional ASM; "czt" = Chirp Z-Transform; "BLAS" = Band-Limited ASM
         :bl:          Boolean, default False, if True enforces band limit filters akin Matushima & Shimobaba
