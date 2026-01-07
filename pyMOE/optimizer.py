@@ -447,16 +447,16 @@ def SASM_jax(field, screen, wavelength, pad_factor = 2, crop =True ):
     
     g0  = scalable_angular_spectrum_method_jax(field, screen, screen.z[0], wavelength, pad_factor= pad_factor, crop=crop)
     
-    print(np.shape(g0))
+    #print(np.shape(g0))
     
     x1 = jnp.linspace(jnp.min(screen.x), jnp.max(screen.x), jnp.shape(g0)[0])
     y1 = jnp.linspace(jnp.min(screen.y), jnp.max(screen.y), jnp.shape(g0)[1])
-    #z = np.linspace(wavelength, 3500*micro, 100)
     z1 = screen.z
     
     #print(z1)
-
-    newscreen = Screen(x1,y1,z1)
+    
+    screen_field = jnp.zeros_like(g0, dtype=jnp.complex64)  # or screen.screen if initialized
+    #newscreen = Screen(x1,y1,z1)
 
     with Timer():
         for z_i in range(zlen):
