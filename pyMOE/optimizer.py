@@ -294,6 +294,24 @@ def crop_to_physical_size_jax(arr, dx_out, desired_size_metersx, dy_out, desired
     #out = arr.at[start:start+crop_size, start:start+crop_size]
     return arr[startx:startx+crop_sizex, starty:starty+crop_sizey]
     
+def resize_field_to_shape_jax(field, output_shape, method="linear"):
+    """
+    Resize a 2D complex array to the desired output shape by
+    resizing real and imaginary parts separately.
+    """
+    import jax.numpy as jnp
+    from jax import image as jimage
+    
+    amplitude = jnp.abs(field)
+    phase = jnp.angle(field)
+
+    amp_resized = jimage.resize(amplitude, output_shape, method=method)
+
+    phase_resized = jimage.resize(phase, output_shape, method=method)
+
+    return amp_resized * jnp.exp(1j * phase_resized)
+    
+    
 def scalable_angular_spectrum_method_jax(field, screen, z, wavelength, pad_factor, skip_final_phase=True, \
                                      crop=False):
     """
