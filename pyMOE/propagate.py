@@ -636,6 +636,9 @@ def SASM(field, screen, wavelength, pad_factor = 2, crop = False):
             #print(np.shape(g1))
             
             newscreen.screen[:, :, z_i] = g1
+            
+            progress_bar((z_i)/(zlen))
+        progress_bar(1)
 
     return newscreen
     
