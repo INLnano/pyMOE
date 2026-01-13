@@ -940,9 +940,6 @@ def ASM(field, screen, wavelength, pad, n = 1.0, mode = None, bl = False, shift 
     return screen
 
     
-    
-    
-    
 def propagate_through_ensemble(ensemble,  wavelength , xar_plus_z=None, propagation_methods_array=None): 
     """
     Propagates though Ensemble object (various MOE surfaces)  
@@ -962,18 +959,27 @@ def propagate_through_ensemble(ensemble,  wavelength , xar_plus_z=None, propagat
     
     field0 = modulate_field(fieldi, amplitude_mask = ensemble.aperture_array_amp[0],\
                                       phase_mask=ensemble.aperture_array_phase[0])
+
+    print("Surface #1")
+    fig, axes = plt.subplots(1, 2)
+
+    # Amplitude
+    im0 = axes[0].imshow(np.abs(field0.field))
+    axes[0].set_title("Amplitude")
+    axes[0].axis("off")
     
-    plt.figure()
-    plt.imshow(np.abs(field0.field))
-    plt.show()
+    # Phase
+    im1 = axes[1].imshow(np.angle(field0.field))
+    axes[1].set_title("Phase")
+    axes[1].axis("off")
     
-    plt.figure()
-    plt.imshow(np.angle(field0.field))
+    plt.tight_layout()
     plt.show()
-    plt.savefig("modulation.png", dpi=600)
+
+
     
     screen0 = ensemble.screen_array[0]
-    print(np.max(screen0.z))
+    #print(np.max(screen0.z))
     
     if propagation_methods_array==None:
         propagation_methods_array= ["bluestein" for i in ensemble.screen_array]
@@ -984,13 +990,27 @@ def propagate_through_ensemble(ensemble,  wavelength , xar_plus_z=None, propagat
         ensemble.field_array[1].field = EXYZ0.screen[:,:, -1]/np.max(EXYZ0.screen[:,:, 0])
         
         EXYZ = EXYZ0
-    
-        ensemble.screen_array[0]= EXYZ
-
-        print(EXYZ.screen.shape)
         
         overall_field_at_screen = screen0
-        overall_field_at_screen.screen = EXYZ.screen
+        overall_field_at_screen.screen = EXYZ.screen/np.max(EXYZ.screen)
+
+    elif propagation_methods_array[0]=="ASM": 
+        EXYZ0 = ASM(field0, screen0, wavelength, pad=int(len(field0.x)/2 ))
+        ensemble.field_array[1].field = EXYZ0.screen[:,:, -1]/np.max(EXYZ0.screen[:,:, 0])
+        
+        EXYZ = EXYZ0
+        
+        overall_field_at_screen = screen0
+        overall_field_at_screen.screen = EXYZ.screen/np.max(EXYZ.screen)
+
+    elif propagation_methods_array[0]=="SASM": 
+        EXYZ0 = SASM(field0, screen0, wavelength, pad_factor=4, crop=True)
+        ensemble.field_array[1].field = EXYZ0.screen[:,:, -1]/np.max(EXYZ0.screen[:,:, 0])
+        
+        EXYZ = EXYZ0
+        
+        overall_field_at_screen = screen0
+        overall_field_at_screen.screen = EXYZ.screen/np.max(EXYZ.screen)
         
     elif propagation_methods_array[0]=="rayleigh-sommerfeld":
         screen_XY = create_screen_XY(np.min(screen0.x), np.max(screen0.x), len(screen0.x), 
@@ -1009,43 +1029,64 @@ def propagate_through_ensemble(ensemble,  wavelength , xar_plus_z=None, propagat
     
     #to the rest for all 
     for i in np.arange(1,len(ensemble.aperture_array_phase)): 
-        print(i)
-        
-        #ensemble.field_array[i].field = EXYZ.screen[:,:, -1]/np.max(EXYZ.screen[:,:, -1])
-        
+        #print(i)
         field = ensemble.field_array[i]
         
         aperture_amp = ensemble.aperture_array_amp[i]
         aperture_phase = ensemble.aperture_array_phase[i]
     
         field = modulate_field(field, amplitude_mask = aperture_amp, phase_mask=aperture_phase)
+
+        print("Surface #"+str(i+1))
+        fig, axes = plt.subplots(1, 2)
+
+        # Amplitude
+        im0 = axes[0].imshow(np.abs(field.field))
+        axes[0].set_title("Amplitude")
+        axes[0].axis("off")
         
-        plt.figure()
-        plt.imshow(np.abs(field.field))
-        plt.show()
+        # Phase
+        im1 = axes[1].imshow(np.angle(field.field))
+        axes[1].set_title("Phase")
+        axes[1].axis("off")
         
-        plt.figure()
-        plt.imshow(np.angle(field.field))
+        plt.tight_layout()
         plt.show()
-        plt.savefig("modulation.png", dpi=600)
-    
+
     
         ensemble.field_array[i].field = field
         
         screen = ensemble.screen_array[i]
         
         if propagation_methods_array[i]=="bluestein":
-            EXYZ0 = Bluestein(field, screen, wavelength)
+            EXYZ1 = Bluestein(field, screen, wavelength)
             if i<len(ensemble.aperture_array_phase)-1 : 
                 ensemble.field_array[i+1].field = EXYZ0.screen[:,:, -1]/np.max(EXYZ0.screen[:,:, -1])
             
-            EXYZ = EXYZ0
-            
-            ensemble.screen_array[i]= EXYZ
+            EXYZ = EXYZ1
 
             overall_field_at_screen = screen
-            overall_field_at_screen.screen = EXYZ.screen
+            overall_field_at_screen.screen = EXYZ.screen/np.max(EXYZ.screen)
             
+        if propagation_methods_array[i]=="ASM":
+            EXYZ1 = ASM(field, screen, wavelength, pad=int(len(field0.x)/2) )
+            if i<len(ensemble.aperture_array_phase)-1 : 
+                ensemble.field_array[i+1].field = EXYZ0.screen[:,:, -1]/np.max(EXYZ0.screen[:,:, -1])
+            
+            EXYZ = EXYZ1
+
+            overall_field_at_screen = screen
+            overall_field_at_screen.screen = EXYZ.screen/np.max(EXYZ.screen)
+
+        if propagation_methods_array[i]=="SASM":
+            EXYZ1 = SASM(field, screen, wavelength, pad_factor=4, crop=True)
+            if i<len(ensemble.aperture_array_phase)-1 : 
+                ensemble.field_array[i+1].field = EXYZ0.screen[:,:, -1]/np.max(EXYZ0.screen[:,:, -1])
+            
+            EXYZ = EXYZ1
+
+            overall_field_at_screen = screen
+            overall_field_at_screen.screen = EXYZ.screen/np.max(EXYZ.screen)
         
         elif propagation_methods_array[i]=="rayleigh-sommerfeld":
             if i==len(ensemble.aperture_array_phase)-1:
@@ -1054,13 +1095,20 @@ def propagate_through_ensemble(ensemble,  wavelength , xar_plus_z=None, propagat
                                             np.min(screen.z), np.max(screen.z), len(screen.z), 
                                             #z=np.max(screen0.z) )
                                             x=0 )
+
+                fig, axes = plt.subplots(1, 2)
+
+                # Amplitude
+                im0 = axes[0].imshow(np.abs(field.field))
+                axes[0].set_title("Amplitude")
+                axes[0].axis("off")
                 
-                plt.figure()
-                plt.imshow(np.abs(field.field))
-                plt.show()
+                # Phase
+                im1 = axes[1].imshow(np.angle(field.field))
+                axes[1].set_title("Phase")
+                axes[1].axis("off")
                 
-                plt.figure()
-                plt.imshow(np.angle(field.field))
+                plt.tight_layout()
                 plt.show()
         
                 EXYZ0 = RS_integral(field, screen_YZ, wavelength, simp2d=True)
@@ -1080,16 +1128,6 @@ def propagate_through_ensemble(ensemble,  wavelength , xar_plus_z=None, propagat
                                                 np.min(screen0.y), np.max(screen0.y), len(screen0.y), 
                                                 z=np.max(screen0.z) )
                                                 
-                plt.figure()
-                plt.imshow(np.abs(field.field))
-                plt.show()
-                
-                plt.figure()
-                plt.imshow(np.angle(field.field))
-                plt.show()
-                plt.savefig("modulation.png", dpi=600)
-                
-
                 EXYZ0 = RS_integral(field, screen_XY, wavelength, simp2d=True)
                 
                 print(np.shape(EXYZ0.screen[:,:,0]), np.shape(EXYZ0.screen))
@@ -1107,22 +1145,18 @@ def propagate_through_ensemble(ensemble,  wavelength , xar_plus_z=None, propagat
                 print("RS only calculated correctly the XY at the end Z, the other values of the screen object (e.g. YZ plane) have been repeated")
         
         del field 
-
-        ensemble.screen_array[i] = EXYZ
         
         #print(EXYZ.screen.shape)        
         #overall_field_at_screen = screen0
         #overall_field_at_screen.screen = EXYZ.screen
+        
         if i==1: 
-            overall_field_at_screen = np.dstack(np.array([overall_field_at_screen.screen, EXYZ.screen]) )
+            overall_field_at_screen = np.dstack(np.array([EXYZ0.screen, EXYZ.screen]) )
         else: 
             print(np.shape(EXYZ.screen), np.shape(overall_field_at_screen))
             overall_field_at_screen = np.dstack(np.array([overall_field_at_screen, EXYZ.screen]) )
         
-
     return overall_field_at_screen 
-
-    
     
     
 ##################################################
