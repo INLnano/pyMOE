@@ -975,46 +975,86 @@ def propagate(xar, aperture, screen, wavelength, mask_amp = None, circ_radius=No
         :input_field:        Input field, by default "uniform field" 
         :E0:                 Input field amplitude, default = 1 
         :propagation_method: Propagation method from propagate module, default "bluestein" 
-        '
+        :pad_factor:         Padding factor for SASM , default = 2 
+        :modedef:            Mode for ASM = ["czt", "BLAS", None], default = "czt" 
+        :ensemble_mode:      Ensemble mode is for ensemble propagation/optimization 
+        
     Returns: 
         :EXY:                Field XY at the screen at the last propagation z point 
     """
-    
-    # Create Aperture
-    aperture1x = create_empty_aperture_from_aperture(aperture) 
-    
-    if circ_radius is not None:
-        aperture2x = create_empty_aperture_from_aperture(aperture1x)
-        mask_amp = circular_aperture(aperture2x, radius=circ_radius, center=(0,0))
-    else: 
-        aperture2x = None
-    
-    if mask_amp is not None: 
-        mask_amp = mask_amp
-    
+
+    # To optimize the implementation -> it generates a new ensemble at each step 
+    if ensemble_mode==True:        
+        aperture_array_amp = mask_amp #array
+        aperture_array_phase = aperture
+        screen_array = screen #array 
+        wavelength_array = wavelength #array 
+        #xar is an array too 
         
-    aperture3x =  create_empty_aperture_from_aperture(aperture1x)
-    aperture3x.aperture = xar 
-    
-    ### Modulate field by the created aperture
-    field = create_empty_field_from_aperture(aperture1x)
+        prop_methods = propagation_method #["bluestein", "bluestein"]
         
-    if input_field=="uniform":
+        for ip, aperturex in enumerate(aperture_array_phase):
+            # Create Aperture
+            aperture1x = create_empty_aperture_from_aperture(aperturex) 
+            
+            if circ_radius is not None:
+                aperture2x = create_empty_aperture_from_aperture(aperture1x)
+                mask_amp = circular_aperture(aperture2x, radius=circ_radius, center=(0,0))
+            else: 
+                aperture2x = None
+            
+            if mask_amp is not None: 
+                mask_amp = mask_amp
+    
+            aperture3x =  create_empty_aperture_from_aperture(aperture1x)
+            aperture3x.aperture = xar[ip] 
+            
+            aperture_array_phase[ip] = aperture3x  
+            
+        field_input = create_empty_field_from_aperture(aperturex)
+        field_input = generate_uniform_field(field_input, E0=1)
+        input_light_field = field_input
+    
+        ensemble = Ensemble(aperture_array_amp, aperture_array_phase, screen_array,  wavelength_array, input_light_field)
+        
+        EXY_array = [propagate_through_ensemble_jax(ensemble, wavelength, propagation_methods_array=prop_methods) for wavelength in [700e-9]]
+        
+        EXY = EXY_array[-1][:, :, -1] 
+        
+    else:     
+        # Create Aperture
+        aperture1x = create_empty_aperture_from_aperture(aperture) 
+        
+        if circ_radius is not None:
+            aperture2x = create_empty_aperture_from_aperture(aperture1x)
+            mask_amp = circular_aperture(aperture2x, radius=circ_radius, center=(0,0))
+        else: 
+            aperture2x = None
+        
+        if mask_amp is not None: 
+            mask_amp = mask_amp
+            
+        aperture3x =  create_empty_aperture_from_aperture(aperture1x)
+        aperture3x.aperture = xar 
+        
+        ### Modulate field by the created aperture
+        field = create_empty_field_from_aperture(aperture1x)
+        
+    if (input_field=="uniform") and (ensemble_mode==False):
         # Generate a uniform field
         field = generate_uniform_field(field, E0=E0)
         
-        #print(aperture1.aperture.shape, aperture3.aperture.shape)
-
         # Modulates the field 
         field = modulate_field(field, amplitude_mask=None, phase_mask=aperture3x, autograd=True )
         
-    
         #moe.plotting.plot_field(field)
     
     elif input_field=="gaussian": 
         ##TO CORRECT 
-
         field = generate_uniform_field(field, E0=E0)
+            
+    else: 
+        field = input_field
     
     #Propagate field to screen 
     if propagation_method=="nojax": 
@@ -1054,8 +1094,7 @@ def propagate(xar, aperture, screen, wavelength, mask_amp = None, circ_radius=No
         # RS TO FIX 
         EXYZ = RS_integral_jax(field, screen, wavelength)
         EXY= EXYZ[:, :, -1] 
-    
-    ### TODO: OTHER PROPAGATION METHODS 
+
 
     # release memory 
     if aperture2x is not None: 
@@ -1064,7 +1103,6 @@ def propagate(xar, aperture, screen, wavelength, mask_amp = None, circ_radius=No
     del field
     
     return EXY
-
 
 
 def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8, gtol=1e-12, bounds =(-np.inf, np.inf), \
