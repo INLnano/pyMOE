@@ -12,6 +12,7 @@ from pyMOE.generate import create_empty_aperture, create_empty_aperture_from_ape
 from pyMOE.field import Field, Screen, create_empty_field_from_aperture, create_empty_field_from_field, generate_uniform_field, modulate_field
 from pyMOE.plotting import plot_field 
 from pyMOE.propagate import Bluestein
+from pyMOE.ensemble import Ensemble 
 
 import numpy as np
 import matplotlib.pyplot as plt 
@@ -336,8 +337,8 @@ def scalable_angular_spectrum_method_jax(field, screen, z, wavelength, pad_facto
            * jnp.sqrt(L_new**2 / (8 * L_new**2 + N_new**2 * wavelength**2)) /
            (wavelength * (-1 + 2 * jnp.sqrt(2) * jnp.sqrt(L_new**2 / (8 * L_new**2 + N_new**2 * wavelength**2)))))
     
-    if z > z_limit:
-        print("Zlimit is " +str(z_limit)+" but z is "+str(z) )
+    #if z > z_limit:
+    #    print("Zlimit is " +str(z_limit)+" but z is "+str(z) )
         
 
     k = 2 * jnp.pi / wavelength
@@ -787,8 +788,175 @@ def ASM_jax(field, screen, wavelength, pad, n = 1.0, mode = None, bl = True, shi
     return screen_field    
 
     
+    
+def propagate_through_ensemble_jax(ensemble,  wavelength , xar_plus_z=None, propagation_methods_array=None): 
+    """
+    Propagates though Ensemble object (various MOE surfaces)  
+    
+    Args:
+        :ensemble:                   Ensemble object 
+        :wavelength:                 Propagation wavelength
+        :xar_plus_z:                 Array with optimization variables (and optionally z position as variable) 
+        :propagation_methods_array:  Propagation method 
+    Returns:
+        :overall_field_at_screen:    Returns a screen concatenating both 
+    """
+    #initial aperture (the rest will be inside a loop)
+    from jax import numpy as jnp 
+    
+    fieldi = ensemble.input_light_field 
+    ensemble.field_array[0] = fieldi
+    
+    field0 = modulate_field(fieldi, amplitude_mask = ensemble.aperture_array_amp[0],\
+                                      phase_mask=ensemble.aperture_array_phase[0], autograd=True)
+
+    screen0 = ensemble.screen_array[0]
+    #print(np.max(screen0.z))
+    
+    if propagation_methods_array==None:
+        propagation_methods_array= ["bluestein" for i in ensemble.screen_array]
+    
+    
+    if propagation_methods_array[0]=="bluestein":
+        EXYZ0 = Bluestein_jax(field0, screen0, wavelength)
+    
+        ensemble.field_array[1].field = EXYZ0[:,:, -1]/jnp.max(EXYZ0[:,:, 0])
+        #ensemble.field_array[1].field = EXYZ0.screen[:,:, -1]/np.max(EXYZ0.screen[:,:, 0])
+        
+        EXYZ = EXYZ0
+        
+        overall_field_at_screen = screen0
+        overall_field_at_screen = EXYZ/jnp.max(EXYZ)
+
+    elif propagation_methods_array[0]=="ASM": 
+        EXYZ0 = ASM_jax(field0, screen0, wavelength, pad=int(len(field0.x)/2 ))
+        ensemble.field_array[1].field = EXYZ0.screen[:,:, -1]/jnp.max(EXYZ0.screen[:,:, 0])
+        
+        EXYZ = EXYZ0
+        
+        overall_field_at_screen = screen0
+        overall_field_at_screen.screen = EXYZ.screen/jnp.max(EXYZ.screen)
+
+    elif propagation_methods_array[0]=="SASM": 
+        EXYZ0 = SASM_jax(field0, screen0, wavelength, pad_factor=4, crop=True)
+        ensemble.field_array[1].field = EXYZ0.screen[:,:, -1]/jnp.max(EXYZ0.screen[:,:, 0])
+        
+        EXYZ = EXYZ0
+        
+        overall_field_at_screen = screen0
+        overall_field_at_screen.screen = EXYZ.screen/jnp.max(EXYZ.screen)
+        
+    elif propagation_methods_array[0]=="rayleigh-sommerfeld":
+        screen_XY = create_screen_XY(np.min(screen0.x), np.max(screen0.x), len(screen0.x), 
+                                        np.min(screen0.y), np.max(screen0.y), len(screen0.y), 
+                                        z=np.max(screen0.z) )
+
+        EXYZ0 = RS_integral_jax(field0, screen_XY, wavelength, simp2d=True)
+        ensemble.field_array[1].field = EXYZ0.screen[:,:,0]/jnp.max(EXYZ0.screen[:,:, 0])
+    
+        overall_field_at_screen = screen0
+        overall_field_at_screen.screen[:,:,-1] = EXYZ0.screen[:,:,0]/jnp.max(EXYZ0.screen[:,:, 0])
+        
+        #print("RS only calculated correctly the XY at the end Z, the other values of the screen object (e.g. YZ plane) have been repeated")
+    
+    EXYZ = EXYZ0
+    
+    #to the rest for all 
+    for i in np.arange(1,len(ensemble.aperture_array_phase)): 
+        #print(i)
+        field = ensemble.field_array[i]
+        
+        aperture_amp = ensemble.aperture_array_amp[i]
+        aperture_phase = ensemble.aperture_array_phase[i]
+    
+        field = modulate_field(field, amplitude_mask = aperture_amp, phase_mask=aperture_phase, autograd = True)
+    
+        ensemble.field_array[i].field = field
+        
+        screen = ensemble.screen_array[i]
+        
+        if propagation_methods_array[i]=="bluestein":
+            EXYZ1 = Bluestein_jax(field, screen, wavelength)
+            if i<len(ensemble.aperture_array_phase)-1 : 
+                ensemble.field_array[i+1].field = EXYZ0[:,:, -1]/jnp.max(EXYZ0[:,:, -1])
+            
+            EXYZ = EXYZ1
+
+            overall_field_at_screen = screen
+            overall_field_at_screen = EXYZ/jnp.max(EXYZ)
+            
+        if propagation_methods_array[i]=="ASM":
+            EXYZ1 = ASM_jax(field, screen, wavelength, pad=int(len(field0.x)/2) )
+            if i<len(ensemble.aperture_array_phase)-1 : 
+                ensemble.field_array[i+1].field = EXYZ0.screen[:,:, -1]/jnp.max(EXYZ0.screen[:,:, -1])
+            
+            EXYZ = EXYZ1
+
+            overall_field_at_screen = screen
+            overall_field_at_screen.screen = EXYZ.screen/np.max(EXYZ.screen)
+
+        if propagation_methods_array[i]=="SASM":
+            EXYZ1 = SASM_jax(field, screen, wavelength, pad_factor=4, crop=True)
+            if i<len(ensemble.aperture_array_phase)-1 : 
+                ensemble.field_array[i+1].field = EXYZ0.screen[:,:, -1]/jnp.max(EXYZ0.screen[:,:, -1])
+            
+            EXYZ = EXYZ1
+
+            overall_field_at_screen = screen
+            overall_field_at_screen.screen = EXYZ.screen/jnp.max(EXYZ.screen)
+        
+        elif propagation_methods_array[i]=="rayleigh-sommerfeld":
+            if i==len(ensemble.aperture_array_phase)-1:
+                screen_YZ = create_screen_YZ(np.min(screen.y), np.max(screen.y), len(screen.y), 
+                                            np.min(screen.z), np.max(screen.z), len(screen.z), 
+                                            #z=np.max(screen0.z) )
+                                            x=0 )
+                                            
+                EXYZ0 = RS_integral_jax(field, screen_YZ, wavelength, simp2d=True)
+                
+                if i<len(ensemble.aperture_array_phase)-1 :
+                    ensemble.field_array[i+1].field = EXYZ0.screen[:,:,-1]/jnp.max(EXYZ0.screen[:,:, -1])
+
+                overall_field_at_screen = screen
+                overall_field_at_screen.screen[int(len(screen0.x)/2),:,:] = EXYZ0.screen[:,0,:]
+ 
+                EXYZ = screen
+
+                
+            else:  
+                screen_XY = create_screen_XY(np.min(screen.x), np.max(screen0.x), len(screen0.x), 
+                                                np.min(screen0.y), np.max(screen0.y), len(screen0.y), 
+                                                z=np.max(screen0.z) )
+                                                
+                EXYZ0 = RS_integral_jax(field, screen_XY, wavelength, simp2d=True)
+
+                if i<len(ensemble.aperture_array_phase)-1 :
+                    ensemble.field_array[i+1].field = EXYZ0.screen[:,:,0]/jnp.max(EXYZ0.screen[:,:, -1])
+
+                overall_field_at_screen = screen
+                overall_field_at_screen.screen[:,:,-1] = EXYZ0.screen[:,:,0]
+
+                #attributing this as screen to avoid dimension errors, however ONLY the XY is meaningful!
+                #might be fixed 
+                EXYZ = screen
+
+        del field 
+        
+        #print(EXYZ.screen.shape)        
+        #overall_field_at_screen = screen0
+        #overall_field_at_screen.screen = EXYZ.screen
+        
+        if i==1: 
+            overall_field_at_screen = jnp.dstack(jnp.array([EXYZ0, EXYZ]) )
+        else: 
+            #print(np.shape(EXYZ.screen), np.shape(overall_field_at_screen))
+            overall_field_at_screen = jnp.dstack(jnp.array([overall_field_at_screen, EXYZ]) )
+        
+    return overall_field_at_screen 
+
+    
 def propagate(xar, aperture, screen, wavelength, mask_amp = None, circ_radius=None, input_field="uniform", E0=1, \
-    propagation_method="bluestein", pad_factor=2, modedef = "czt" ): 
+    propagation_method="bluestein", pad_factor=2, modedef = "czt", ensemble_mode=False  ): 
     """
     This function is wrapper of propagate module functionalities, by default employing bluestein method
     to obtain the field at a 2D screen at the furthest z value (most common). 
