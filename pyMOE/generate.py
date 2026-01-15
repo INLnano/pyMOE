@@ -19,7 +19,7 @@ import cv2
 
 
 
-def create_empty_aperture(xmin, xmax, N_x, ymin, ymax, N_y):
+def create_empty_aperture(xmin, xmax, N_x, ymin, ymax, N_y, endpoint=False):
     """
     Creates an empty aperture max of the mesh dimensions provided
     
@@ -32,8 +32,8 @@ def create_empty_aperture(xmin, xmax, N_x, ymin, ymax, N_y):
     Returns:
         :mask: empty Aperture
     """
-    x = np.linspace(xmin, xmax, N_x)
-    y = np.linspace(ymin, ymax, N_y)
+    x = np.linspace(xmin, xmax, N_x, endpoint=endpoint)
+    y = np.linspace(ymin, ymax, N_y, endpoint=endpoint)
     
     return Aperture(x,y)
 

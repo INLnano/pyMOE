@@ -60,13 +60,17 @@ class Aperture:
         self.aperture = levels[digitized]
         self.discretized_flag=True
 
-    def modulos(self, mod, normalize_to_max=True,mod_tolerance=1e-64):
+    def modulos(self, mod, normalize_to_max=True,mod_tolerance=1e-64, align_max=True):
         """Discretizes the aperture to the number of levels"""
         if self.aperture_original is None:
             self.aperture_original = np.copy(self.aperture)
 
-        aux = self.aperture        
-        self.aperture = (aux-np.max(aux)-mod_tolerance) % (mod)
+        aux = self.aperture
+
+        func_align = np.min
+        if align_max:
+            func_align = np.max
+        self.aperture = (aux-func_align(aux)-mod_tolerance) % (mod)
 
     def pixelize(self, pixelize_x, pixelize_y, verbose=True):
         """Pixelizes the aperture to the given pixelize_x in real space coordinates by averaging the data within the pixel, keeping same shape"""
