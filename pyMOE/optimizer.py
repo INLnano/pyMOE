@@ -956,8 +956,9 @@ def propagate_through_ensemble_jax(ensemble,  wavelength , corr=1, propagation_m
     return overall_field_at_screen 
 
     
-def propagate(xar, aperture, screen, wavelength, mask_amp = None, circ_radius=None, input_field="uniform", E0=1, \
-    propagation_method="bluestein", pad_factor=2, modedef = "czt", ensemble_mode=False  ): 
+def propagate(xar, aperture, screen, wavelength, mask_amp=None, circ_radius=None, input_field="uniform", \
+              input_field_amp=None, input_field_phase=None, E0=1, propagation_method="bluestein", \
+              pad_factor=2, modedef = "czt", ensemble_mode=False, corr=1 ): 
     """
     This function is wrapper of propagate module functionalities, by default employing bluestein method
     to obtain the field at a 2D screen at the furthest z value (most common). 
@@ -965,63 +966,94 @@ def propagate(xar, aperture, screen, wavelength, mask_amp = None, circ_radius=No
     These xar will change during optimization depending on a loss function being minimized.     
 
     TODO: not restrict to the propagation to just the last 2D screen at z value, but use the 
-          full calculated Screen(x,y,z) - although this could be also done without any problem at each loss function definition 
+          full calculated Screen(x,y,z) - although this could be also done at each loss function definition 
     
     Args: 
-        :xar:                2D real mesh grid of the phase values to populate the XY aperture phase values 
-        :aperture:           Aperture object that will hold xar values, and modulate a field E 
-        :screen:             Screen object with propagated field 
-        :wavelength:         Wavelength of propagation 
+        :xar:                2D real mesh grid of the phase values to populate the XY aperture phase values (array of these for ensemble_mode)
+        :aperture:           Aperture object that will hold xar values, and modulate a field E (array of these for ensemble_mode)
+        :screen:             Screen object with propagated field (array of these for ensemble_mode)
+        :wavelength:         Wavelength of propagation (array of these for ensemble_mode)
+        :mask_amp:           2D real mesh grid of the phase values to populate the XY aperture amplitude values   
         :circ_radius:        Radius of a circular aperture surrouding the xar values 
-        :input_field:        Input field, by default "uniform field" 
+        :input_field:        Input field, by default "uniform", if "custom" modulates field by 2D mesh grids amplitude & phase = input_field_amp & input_field_phase
+        :input_field_amp:    2D real mesh grid of the amplitude values to modulate the field, default None 
+        :input_field_phase:  2D real mesh grid of the phase values to modulate the field, default None  
         :E0:                 Input field amplitude, default = 1 
         :propagation_method: Propagation method from propagate module, default "bluestein" 
         :pad_factor:         Padding factor for SASM , default = 2 
         :modedef:            Mode for ASM = ["czt", "BLAS", None], default = "czt" 
         :ensemble_mode:      Ensemble mode is for ensemble propagation/optimization 
+        :corr:               correction factor, default 1, if overflows are verified helps to play with it 
         
     Returns: 
         :EXY:                Field XY at the screen at the last propagation z point 
     """
 
-    # To optimize the implementation -> it generates a new ensemble at each step 
+    # To optimize the implementation -> it generates a new ensemble at each optimization step 
     if ensemble_mode==True:        
-        aperture_array_amp = mask_amp #array
-        aperture_array_phase = aperture
-        screen_array = screen #array 
-        wavelength_array = wavelength #array 
-        #xar is an array too 
+        aperture_array_amp = mask_amp #array of 2D matrices for the amp of each 
+        aperture_array_phase = aperture #array of apertures, one for each surface in the path  
+        screen_array = screen #array of screens, representing what comes after each surface 
+        wavelength_array = wavelength #array, can  be single e.g. [lambda] 
+        #xar is an array too, array of the 2D phases of the ensemble surfaces 
         
-        prop_methods = propagation_method #["bluestein", "bluestein"]
+        prop_methods = propagation_method #array e-g. ["bluestein", "bluestein"]
         
         for ip, aperturex in enumerate(aperture_array_phase):
-            # Create Aperture
-            aperture1x = create_empty_aperture_from_aperture(aperturex) 
+            # Create Apertur
+            aperturein =  create_empty_aperture_from_aperture(aperturex)
+            aperturein.aperture = xar[ip] 
             
-            if circ_radius is not None:
-                aperture2x = create_empty_aperture_from_aperture(aperture1x)
-                mask_amp = circular_aperture(aperture2x, radius=circ_radius, center=(0,0))
-            else: 
-                aperture2x = None
+            aperture_array_phase[ip] = aperturein  
             
-            if mask_amp is not None: 
-                mask_amp = mask_amp
-    
-            aperture3x =  create_empty_aperture_from_aperture(aperture1x)
-            aperture3x.aperture = xar[ip] 
+        if input_field =="uniform": 
+            field_input = create_empty_field_from_aperture(aperturex)
+            field_input = generate_uniform_field(field_input, E0=1)
+            input_light_field = field_input
             
-            aperture_array_phase[ip] = aperture3x  
+        elif input_field=="custom": 
+            # Modulates the field 
+            field_input = create_empty_field_from_aperture(aperturex)
+            field_input = generate_uniform_field(field_input, E0=1)
+
+            if input_field_amp is not None: 
+                aperture_amp = create_empty_aperture_from_aperture(aperturex)
+                if input_field_amp.shape == aperture_amp.aperture.shape: 
+                    aperture_amp.aperture = input_field_amp
+                else: 
+                    print("Shape of input field amplitude is NOT the same the aperture shape. ")
+                
+            if input_field_phase is not None:   
+                aperture_phase = create_empty_aperture_from_aperture(aperturex)
+                if input_field_phase.shape == aperture_phase.aperture.shape: 
+                    aperture_phase.aperture = input_field_phase
+                else: 
+                    print("Shape of input field phase is NOT the same the aperture shape. ")
+
+            #incoherent phase 
+            elif input_field_phase=="random":
+                aperture_phase = create_empty_aperture_from_aperture(aperturex)
+                if input_field_phase.shape == aperture_phase.aperture.shape: 
+                    aperture_phase.aperture = np.random.rand(np.flatten(aperture_phase.shape))*2*np.pi
+                else: 
+                    print("Shape of input field phase is NOT the same the aperture shape. ")
             
-        field_input = create_empty_field_from_aperture(aperturex)
-        field_input = generate_uniform_field(field_input, E0=1)
-        input_light_field = field_input
+
+            input_light_field = modulate_field(field_input, amplitude_mask=aperture_amp, phase_mask=aperture_phase, autograd=True )
+            
+            del aperture_phase, aperture_amp
+            #moe.plotting.plot_field(input_light_field)
+        #print(screen_array)
     
         ensemble = Ensemble(aperture_array_amp, aperture_array_phase, screen_array,  wavelength_array, input_light_field)
+        #print(ensemble.screen_array)
         
-        EXY_array = [propagate_through_ensemble_jax(ensemble, wavelength, propagation_methods_array=prop_methods) for wavelength in [700e-9]]
+        EXY_array = [propagate_through_ensemble_jax(ensemble, wavelength, propagation_methods_array=prop_methods, corr=corr) for wavelength in wavelength_array]
+        #print(ensemble.screen_array)
         
         EXY = EXY_array[-1][:, :, -1] 
-        
+
+    ###If ensemble mode is false, do simple 
     else:     
         # Create Aperture
         aperture1x = create_empty_aperture_from_aperture(aperture) 
@@ -1041,14 +1073,18 @@ def propagate(xar, aperture, screen, wavelength, mask_amp = None, circ_radius=No
         ### Modulate field by the created aperture
         field = create_empty_field_from_aperture(aperture1x)
         
+        del aperture1x
+
     if (input_field=="uniform") and (ensemble_mode==False):
         # Generate a uniform field
         field = generate_uniform_field(field, E0=E0)
-        
+        #print(aperture1.aperture.shape, aperture3.aperture.shape)
+
         # Modulates the field 
         field = modulate_field(field, amplitude_mask=None, phase_mask=aperture3x, autograd=True )
-        
         #moe.plotting.plot_field(field)
+        
+        del aperture3x 
     
     elif input_field=="gaussian": 
         ##TO CORRECT 
@@ -1095,12 +1131,8 @@ def propagate(xar, aperture, screen, wavelength, mask_amp = None, circ_radius=No
         # RS TO FIX 
         EXYZ = RS_integral_jax(field, screen, wavelength)
         EXY= EXYZ[:, :, -1] 
-
-
-    # release memory 
-    if aperture2x is not None: 
-        del aperture2x 
-    del aperture1x, aperture3x
+ 
+    #del aperture1x, aperture3x
     del field
     
     return EXY
@@ -1141,7 +1173,13 @@ def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8,
     else: 
         v = 2
         
-        
+    loss_history = [] 
+    
+    def loss_with_logging(x, *args):
+        val = loss(x, *args)
+        loss_history.append(float(val))
+        return val
+    
     if optimizer_method in ["adam", "rmsprop"]:
         import optax
     
@@ -1152,7 +1190,7 @@ def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8,
         x = np.array(x0)
         opt_state = optimizer.init(x)
 
-        loss_fn = lambda x: loss(x, *args1)
+        loss_fn = lambda x: loss_with_logging(x, *args11)
         loss_and_grad_fn = (jax.value_and_grad(loss_fn))
 
         loss_history = []
@@ -1177,24 +1215,25 @@ def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8,
         solution = x
 
     elif optimizer_method=='leastsq-lm': 
-        solution = leastsq(loss, x0= x0,  args=args1 ,jac =cal_jac, ftol=ftol, xtol=xtol, gtol=gtol, verbose=v, max_nfev=max_nfev)
+        solution = leastsq(loss_with_logging, x0= x0,  args=args1 ,jac =cal_jac, ftol=ftol, xtol=xtol, gtol=gtol, verbose=v, max_nfev=max_nfev)
     elif (optimizer_method=='trf') or (optimizer_method=='dogbox'):  
-        solution = least_squares(loss, x0=x0, args=args1 , jac =cal_jac,  ftol=ftol, xtol=xtol, gtol=gtol, method=optimizer_method, bounds=bounds, verbose=v, max_nfev=max_nfev, **kwargs)
+        solution = least_squares(loss_with_logging, x0=x0, args=args1 , jac =cal_jac,  ftol=ftol, xtol=xtol, gtol=gtol, method=optimizer_method, bounds=bounds, verbose=v, max_nfev=max_nfev, **kwargs)
     elif optimizer_method=='differential_evolution': 
-        solution = differential_evolution(loss, x0=x0, jac =cal_jac, bounds = bounds, args =args1, verbose=v)
+        solution = differential_evolution(loss_with_logging, x0=x0, jac =cal_jac, bounds = bounds, args =args1, verbose=v)
     elif optimizer_method=='dual_annealing': 
-        solution = dual_annealing(loss, x0=x0, args =args1,jac =cal_jac,  bounds = bounds, verbose=v)
+        solution = dual_annealing(loss_with_logging, x0=x0, args =args1,jac =cal_jac,  bounds = bounds, verbose=v)
     elif optimizer_method=='basinhopping': 
-        solution = basinhopping(loss, x0=x0,minimizer_kwargs=minimizer_kwargs, niter=max_iters)
+        solution = basinhopping(loss_with_logging, x0=x0,minimizer_kwargs=minimizer_kwargs, niter=max_iters)
     elif optimizer_method in ['Nelder-Mead', 'Powell','CG', 'BFGS', 'Newton-CG','L-BFGS-B', \
     'TNC', 'COBYLA', 'COBYQA', 'SLSQP', 'trust-constr', 'dogleg', 'trust-ncg', 'trust-exact','trust-krylov']:
         argas = args1
-        solution = minimize(loss, x0, argas, jac =cal_jac, options={'gtol': ftol, 'disp': True, 'maxiter':50000},bounds=bounds)
+        solution = minimize(loss_with_logging, x0, argas, jac =cal_jac, options={'gtol': ftol, 'disp': True, 'maxiter':50000},bounds=bounds)
     else: 
         print("Option optimizer_method= '"+str(optimizer_method)+"' not recognized")
 
+    solution.loss_history = loss_history 
+    
     return solution
-
 
 def generate_loss_function(metric): 
     """
