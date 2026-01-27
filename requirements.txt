@@ -1,10 +1,12 @@
-opencv-python
-gdspy==1.6.3
-klayout==0.26.12
-Pillow==8.1.1
-scipy
+
 matplotlib
 numpy
 dask  
 zernike
+jax
+ipykernel
+pytest
+klayout
+opencv-python
+gdspy==1.6.3
 shapely==1.7.1
