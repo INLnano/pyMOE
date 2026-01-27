@@ -1138,9 +1138,51 @@ def propagate(xar, aperture, screen, wavelength, mask_amp=None, circ_radius=None
     return EXY
 
 
+def setup_optimizer_logger_batch(x_size, batch_size=1, log_dir="logs", name="optimize_log"):
+    """
+    Setup logger and memory structures for batch binary logging of optimizer variables
+    
+    Returns:
+        :x_size:        size of x arrays (needed for reshape)
+        :logger:        Python logger for text logs
+        :logfile_txt:   path to text log file
+        :batch_list:    list to accumulate batches
+        :iter_counter:  dict for iteration counting 
+
+    """
+
+    import logging
+    import os
+    import numpy as np
+    from datetime import datetime
+
+    os.makedirs(log_dir, exist_ok=True)
+    
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    
+    logfile_txt = os.path.join(log_dir, f"{name}_{timestamp}.txt")
+    logfile_bin = os.path.join(log_dir, f"{name}_{timestamp}_x.npy")
+    
+    # Text logger
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.INFO)
+    fh = logging.FileHandler(logfile_txt)
+    fh.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(asctime)s | %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+    
+    # Initialize batch list and counter
+    batch_list = []
+    iter_counter = {"k": 0}
+    
+    # Return info needed for optimizer
+    return logger, logfile_txt, logfile_bin, batch_list, iter_counter, batch_size
+
+
 def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8, gtol=1e-12, bounds =(-np.inf, np.inf), \
                 niter =2, minimizer_kwargs=None, verbose=True, eps = None, learning_rate = 0.1, max_iters=100, max_nfev=1e6, \
-                jax=True, *args, **kwargs): 
+                jax=True, logger=None, logfile_bin=None, batch_list=None, batch_size=1, iter_counter=None, *args, **kwargs):
     """
     Optimize function using scipy optimizers, minizes the 'loss' function given as input 
     
@@ -1157,13 +1199,17 @@ def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8,
     Returns: 
         :solution:           The scipy solution object, to call the actual result do solution.x 
     """
-    if jax==True: 
+    import numpy as onp
+        
+    if jax:
+        import jax
         import jax.numpy as np
         from jax import jacrev
 
-        def cal_jac(x, *args): 
+        def cal_jac(x, *args):
             return jacrev(lambda x: loss(x, *args))(x).ravel()
-    else: 
+    else:
+        import numpy as np
         cal_jac = '3-point'
     
     if verbose==True: 
@@ -1173,12 +1219,47 @@ def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8,
     else: 
         v = 2
         
-    loss_history = [] 
+    loss_history = []
+    x_iter_history = []
+
+    if iter_counter is None:
+        iter_counter = {"k": 0}
+    last_x = {"val": None}
+    
+    if batch_list is None:
+        batch_list = []
     
     def loss_with_logging(x, *args):
-        val = loss(x, *args)
-        loss_history.append(float(val))
-        return val
+        x_np = onp.asarray(x)
+        k = iter_counter["k"]
+        
+        if last_x["val"] is None or not onp.allclose(x_np, last_x["val"]):
+            val = float(loss(x_np, *args))
+
+            # Text log 
+            x_str = onp.array2string(x_np, precision=6, suppress_small=True, threshold=1000)
+            if logger is not None:
+                logger.info("iter=%d | loss=%.6e | x=%s", k, val, x_str)
+
+            # Append to batch
+            batch_list.append(x_np.copy())
+
+            # Write batch to .npy file if full
+            if logfile_bin is not None and len(batch_list) >= batch_size:
+                arr = onp.array(batch_list, dtype=onp.float64)
+                with open(logfile_bin, "ab") as f:
+                    arr.tofile(f)
+                batch_list.clear()
+
+            # Save in-memory histories
+            x_iter_history.append(x_np.copy())
+            loss_history.append(val)
+
+            iter_counter["k"] += 1
+            last_x["val"] = x_np.copy()
+            return val
+
+        return loss(x, *args)
     
     if optimizer_method in ["adam", "rmsprop"]:
         import optax
@@ -1195,13 +1276,17 @@ def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8,
 
         loss_history = []
 
-        prev_loss = np.inf
+        prev_loss = onp.inf
 
         for i in range(max_iters):
             loss_val, grads = loss_and_grad_fn(x)
 
+            logger.info("iter=%d | loss=%.6e | x=%s", k, float(loss_val), onp.array2string(onp.asarray(x), precision=6))
+
+            x_iter_history.append(onp.asarray(x).copy())
+
             # Convergence check
-            if np.abs(prev_loss - loss_val) < ftol:
+            if onp.abs(prev_loss - loss_val) < ftol:
                 if verbose:
                     print(f"Stopping at iteration {i}, loss change below tolerance ({ftol})")
                 break
@@ -1209,7 +1294,7 @@ def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8,
             updates, opt_state = optimizer.update(grads, opt_state, x)
             x = optax.apply_updates(x, updates)
 
-            loss_history.append(loss_val)
+            loss_history.append(float(loss_val))
             prev_loss = loss_val
 
         solution = x
@@ -1226,12 +1311,36 @@ def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8,
         solution = basinhopping(loss_with_logging, x0=x0,minimizer_kwargs=minimizer_kwargs, niter=max_iters)
     elif optimizer_method in ['Nelder-Mead', 'Powell','CG', 'BFGS', 'Newton-CG','L-BFGS-B', \
     'TNC', 'COBYLA', 'COBYQA', 'SLSQP', 'trust-constr', 'dogleg', 'trust-ncg', 'trust-exact','trust-krylov']:
+        def minimize_callback(xk):
+            k = iter_counter["k"]
+            x_np = onp.asarray(xk)
+            val = float(loss(xk, *args1))
+
+            if logger is not None:
+                logger.info("iter=%d | loss=%.6e | x=%s", k, val, onp.array2string(x_np, precision=6, threshold=1000))
+
+            x_iter_history.append(x_np.copy())
+            loss_history.append(val)
+            iter_counter["k"] += 1
+
+            # Append to batch
+            batch_list.append(x_np.copy())
+            if logfile_bin is not None and len(batch_list) >= batch_size:
+                arr = onp.array(batch_list, dtype=onp.float64)
+                with open(logfile_bin, "ab") as f:
+                    arr.tofile(f)
+                batch_list.clear()
+        
         argas = args1
-        solution = minimize(loss_with_logging, x0, argas, jac =cal_jac, options={'gtol': ftol, 'disp': True, 'maxiter':50000},bounds=bounds)
+        solution = minimize(loss_with_logging, x0, argas, jac =cal_jac, callback = minimize_callback, options={'ftol': ftol, 'disp': True, 'maxiter':50000},bounds=bounds)
     else: 
         print("Option optimizer_method= '"+str(optimizer_method)+"' not recognized")
 
     solution.loss_history = loss_history 
+    solution.x_iter_history = onp.array(x_iter_history)
+    
+    if logger is not None: 
+        logger.info("Optimization finished")
     
     return solution
 
