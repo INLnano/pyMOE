@@ -360,7 +360,7 @@ def create_screen_XY(xmin, xmax, N_x, ymin, ymax, N_y, z):
     """
     x = np.linspace(xmin, xmax, N_x)
     y = np.linspace(ymin, ymax, N_y)
-    z=z
+    z=  np.array([z])
     
     return Screen(x,y,z)
 
@@ -381,7 +381,7 @@ def create_screen_YZ(ymin, ymax, N_y, zmin, zmax, N_z, x=0):
     Returns:
         :screen: empty Screen
     """
-    x=x
+    x = np.array([x])
     y = np.linspace(ymin, ymax, N_y)
     z = np.linspace(zmin, zmax, N_z)
 
@@ -406,7 +406,7 @@ def create_screen_ZZ(zmin, zmax, N_z, x=0, y=0, log=False):
     
     if log==True: 
         z = np.logspace(zmin, zmax, N_z)
-    y=y
-    x=x
+    y = np.array([y])
+    x = np.array([x])
     
     return Screen(x,y,z)

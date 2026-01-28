@@ -352,18 +352,19 @@ def bluestein_czt(x, f1, f2, fs, mout):
     #Eq S16, complex point spacing
     w = np.exp(-1j * 2 * np.pi / ((mout * fs) /((f22 - f11) )))
     
-    
+  
     #calculation of the size of the tile N
     mp = m + mout - 1
     N = 2 ** int(np.ceil(np.log2(mp)))
 
     #defining the number of vals where to evaluate the czt, from -m +1 to m -1  (2m-1 size)
     h = np.arange(-m + 1, max(mout, m) )
+
     
     # W^(m^2 /2) 
     h_vals = w ** ((h ** 2) / 2)
 
-    
+
     # W^(-m^2 /2) #all m, but cropped to N after 
     hin = 1 / h_vals[0:mp+1]
     
@@ -372,13 +373,10 @@ def bluestein_czt(x, f1, f2, fs, mout):
 
     #b is A^(-m) * W^(m^2 /2) , positive m 
     b = a ** (-(np.arange(0,m))) * h_vals[m -1 : 2 * m-1]
-    
     #apply the b in each tile * field 
     x_t = x * np.tile(b[:, np.newaxis], (1, n))
-    
     ###fft ( field * A^(-m) * W^(m^2 /2)  )
     b_fft = sfft.fft(np.array(x_t), N, axis=0, norm="ortho")
-
     ###convolution: ifft( fft[ field * A^(-m) * W^(m^2 /2)] * fft (W^(-m^2/2)) ) * W^(m^2/2)
     b_ifft = sfft.ifft(b_fft * np.tile(ft[:, np.newaxis], (1, n)), axis=0, norm="ortho")
     bconv = b_ifft[m - 1:mp, :].T * np.tile(h_vals[m - 1:mp], (n, 1)) #positive m until mp, not 2m-1 
@@ -392,6 +390,7 @@ def bluestein_czt(x, f1, f2, fs, mout):
     #tile over 
     Mshift_til = np.tile(Pshift, (n, 1))
     bout = bconv * Mshift_til 
+
     
     return bout
     
@@ -424,12 +423,19 @@ def scalar_bluestein(field, screen, d, wavelength):
 
     #arg of Eq 6 
     gout = field.field  * F
-    
+
+   
     #args for bluestein 
     fsx = wavelength * d / field.pixel_x
     fsy = wavelength * d / field.pixel_y
     
     mxout, myout = len(screen.x), len(screen.y)
+
+    # X-direction 
+    fx1 = xstart + fsx / 2
+    fx2 = xend + fsx / 2
+    gout = bluestein_czt(gout, fx1, fx2, fsx, mxout)
+      
 
     #apply calc to obtain the CZT 
     # Y-direction 
@@ -437,11 +443,6 @@ def scalar_bluestein(field, screen, d, wavelength):
     fy2 = yend + fsy / 2
     gout = bluestein_czt(gout, fy1, fy2, fsy, myout)
 
-    # X-direction 
-    fx1 = xstart + fsx / 2
-    fx2 = xend + fsx / 2
-    gout = bluestein_czt(gout, fx1, fx2, fsx, mxout)
-      
     #Eq 6, now gout is the result of the CZT
     gout = F0 * gout
 
@@ -462,9 +463,8 @@ def Bluestein(field, screen, wavelength, n=None):
     Returns:
         :screen:    Returns the screen populated with the result
     """
-    
+    assert screen.x.shape != () and screen.y.shape != (), "Screen x and y must not be empty"
     xlen,ylen,zlen = screen.XX.shape
-
     with Timer():
         for z_i in range(zlen):
             z = screen.ZZ[:, :, z_i][-1][0]

@@ -109,7 +109,7 @@ def plot_field(field, which='both', scale=None, colorbar=True, only_plot=False, 
         :filename:  if provided, saves figure to filename
         ###available output file extensions are same as opencv https://docs.opencv.org/3.4/d4/da8/group__imgcodecs.html
     """
-    assert type(field) is Field, "field given is not an Field object"
+    assert type(field) is Field, "field given is not a Field object"
     assert which in ["both", "amplitude", "phase"]
     
     if scale is not None:
