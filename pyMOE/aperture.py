@@ -33,7 +33,7 @@ class Aperture:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.XX, self.YY = np.meshgrid(x, y, indexing ='xy')
+        self.XX, self.YY = np.meshgrid(x, y, indexing ='ij')
         self.pixel_x = self.x[1]-self.x[0]
         self.pixel_y = self.y[1]-self.y[0]
         

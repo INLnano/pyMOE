@@ -212,7 +212,7 @@ def plot_screen_XY(screen,z=0, which='both', scale=None, colorbar=True, only_plo
     if which in ["both", "amplitude"]:
         plt.sca(ax1)
         ax1.set_aspect(1)
-        pcm = plt.pcolormesh(screen.x/scale_factor, screen.y/scale_factor, screen.amplitude[:,:,z_index])
+        pcm = plt.pcolormesh(screen.XX[:,:,z_index]/scale_factor, screen.YY[:,:,z_index]/scale_factor, screen.amplitude[:,:,z_index])
         
         if not only_plot:
             plt.xlabel("x [%sm]"%scale)
@@ -229,7 +229,7 @@ def plot_screen_XY(screen,z=0, which='both', scale=None, colorbar=True, only_plo
     if which in ["both", "phase"]:
         plt.sca(ax2)
         ax2.set_aspect(1)
-        pcm = plt.pcolormesh(screen.x/scale_factor, screen.y/scale_factor, screen.phase[:,:,z_index])
+        pcm = plt.pcolormesh(screen.XX[:,:,z_index]/scale_factor, screen.YY[:,:,z_index]/scale_factor, screen.phase[:,:,z_index])
     
         if not only_plot:
             plt.xlabel("x [%sm]"%scale)
@@ -291,7 +291,7 @@ def plot_screen_YZ(screen, x=0, which='both', scale=None, colorbar=True, only_pl
         plt.sca(ax1)
         # ax1.set_aspect(1)
 
-        pcm = plt.pcolormesh(screen.z/scale_factor, screen.y/scale_factor, screen.amplitude[x_index,:,:])
+        pcm = plt.pcolormesh(screen.ZZ[x_index,:,:]/scale_factor, screen.YY[x_index,:,:]/scale_factor, screen.amplitude[x_index,:,:])
         
         if not only_plot:
             plt.xlabel("z [%sm]"%scale)
@@ -308,7 +308,7 @@ def plot_screen_YZ(screen, x=0, which='both', scale=None, colorbar=True, only_pl
     if which in ["both", "phase"]:
         plt.sca(ax2)
         # ax2.set_aspect(1)
-        pcm = plt.pcolormesh(screen.z/scale_factor, screen.y/scale_factor, screen.phase[x_index,:,:])
+        pcm = plt.pcolormesh(screen.ZZ[x_index,:,:]/scale_factor, screen.YY[x_index,:,:]/scale_factor, screen.phase[x_index,:,:])
     
         if not only_plot:
             plt.xlabel("z [%sm]"%scale)
@@ -372,7 +372,7 @@ def plot_screen_ZZ(screen, x=0, y=0, which='both', scale=None, only_plot=False, 
     if which in ["both", "amplitude"]:
         plt.sca(ax1)
         # ax1.set_aspect(1)
-        pcm = plt.plot(screen.z/scale_factor, screen.amplitude[x_index,y_index,:],)
+        pcm = plt.plot(screen.ZZ[x_index,y_index,:]/scale_factor, screen.amplitude[x_index,y_index,:],)
         
         if not only_plot:
             plt.xlabel("z [%sm]"%scale)
@@ -386,7 +386,7 @@ def plot_screen_ZZ(screen, x=0, y=0, which='both', scale=None, only_plot=False, 
     if which in ["both", "phase"]:
         plt.sca(ax2)
         # ax2.set_aspect(1)
-        pcm = plt.plot(screen.z/scale_factor, screen.phase[x_index,y_index,:])
+        pcm = plt.plot(screen.ZZ[x_index,y_index,:]/scale_factor, screen.phase[x_index,y_index,:])
     
         if not only_plot:
             plt.xlabel("z [%sm]"%scale)

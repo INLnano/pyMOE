@@ -35,7 +35,7 @@ class Field:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.XX, self.YY = np.meshgrid(x, y, indexing='xy')
+        self.XX, self.YY = np.meshgrid(x, y, indexing='ij')
         self.pixel_x = self.x[1]-self.x[0]
         self.pixel_y = self.y[1]-self.y[0]
     
@@ -51,7 +51,7 @@ class Field:
             self.fy = sfft.fftshift(sfft.fftfreq(self.Ny, d=self.pixel_y) )
        
         if (self.Nx !=1) and (self.Ny!=1):
-            self.FX, self.FY = np.meshgrid(self.fx, self.fy, indexing='xy')
+            self.FX, self.FY = np.meshgrid(self.fx, self.fy, indexing='ij')
             
     @property
     def shape(self):
@@ -285,7 +285,7 @@ class Screen:
         
         self.Nx, self.Ny, self.Nz = self.x.size, self.y.size, self.z.size
         
-        self.XX, self.YY, self.ZZ = np.meshgrid(x, y, z, indexing='xy')
+        self.XX, self.YY, self.ZZ = np.meshgrid(x, y, z, indexing='ij')
     
         if self.Nx!=1: 
             self.pixel_x = np.diff(self.x)[0]
@@ -299,7 +299,7 @@ class Screen:
         self.n = np.ones(self.XX.shape)
         
         if (self.Nx !=1) and (self.Ny!=1):
-            self.FX, self.FY = np.meshgrid(self.fx, self.fy, indexing='xy')
+            self.FX, self.FY = np.meshgrid(self.fx, self.fy, indexing='ij')
         
         self.screen = np.zeros(self.XX.shape, dtype=complex)
         
