@@ -319,6 +319,28 @@ class Screen:
     def nindex(self):
         return self.n
     
+    def slice_XY(self, z):
+        z_index = np.argmin(np.abs(self.z - z))
+        return self.screen[:,:,z_index]
+    def slice_XZ(self, y):
+        y_index = np.argmin(np.abs(self.y - y))
+        return self.screen[:,y_index,:]
+    def slice_YZ(self, x):
+        x_index = np.argmin(np.abs(self.x - x))
+        return self.screen[x_index,:,:]
+    
+    def slice_X(self, y, z):
+        y_index = np.argmin(np.abs(self.y - y))
+        z_index = np.argmin(np.abs(self.z - z))
+        return self.screen[:,y_index,z_index]
+    def slice_Y(self, x, z):
+        x_index = np.argmin(np.abs(self.x - x))
+        z_index = np.argmin(np.abs(self.z - z))
+        return self.screen[x_index,:,z_index]
+    def slice_Z(self, x, y):
+        x_index = np.argmin(np.abs(self.x - x))
+        y_index = np.argmin(np.abs(self.y - y))
+        return self.screen[x_index,y_index,:]
 
     
     
