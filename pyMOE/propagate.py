@@ -864,7 +864,7 @@ def ASM_propagate(field, screen, z, wavelength, pad_width, n = 1.0, mode = None,
         # crop to unpadded 
         y_slice = slice(int(padded_field.Ny/2) - int(screen.Ny/2),  int(padded_field.Ny/2) - int(screen.Ny/2) + screen.Ny)
         x_slice = slice(int(padded_field.Nx/2) - int(screen.Nx/2),  int(padded_field.Nx/2) - int(screen.Nx/2) + screen.Nx)
-        field_transform = field_transform[y_slice, x_slice]
+        field_transform = field_transform[x_slice, y_slice]
 
     else:   
         # just IFFT 
@@ -892,7 +892,7 @@ def ASM_propagate(field, screen, z, wavelength, pad_width, n = 1.0, mode = None,
         
     #print(field_transform.shape)
         
-    return field_transform
+    return field_transform.astype(complex)
 
 
 def ASM(field, screen, wavelength, pad, n = 1.0, mode = None, bl = False, shift = None, kykx = (0.,0.) ):
@@ -930,7 +930,7 @@ def ASM(field, screen, wavelength, pad, n = 1.0, mode = None, bl = False, shift 
             g1 = ASM_propagate(field, screen, z, wavelength, pad, n=n, mode=mode, bl=bl, shift=shift, kykx=kykx)
             
             if screen.Ny == 1:
-                screen.screen[:, :, z_i] = np.reshape(g1, (screen.Ny, screen.Nx))
+                screen.screen[:, :, z_i] = np.reshape(g1, (screen.Nx, screen.Ny))
             else:
                 screen.screen[:, :, z_i] = g1
             
