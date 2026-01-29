@@ -19,6 +19,7 @@ import pyMOE.ensemble as ensemble
 from pyMOE.aperture import Aperture
 from pyMOE.field import Field
 from pyMOE.field import Screen
+# from pyMOE.screen import Screen
 from pyMOE.aperture import ApertureField
 from pyMOE.ensemble import Ensemble
 
