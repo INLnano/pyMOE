@@ -252,10 +252,10 @@ def oblique(field, wavelength, thetax, thetay):
     """
     
     k= 2*np.pi/(wavelength)
-    phasey = np.exp(1.j*k*np.sin(thetay)*field.y)
-    phasex = np.exp(1.j*k*np.sin(thetax)*field.x)
+    phasey = np.exp(1.j*k*np.sin(thetay)*field.YY)
+    phasex = np.exp(1.j*k*np.sin(thetax)*field.XX)
 
-    field.field = ((field.field*phasey).T)*phasex
+    field.field = ((field.field*phasey))*phasex
     
     return field
 
