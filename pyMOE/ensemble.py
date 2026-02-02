@@ -72,4 +72,4 @@ class Ensemble:
     @property
     def apertures_xar(self):
         flat_apertures = np.array([phase.aperture.flatten() for phase in self.aperture_array_phase])
-        return flat           
+        return flat_apertures           
