@@ -7,7 +7,8 @@ Mask design features:
 * Designing multi-layer (grayscale) masks from analytical and/or numerical (e.g. Gerchberg–Saxton) methods  
 * Designing single layer (binary) dithered masks from grayscale masks 
 * Designing rudimentary metasurfaces masks 
-* Numerical scalar propagation methods (Rayleigh-Sommerfeld, Fresnel, Fraunhofer) of electric fields from (grayscale) masks 
+* Numerical scalar propagation methods (Rayleigh-Sommerfeld, Fresnel, Fraunhofer, Angular Spectrum Method, Bluestein) of electric fields from (grayscale) masks
+* Rudimentary optimization and inverse design based on gradient-descent methods
 
 Mask production features: 
 * Image file (binary/grayscale) <-> CAD files input-output conversion  
