@@ -251,7 +251,7 @@ def kernel_RS(field, k, x,y,z, simp2d=False, method=False, sampler=None):
     elif method=="trap":
         Exyz = np.trapz(np.trapz(propE, x=field.x, axis=0), x=field.y, axis=0)
     else: 
-        Exyz = integrate.simpson(integrate.simpson(propE, field.x),field.y)/(2*np.pi) 
+        Exyz = integrate.simpson(integrate.simpson(propE, field.y),field.x)/(2*np.pi) 
 
     return Exyz
     
