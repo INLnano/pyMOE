@@ -187,30 +187,30 @@ def kernel_RS(field, k, x,y,z, simp2d=False, method=False, sampler=None):
     Returns:
         :E:         Calculated field
     """
-    import jax.numpy as np 
+    import jax.numpy as jnp 
     from scipy import integrate 
 
     z_field = 0 # the field source is assumed at z=0
-    r = np.sqrt( (field.XX-x)**2 + (field.YY-y)**2 + (z_field-z)**2)
+    r = jnp.sqrt( (field.XX-x)**2 + (field.YY-y)**2 + (z_field-z)**2)
     r2 = r*r
 
-    prop1 = np.exp(r*1.0j*k)/r2
-    prop2 = z * k/(2*np.pi) *( 1/(r*k) - 1.0j)
+    prop1 = jnp.exp(r*1.0j*k)/r2
+    prop2 = z * k/(2*jnp.pi) *( 1/(r*k) - 1.0j)
     propE = field.field * prop1 * prop2
 
     # integrate over the input field and return field
     if simp2d==True or method=="simp2d": 
-        Exyz = simpson2d(propE,field.x[0], field.x[-1], field.y[0], field.y[-1]) /(2*np.pi)
+        Exyz = simpson2d(propE,field.x[0], field.x[-1], field.y[0], field.y[-1]) /(2*jnp.pi)
         #print("Simpson 2D method")
     elif method=="qmc":
         if sampler is None: 
             print("Please add a sample selection of points, e.g. Sobol.")
-        Exyz = qmc_2d(propE,field.x[0], field.x[-1], field.y[0], field.y[-1], sampler) /(2*np.pi)
+        Exyz = qmc_2d(propE,field.x[0], field.x[-1], field.y[0], field.y[-1], sampler) /(2*jnp.pi)
         #print("QMC 2D method")
     elif method=="trap":
-        Exyz = np.trapezoid(np.trapezoid(propE, x=field.x, axis=0), x=field.y, axis=0)
+        Exyz = jnp.trapezoid(jnp.trapezoid(propE, x=field.x, axis=0), x=field.y, axis=0)
     else: 
-        Exyz = integrate.simpson(integrate.simpson(propE, field.x),field.y)/(2*np.pi) 
+        Exyz = integrate.simpson(integrate.simpson(propE, field.x),field.y)/(2*jnp.pi) 
 
     return Exyz
     
