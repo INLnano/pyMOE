@@ -737,7 +737,7 @@ def ASM_propagate(field, screen, z, wavelength, pad_width, n = 1.0, mode = None,
         :mode:        ASM mode, options: None (default) = convetional ASM; "czt" = Chirp Z-Transform; "BLAS" = Band-Limited ASM
         :bl:          Boolean, default False, if True enforces band limit filters akin Matushima & Shimobaba
         :shift:       tuple (shift_y, shift_x) with shift at the output screen plane, default None = calculates the shift from screen limits. If mode="czt" shift is not used. 
-        :kykx:        tuple (ky,kx) angular input direction, default = (0.,0.) 
+        :kykx:        tuple (ky,kx) angular input direction, default = (0.,0.), required for "off-axis" for non-czt 
     Returns:
         :field:       Returns the calculated field
     """
@@ -760,7 +760,7 @@ def ASM_propagate(field, screen, z, wavelength, pad_width, n = 1.0, mode = None,
     axes = (-2, -1)  #define axes as last two dims for generalization, although with 2D does not make a difference
     spatial_shape = np.array(padded_field.shape)
     
-    input_dx = np.array([field.pixel_y, field.pixel_x])
+    input_dx = np.array([field.pixel_x, field.pixel_y])
     mask_field_extent = input_dx * spatial_shape 
     input_df = 1.0 / mask_field_extent 
     
@@ -774,7 +774,7 @@ def ASM_propagate(field, screen, z, wavelength, pad_width, n = 1.0, mode = None,
         shift_y = (ymax + ymin)/2
         shift_x = (xmax + xmin)/2
         
-        shift_yx_for_kernel = (shift_y, shift_x) 
+        shift_yx_for_kernel = (shift_x, shift_y) 
     
     elif (shift is None) & (mode == "czt"):
         shift_yx_for_kernel = (0.,0.) 
@@ -801,8 +801,9 @@ def ASM_propagate(field, screen, z, wavelength, pad_width, n = 1.0, mode = None,
         # Scaling factor: alpha = output_dx / input_df
         alpha = output_dx / input_df 
 
-        limits_min = [ymin, xmin]
-        limits_max = [ymax, xmax]
+        limits_min = [xmin, ymin]
+        limits_max = [xmax, ymax]
+        
         
         for d, axis in enumerate(axes):
             m = output_shape[d]
@@ -832,6 +833,7 @@ def ASM_propagate(field, screen, z, wavelength, pad_width, n = 1.0, mode = None,
         field_transform = field_transform * final_scaling
         
     elif (mode == "BLAS") & (bl==True):
+        #print("BLAS")
         fx_grid, fy_grid = padded_field.FX, padded_field.FY
         f_grid = np.stack((fx_grid, fy_grid), axis=-1)
             
@@ -842,7 +844,7 @@ def ASM_propagate(field, screen, z, wavelength, pad_width, n = 1.0, mode = None,
         output_dx_y = (ymax - ymin) / (output_shape[0] - 1)
         output_dx_x = (xmax - xmin) / (output_shape[1] - 1)
 
-        output_dx = np.array([output_dx_y, output_dx_x])
+        output_dx = np.array([output_dx_x, output_dx_y])
         
         # Scaling factor: alpha = output_dx / input_df (Eq 7)
         alpha = output_dx / input_df
@@ -867,6 +869,7 @@ def ASM_propagate(field, screen, z, wavelength, pad_width, n = 1.0, mode = None,
         field_transform = field_transform[x_slice, y_slice]
 
     else:   
+        #print("Conventional ")
         # just IFFT 
         propagated_field = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(field_transform, axes=axes), axes=axes), axes=axes)
 
@@ -880,7 +883,7 @@ def ASM_propagate(field, screen, z, wavelength, pad_width, n = 1.0, mode = None,
                         int(padded_field.Ny/2) - int(screen.Ny/2 *scaling_y) + int(screen.Ny*scaling_y) )
         x_slice = slice(int(padded_field.Nx/2) - int(screen.Ny/2 *scaling_y), \
                         int(padded_field.Nx/2) - int(screen.Ny/2 *scaling_y) + int(screen.Nx*scaling_x) )
-        field_transform = propagated_field[y_slice, x_slice]
+        field_transform = propagated_field[x_slice, y_slice]
 
         #fig = plt.figure() 
         #plt.imshow(np.abs(psi_final))
