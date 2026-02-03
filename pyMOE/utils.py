@@ -136,7 +136,33 @@ def simpson2d(f,ax,bx,ay,by):
     
     return tint
 
+def qmc_2d(f,ax,bx,ay,by,sobol_samples):
+    """
+    Calculates 2D integral via Quasi Monte Carlo method using Sobol sequences 
+    https://en.wikipedia.org/wiki/Quasi-Monte_Carlo_method
+    We are approximating the integral of f to the average of the function evaluated in a set of points 
+    
+    Arguments: 
+        :f_ravel:       2D array to integrate   
+        :[ax, bx]:      limits of integration in x, [lower, upper]
+        :[ay, by]:      limits of integration in y, [lower, upper]
+        :sobol_samples: subset of a Sobol sequence of same dimension as f
+        
+    Returns: 
+        :res:           integral estimation  
+    """
+    samples = sobol_samples
+    
+    xsamples = samples[:, 0] 
+    ysamples = samples[:, 1] 
+    values = f[xsamples, ysamples]
 
+    area = (bx - ax) * (by - ay)
+    
+    result = np.mean(values) * area
+
+    return result
+    
 
 def find_closest_indices(x, y):
     from scipy.spatial.distance import cdist

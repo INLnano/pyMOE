@@ -12,6 +12,8 @@ import numpy as np
 
 from pyMOE.aperture import Aperture
 
+import scipy.fftpack as sfft 
+
 
 
 class Field:
@@ -33,12 +35,24 @@ class Field:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.XX, self.YY = np.meshgrid(x, y) # indexing='ij')
+        self.XX, self.YY = np.meshgrid(x, y, indexing='ij')
         self.pixel_x = self.x[1]-self.x[0]
         self.pixel_y = self.y[1]-self.y[0]
     
         self.field = np.zeros(self.XX.shape, dtype=complex)
         
+        self.Nx, self.Ny = self.x.size, self.y.size
+        
+        if self.Nx!=1: 
+            self.pixel_x = np.diff(self.x)[0]
+            self.fx = sfft.fftshift(sfft.fftfreq(self.Nx, d=self.pixel_x) )
+        if self.Ny!=1:        
+            self.pixel_y = np.diff(self.y)[0]
+            self.fy = sfft.fftshift(sfft.fftfreq(self.Ny, d=self.pixel_y) )
+       
+        if (self.Nx !=1) and (self.Ny!=1):
+            self.FX, self.FY = np.meshgrid(self.fx, self.fy, indexing='ij')
+            
     @property
     def shape(self):
         return self.field.shape
@@ -102,7 +116,7 @@ def create_empty_field_from_aperture(aperture):
     return Field(aperture.x, aperture.y)
 
 
-def modulate_field(field, amplitude_mask=None, phase_mask=None):
+def modulate_field(field, amplitude_mask=None, phase_mask=None, autograd=False):
     """
     Modulates the input field with the given amplitude or phase mask.
     If amplitude_mask is not given, it assumes an amplitude of 1 for the amplitude modulatiom.
@@ -117,18 +131,22 @@ def modulate_field(field, amplitude_mask=None, phase_mask=None):
         :field: returns the modulated field.
     """
     assert type(field) is Field, "field must be of type Field"
+    
+    if autograd==True: 
+        import jax.numpy as np
+    else: 
+        import numpy as np 
 
-
-    modulation_amplitude = np.ones(field.XX.shape)
-    modulation_phase = np.zeros(field.XX.shape)
+    modulation_amplitude = (np.ones(field.XX.shape))
+    modulation_phase = (np.zeros(field.XX.shape))
 
     if amplitude_mask is not None:
         assert type(amplitude_mask) is Aperture, "amplitude_mask must be of type Aperture"
-        assert np.all(amplitude_mask.XX == field.XX) and np.all(amplitude_mask.YY == field.YY), "Spatial dimensions of field and amplitude_mask must be the same"
+        #assert np.all(amplitude_mask.XX == field.XX) and np.all(amplitude_mask.YY == field.YY), "Spatial dimensions of field and amplitude_mask must be the same"
         modulation_amplitude = amplitude_mask.aperture
     if phase_mask is not None:
         assert type(phase_mask) is Aperture, "phase_mask must be of type Aperture"
-        assert np.all(phase_mask.XX == field.XX) and np.all(phase_mask.YY == field.YY), "Spatial dimensions of field and phase_mask must be the same"
+        #assert np.all(phase_mask.XX == field.XX) and np.all(phase_mask.YY == field.YY), "Spatial dimensions of field and phase_mask must be the same"
         modulation_phase = phase_mask.aperture
 
     # Creates a new empty field to store the modulated field
@@ -139,7 +157,6 @@ def modulate_field(field, amplitude_mask=None, phase_mask=None):
 
     # Modulates the input field
     modulated_field.field = field.field*modulation
-    
 
     return modulated_field
 
@@ -156,9 +173,8 @@ def generate_uniform_field(field, E0=1 ):
     """
     assert type(field) is Field, "field must be of type Field"
 
-    field.field = np.ones(field.XX.shape)*E0
+    field.field = (np.ones(field.XX.shape)*E0)
     
-
     return field
 
 def generate_gaussian_field(field, E0, w0, center=(0,0) ):
@@ -223,7 +239,25 @@ def generate_gaussian_beam(field, w0, z, wavelength, center=(0,0), E0=1 ):
     return field
 
 
+def oblique(field, wavelength, thetax, thetay): 
+    """
+    Transform the normal incident field into an oblique incidence by angles (thetax, thetay) defined against aperture normal
+    
+    Args: 
+        :thetax: Angle between surface normal and x axis (radians)
+        :thetay: Angle between surface normal and y axis (radians)
+        
+    Returns: 
+        :field: returns the oblique field 
+    """
+    
+    k= 2*np.pi/(wavelength)
+    phasey = np.exp(1.j*k*np.sin(thetay)*field.YY)
+    phasex = np.exp(1.j*k*np.sin(thetax)*field.XX)
 
+    field.field = ((field.field*phasey))*phasex
+    
+    return field
 
 
 class Screen:
@@ -245,17 +279,30 @@ class Screen:
 
     """
     def __init__(self, x, y, z):
-        self.x = x
-        self.y = y
-        self.z = z
-        self.XX, self.YY, self.ZZ = np.meshgrid(x, y, z)#, indexing='ij')
-        # self.pixel_x = self.x[1]-self.x[0]
-        # self.pixel_y = self.y[1]-self.y[0]
-        # self.pixel_z = self.z[1]-self.z[0]
+        self.x = np.array(x)
+        self.y = np.array(y)
+        self.z = np.array(z)
+        
+        self.Nx, self.Ny, self.Nz = self.x.size, self.y.size, self.z.size
+        
+        self.XX, self.YY, self.ZZ = np.meshgrid(x, y, z, indexing='ij')
+    
+        if self.Nx!=1: 
+            self.pixel_x = np.diff(self.x)[0]
+            self.fx = sfft.fftshift(sfft.fftfreq(self.Nx, d=self.pixel_x) )
+        if self.Ny!=1:        
+            self.pixel_y = np.diff(self.y)[0]
+            self.fy = sfft.fftshift(sfft.fftfreq(self.Ny, d=self.pixel_y) )
+        if self.Nz!=1:        
+            self.pixel_z = np.diff(self.z)[0]
         
         self.n = np.ones(self.XX.shape)
-    
+        
+        if (self.Nx !=1) and (self.Ny!=1):
+            self.FX, self.FY = np.meshgrid(self.fx, self.fy, indexing='ij')
+        
         self.screen = np.zeros(self.XX.shape, dtype=complex)
+        
     @property
     def shape(self):
         return self.screen.shape
@@ -272,6 +319,28 @@ class Screen:
     def nindex(self):
         return self.n
     
+    def slice_XY(self, z):
+        z_index = np.argmin(np.abs(self.z - z))
+        return self.screen[:,:,z_index]
+    def slice_XZ(self, y):
+        y_index = np.argmin(np.abs(self.y - y))
+        return self.screen[:,y_index,:]
+    def slice_YZ(self, x):
+        x_index = np.argmin(np.abs(self.x - x))
+        return self.screen[x_index,:,:]
+    
+    def slice_X(self, y, z):
+        y_index = np.argmin(np.abs(self.y - y))
+        z_index = np.argmin(np.abs(self.z - z))
+        return self.screen[:,y_index,z_index]
+    def slice_Y(self, x, z):
+        x_index = np.argmin(np.abs(self.x - x))
+        z_index = np.argmin(np.abs(self.z - z))
+        return self.screen[x_index,:,z_index]
+    def slice_Z(self, x, y):
+        x_index = np.argmin(np.abs(self.x - x))
+        y_index = np.argmin(np.abs(self.y - y))
+        return self.screen[x_index,y_index,:]
 
     
     
@@ -291,7 +360,7 @@ def create_screen_XY(xmin, xmax, N_x, ymin, ymax, N_y, z):
     """
     x = np.linspace(xmin, xmax, N_x)
     y = np.linspace(ymin, ymax, N_y)
-    z=z
+    z=  np.array([z])
     
     return Screen(x,y,z)
 
@@ -312,7 +381,7 @@ def create_screen_YZ(ymin, ymax, N_y, zmin, zmax, N_z, x=0):
     Returns:
         :screen: empty Screen
     """
-    x=x
+    x = np.array([x])
     y = np.linspace(ymin, ymax, N_y)
     z = np.linspace(zmin, zmax, N_z)
 
@@ -337,7 +406,7 @@ def create_screen_ZZ(zmin, zmax, N_z, x=0, y=0, log=False):
     
     if log==True: 
         z = np.logspace(zmin, zmax, N_z)
-    y=y
-    x=x
+    y = np.array([y])
+    x = np.array([x])
     
     return Screen(x,y,z)

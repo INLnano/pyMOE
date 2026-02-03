@@ -72,7 +72,7 @@ def plot_aperture(aperture, scale=None, colorbar=True, only_plot=False, filename
     
     plt.sca(ax)
     ax.set_aspect(1)
-    pcm = plt.pcolormesh(aperture.x/scale_factor, aperture.y/scale_factor, aperture.aperture,)
+    pcm = plt.pcolormesh(aperture.XX/scale_factor, aperture.YY/scale_factor, aperture.aperture)
     
     if not only_plot:
         plt.xlabel("x [%sm]"%scale)
@@ -109,7 +109,7 @@ def plot_field(field, which='both', scale=None, colorbar=True, only_plot=False, 
         :filename:  if provided, saves figure to filename
         ###available output file extensions are same as opencv https://docs.opencv.org/3.4/d4/da8/group__imgcodecs.html
     """
-    assert type(field) is Field, "field given is not an Field object"
+    assert type(field) is Field, "field given is not a Field object"
     assert which in ["both", "amplitude", "phase"]
     
     if scale is not None:
@@ -132,7 +132,7 @@ def plot_field(field, which='both', scale=None, colorbar=True, only_plot=False, 
     if which in ["both", "amplitude"]:
         plt.sca(ax1)
         ax1.set_aspect(1)
-        pcm = plt.pcolormesh(field.x/scale_factor, field.y/scale_factor, field.amplitude,)
+        pcm = plt.pcolormesh(field.XX/scale_factor, field.YY/scale_factor, field.amplitude,)
         
         if not only_plot:
             plt.xlabel("x [%sm]"%scale)
@@ -149,7 +149,7 @@ def plot_field(field, which='both', scale=None, colorbar=True, only_plot=False, 
     if which in ["both", "phase"]:
         plt.sca(ax2)
         ax2.set_aspect(1)
-        pcm = plt.pcolormesh(field.x/scale_factor, field.y/scale_factor, field.phase)
+        pcm = plt.pcolormesh(field.XX/scale_factor, field.YY/scale_factor, field.phase)
     
         if not only_plot:
             plt.xlabel("x [%sm]"%scale)
@@ -174,12 +174,13 @@ def plot_field(field, which='both', scale=None, colorbar=True, only_plot=False, 
 
 
 
-def plot_screen_XY(screen, which='both', scale=None, colorbar=True, only_plot=False, filename=None, **kwargs):
+def plot_screen_XY(screen,z=0, which='both', scale=None, colorbar=True, only_plot=False, filename=None, **kwargs):
     """
     Plots the given screen
 
     Args:
         :screen:  Screen object of the mask
+        :z:        z position to plot the XY slice (default 0)
         :which:     default "both", "amplitude" or "phase"
         :colorbar:  True/False flag to plot colorbars
         :only_plot: if True, only shows image without labels and axes
@@ -206,10 +207,12 @@ def plot_screen_XY(screen, which='both', scale=None, colorbar=True, only_plot=Fa
         fig = plt.figure()
         ax2 = plt.gca()
     
+        # find index of z
+    z_index = (np.abs(screen.z - z)).argmin()
     if which in ["both", "amplitude"]:
         plt.sca(ax1)
         ax1.set_aspect(1)
-        pcm = plt.pcolormesh(screen.x/scale_factor, screen.y/scale_factor, screen.amplitude.reshape((len(screen.x),len(screen.y))))
+        pcm = plt.pcolormesh(screen.XX[:,:,z_index]/scale_factor, screen.YY[:,:,z_index]/scale_factor, screen.amplitude[:,:,z_index])
         
         if not only_plot:
             plt.xlabel("x [%sm]"%scale)
@@ -226,7 +229,7 @@ def plot_screen_XY(screen, which='both', scale=None, colorbar=True, only_plot=Fa
     if which in ["both", "phase"]:
         plt.sca(ax2)
         ax2.set_aspect(1)
-        pcm = plt.pcolormesh(screen.x/scale_factor, screen.y/scale_factor, screen.phase.reshape((len(screen.x),len(screen.y))))
+        pcm = plt.pcolormesh(screen.XX[:,:,z_index]/scale_factor, screen.YY[:,:,z_index]/scale_factor, screen.phase[:,:,z_index])
     
         if not only_plot:
             plt.xlabel("x [%sm]"%scale)
@@ -248,12 +251,13 @@ def plot_screen_XY(screen, which='both', scale=None, colorbar=True, only_plot=Fa
         # cv2.imwrite(filename, img)
 
 
-def plot_screen_YZ(screen, which='both', scale=None, colorbar=True, only_plot=False, filename=None, **kwargs):
+def plot_screen_YZ(screen, x=0, which='both', scale=None, colorbar=True, only_plot=False, filename=None, **kwargs):
     """
-    Plots the given screen
+    Plots the given screen YZ slice at given x position (finds nearest x index)
 
     Args:
         :screen:  Screen object of the mask
+        :x:        x position to plot the YZ slice
         :which:     default "both", "amplitude" or "phase"
         :colorbar:  True/False flag to plot colorbars
         :only_plot: if True, only shows image without labels and axes
@@ -279,11 +283,15 @@ def plot_screen_YZ(screen, which='both', scale=None, colorbar=True, only_plot=Fa
     elif which == "phase":
         fig = plt.figure()
         ax2 = plt.gca()
-    
+
+    # find index of x
+    x_index = (np.abs(screen.x - x)).argmin()
+
     if which in ["both", "amplitude"]:
         plt.sca(ax1)
         # ax1.set_aspect(1)
-        pcm = plt.pcolormesh(screen.z/scale_factor, screen.y/scale_factor, screen.amplitude[:,0])
+
+        pcm = plt.pcolormesh(screen.ZZ[x_index,:,:]/scale_factor, screen.YY[x_index,:,:]/scale_factor, screen.amplitude[x_index,:,:])
         
         if not only_plot:
             plt.xlabel("z [%sm]"%scale)
@@ -300,7 +308,7 @@ def plot_screen_YZ(screen, which='both', scale=None, colorbar=True, only_plot=Fa
     if which in ["both", "phase"]:
         plt.sca(ax2)
         # ax2.set_aspect(1)
-        pcm = plt.pcolormesh(screen.z/scale_factor, screen.y/scale_factor, screen.phase[:,0])
+        pcm = plt.pcolormesh(screen.ZZ[x_index,:,:]/scale_factor, screen.YY[x_index,:,:]/scale_factor, screen.phase[x_index,:,:])
     
         if not only_plot:
             plt.xlabel("z [%sm]"%scale)
@@ -322,13 +330,92 @@ def plot_screen_YZ(screen, which='both', scale=None, colorbar=True, only_plot=Fa
         # cv2.imwrite(filename, img)
 
 
+def plot_screen_XZ(screen, y=0, which='both', scale=None, colorbar=True, only_plot=False, filename=None, **kwargs):
+    """
+    Plots the given screen XZ slice at given y position (finds nearest y index)
 
-def plot_screen_ZZ(screen, which='both', scale=None, only_plot=False, filename=None, **kwargs):
+    Args:
+        :screen:  Screen object of the mask
+        :y:        y position to plot the XZ slice
+        :which:     default "both", "amplitude" or "phase"
+        :colorbar:  True/False flag to plot colorbars
+        :only_plot: if True, only shows image without labels and axes
+        :filename:  if provided, saves figure to filename
+        ###available output file extensions are same as opencv https://docs.opencv.org/3.4/d4/da8/group__imgcodecs.html
+    """
+    assert type(screen) is Screen, "screen given is not an Screen object"
+    assert which in ["both", "amplitude", "phase"]
+    
+    if scale is not None:
+        scale_factor = scale
+    else:
+        scale_factor = 1 
+        scale = ""
+
+    if which == "both":
+        fig, axes = plt.subplots(1,2, sharey=True, sharex=True, )
+        ax1 = axes[0]
+        ax2 = axes[1]
+    elif which == "amplitude":
+        fig = plt.figure()
+        ax1 = plt.gca()
+    elif which == "phase":
+        fig = plt.figure()
+        ax2 = plt.gca()
+
+    # find index of y
+    y_index = (np.abs(screen.y - y)).argmin()
+
+    if which in ["both", "amplitude"]:
+        plt.sca(ax1)
+        # ax1.set_aspect(1)
+
+        pcm = plt.pcolormesh(screen.ZZ[:,y_index,:]/scale_factor, screen.XX[:,y_index,:]/scale_factor, screen.amplitude[:,y_index,:])
+        
+        if not only_plot:
+            plt.xlabel("z [%sm]"%scale)
+            plt.ylabel("x [%sm]"%scale)
+            if colorbar:
+                fig.colorbar(pcm, ax=ax1, label='Amplitude [a.u.]', shrink=0.6)
+            else:
+                plt.title("Amplitude")
+        else:
+            plt.axis('off')
+            ax1.get_xaxis().set_visible(False)
+            ax1.get_yaxis().set_visible(False)
+
+    if which in ["both", "phase"]:
+        plt.sca(ax2)
+        # ax2.set_aspect(1)
+        pcm = plt.pcolormesh(screen.ZZ[:,y_index,:]/scale_factor, screen.XX[:,y_index,:]/scale_factor, screen.phase[:,y_index,:])
+    
+        if not only_plot:
+            plt.xlabel("z [%sm]"%scale)
+            plt.ylabel("x [%sm]"%scale)
+            if colorbar:
+                fig.colorbar(pcm, ax=ax2, label='Phase [rad]', shrink=0.6)
+            else:
+                plt.title("Phase")
+        else:
+            plt.axis('off')
+            ax2.get_xaxis().set_visible(False)
+            ax2.get_yaxis().set_visible(False) 
+            
+    plt.subplots_adjust(wspace=0.3)
+    if filename is not None:
+        plt.savefig("temp.png", bbox_inches='tight', pad_inches = 0)
+        plt.close(fig1)
+        # img = cv2.imread("temp.png")
+        # cv2.imwrite(filename, img)    
+
+def plot_screen_ZZ(screen, x=0, y=0, which='both', scale=None, only_plot=False, filename=None, **kwargs):
     """
     Plots the given screen
 
     Args:
         :screen:  Screen object of the mask
+        :x:        x position to plot the ZZ slice
+        :y:        y position to plot the ZZ slice
         :which:     default "both", "amplitude" or "phase"
         :colorbar:  True/False flag to plot colorbars
         :only_plot: if True, only shows image without labels and axes
@@ -354,11 +441,15 @@ def plot_screen_ZZ(screen, which='both', scale=None, only_plot=False, filename=N
     elif which == "phase":
         fig = plt.figure()
         ax2 = plt.gca()
+
+    # find index of x
+    x_index = (np.abs(screen.x - x)).argmin()
+    y_index = (np.abs(screen.y - y)).argmin()
     
     if which in ["both", "amplitude"]:
         plt.sca(ax1)
         # ax1.set_aspect(1)
-        pcm = plt.plot(screen.z/scale_factor, screen.amplitude[0,0,:],)
+        pcm = plt.plot(screen.ZZ[x_index,y_index,:]/scale_factor, screen.amplitude[x_index,y_index,:],)
         
         if not only_plot:
             plt.xlabel("z [%sm]"%scale)
@@ -372,7 +463,7 @@ def plot_screen_ZZ(screen, which='both', scale=None, only_plot=False, filename=N
     if which in ["both", "phase"]:
         plt.sca(ax2)
         # ax2.set_aspect(1)
-        pcm = plt.plot(screen.z/scale_factor, screen.phase[0,0,:])
+        pcm = plt.plot(screen.ZZ[x_index,y_index,:]/scale_factor, screen.phase[x_index,y_index,:])
     
         if not only_plot:
             plt.xlabel("z [%sm]"%scale)

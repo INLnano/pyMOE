@@ -9,7 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt 
 import gdspy as gdspy
 from gdspy import FlexPath
-from shapely.geometry import MultiPolygon, Polygon
+#from shapely.geometry import MultiPolygon, Polygon
 import pickle 
 import cv2 
  
@@ -37,7 +37,8 @@ def inspect_gds2(filename, colors, rescale=0, **kwargs):
         :rescale:    int rescaling factor for all points in mask, by default is 0 
     
     """
-
+    from shapely.geometry import MultiPolygon, Polygon
+    
     lib = gdspy.GdsLibrary(infile=filename)
     main_cell = lib.top_level()[0]
     
@@ -117,7 +118,7 @@ def inspect_gds2layers(filename, norm, rescale=0,verbose = False, **kwargs ):
         for **kwargs, add 'axes = subplot', where subplot has been previously defined as subplot = fig.add_subplot(111) 
         with 'import matplotlib.pyplot as plt' and 'fig = plt.figure()'
     """
-
+    from shapely.geometry import MultiPolygon, Polygon
     
     #create cell to store the layers 
     cell_multipol = gdspy.Cell('top')
@@ -231,6 +232,7 @@ def inspect_gds2layersplt(filename, norm, rescale=0, verbose = False, **kwargs )
         for **kwargs, add 'axes = subplot', where subplot has been previously defined as subplot = fig.add_subplot(111) 
         with 'import matplotlib.pyplot as plt' and 'fig = plt.figure()'
     """
+    from shapely.geometry import MultiPolygon, Polygon
     
     #create cell to store the layers 
     gdspy.current_library = gdspy.GdsLibrary()
@@ -379,6 +381,43 @@ def gds2img(infile,outfile,norm, rescaled=0, verbose=False):
     im = cv2.imread("temp.png")
 
     cv2.imwrite(outfile, im)
+    
+    print("Imported file "+infile+" and exported into "+outfile+ " with size "+ str(int(xmx)) + " x " + str(int(ymx)) + " pixels.")
+    
+
+def gds2imgtiff(infile, outfile, norm, rescaled=0, verbose=False, pixels_per_unit=1): 
+    """
+    Converts GDS to 16-bit TIFF image preserving full gray-level resolution.
+    """
+    # --- Create figure and draw layout ---
+    fig = plt.figure()
+    cell_multipol, pol_dict, xmn, xmx, ymn, ymx = inspect_gds2layersplt(
+        infile, norm, rescale=rescaled, verbose=verbose, axes=plt
+    )
+
+    ax = fig.add_subplot(1, 1, 1)
+    plt.axis("equal")
+    plt.axis("off")
+    plt.tight_layout(pad=0, w_pad=0, h_pad=0)
+    plt.gca().set_axis_off()
+    plt.subplots_adjust(top=1, bottom=0, right=1, left=0,
+                        hspace=0, wspace=0)
+    plt.margins(0, 0)
+    fig.set_size_inches((xmx - xmn), (ymx - ymn))
+    fig.set_dpi(1)
+
+    # --- Render figure to pixel buffer in memory ---
+    fig.canvas.draw()
+    img_rgb = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
+    img_rgb = img_rgb.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+
+    plt.close(fig)
+
+    # --- Convert to grayscale and then to 16-bit TIFF ---
+    img_gray = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2GRAY)
+    img16 = (img_gray.astype(np.float32) / 255.0 * 65535).astype(np.uint16)
+
+    cv2.imwrite(outfile, img16)
     
     print("Imported file "+infile+" and exported into "+outfile+ " with size "+ str(int(xmx)) + " x " + str(int(ymx)) + " pixels.")
     

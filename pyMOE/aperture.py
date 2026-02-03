@@ -33,7 +33,7 @@ class Aperture:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.XX, self.YY = np.meshgrid(x, y)
+        self.XX, self.YY = np.meshgrid(x, y, indexing ='ij')
         self.pixel_x = self.x[1]-self.x[0]
         self.pixel_y = self.y[1]-self.y[0]
         
@@ -119,22 +119,30 @@ class Aperture:
 
 
     def phase2height(self, wavelength, n1, n0=1):
-        """Converts the phase to height
+        """
+        Converts the phase to height
+        
         Args:
             :wavelength:    Wavelength of the light
             :n1:            Refractive index of the medium where the light is propagating
-            :n0:            Refractive index of the medium background"""
+            :n0:            Refractive index of the medium background
+            
+        """
         # assert self.is_height is False, "Cannot unwrap height"
 
 
         self.aperture = phase2height(self.aperture, wavelength, n1, n0)
 
     def height2phase(self, wavelength, n1, n0=1):
-        """Converts the height to phase
+        """
+        Converts the height to phase
+        
         Args:
             :wavelength:    Wavelength of the light
             :n1:            Refractive index of the medium where the light is propagating
-            :n0:            Refractive index of the medium background"""
+            :n0:            Refractive index of the medium background
+        
+        """
 
         self.aperture = height2phase(self.aperture, wavelength, n1, n0)
 

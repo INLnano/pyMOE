@@ -190,8 +190,8 @@ def dammann_grating_periodic(x,transitions, period=1, start_value=1):
 
     
 def dammann_2d(XX,YY,transitions_x=None, period_x=1, transitions_y=None, period_y=1, start_value_x=1, start_value_y=1):
-    x = XX[0,:]
-    y = YY[:,0]
+    x = XX[:,0]
+    y = YY[0,:]
 
     if transitions_x is not None:
         grating_x = dammann_grating_periodic(x, transitions_x, period=period_x, start_value=start_value_x)
@@ -203,7 +203,7 @@ def dammann_2d(XX,YY,transitions_x=None, period_x=1, transitions_y=None, period_
     else:  
         grating_y = np.ones_like(y)
 
-    grating = np.outer(grating_y, grating_x)
+    grating = np.outer(grating_x, grating_y)
     return grating
 
 
