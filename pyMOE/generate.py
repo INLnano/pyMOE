@@ -367,7 +367,6 @@ def resize_linear(image_matrix, new_height:int, new_width:int):
     return output_image
 
 
-
 def aperture_rotate(aperture_in, angle, pivot=None, background =0):
     """
     Rotates image around the pivot point, using the scipy ndimage (default applies spline interpolation + rotation of 2D array)
@@ -410,7 +409,7 @@ def aperture_rotate(aperture_in, angle, pivot=None, background =0):
     
     #resize the input aperture to have pixel_x = pixel_y 
     aperture_temp = create_empty_aperture(dx0_1, dx0_2, new_Nx, dy0_1, dy0_2, new_Ny,)
-    aperture_temp.aperture = resize_linear(aperture_in.aperture, new_Ny, new_Nx)
+    aperture_temp.aperture = resize_linear(aperture_in.aperture, new_Nx, new_Ny)
 
     #center point of the resized aperture 
     midpoint = np.mean(aperture_temp.x), np.mean(aperture_temp.y)
@@ -422,11 +421,13 @@ def aperture_rotate(aperture_in, angle, pivot=None, background =0):
     rotated_aperture = ndimage.rotate(aperture_temp.aperture, angle, reshape=True, order=5, cval = background)
 
     #number of pixels of the rotated aperture 
-    new_dimy, new_dimx = rotated_aperture.shape
+    new_dimx, new_dimy = rotated_aperture.shape
  
     #width and height of the rotated aperture 
-    dx = dx0 * np.cos(np.radians(angle)) + dy0 * np.sin(np.radians(angle))
-    dy = dx0 * np.sin(np.radians(angle)) + dy0 * np.cos(np.radians(angle))
+    #dx = dx0 * np.cos(np.radians(angle)) + dy0 * np.sin(np.radians(angle))
+    #dy = dx0 * np.sin(np.radians(angle)) + dy0 * np.cos(np.radians(angle))
+    dx = new_dimx * new_pix_x 
+    dy = new_dimy * new_pix_y
     
     #limits of the rotated aperture 
     dmin_x, dmax_x = -dx/2 + drotx, dx/2 + drotx
@@ -493,7 +494,7 @@ def clip_aperture(aperture_in, new_dx0_1,new_dx0_2, new_dy0_1, new_dy0_2):
     aperture_clipped = aperture_in_values[xmin:xmax, ymin:ymax] 
     
     #number of pixels in the clipping window - careful to the x,y order they are correct like this
-    new_dimy, new_dimx = aperture_clipped.shape
+    new_dimx, new_dimy = aperture_clipped.shape
     
     #output aperture 
     aperture_out =  create_empty_aperture(new_dx0_1, new_dx0_2, new_dimx, new_dy0_1, new_dy0_2, new_dimy,)
