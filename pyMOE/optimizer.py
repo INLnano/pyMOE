@@ -119,17 +119,18 @@ def scalar_bluestein(field, screen, d, wavelength):
     
     mxout, myout = len(screen.x), len(screen.y)
 
+    # X-direction 
+    fx1 = xstart + fsx / 2
+    fx2 = xend + fsx / 2
+    gout = bluestein_czt_jax(gout, fx1, fx2, fsx, mxout)
+      
+    
     #apply calc to obtain the CZT 
     # Y-direction 
     fy1 = ystart + fsy/ 2
     fy2 = yend + fsy / 2
     gout = bluestein_czt_jax(gout, fy1, fy2, fsy, myout)
 
-    # X-direction 
-    fx1 = xstart + fsx / 2
-    fx2 = xend + fsx / 2
-    gout = bluestein_czt_jax(gout, fx1, fx2, fsx, mxout)
-      
     #Eq 6, now gout is the result of the CZT
     gout = F0 * gout
 
