@@ -992,6 +992,16 @@ def propagate_through_ensemble(ensemble,  wavelength , xar_plus_z=None, propagat
         
         overall_field_at_screen = screen0
         overall_field_at_screen.screen = EXYZ.screen/np.max(EXYZ.screen)
+        
+        
+    elif propagation_methods_array[0]=="ASM-CZT": 
+        EXYZ0 = ASM(field0, screen0, wavelength, pad=int(len(field0.x)/2 ), mode="czt")
+        ensemble.field_array[1].field = EXYZ0.screen[:,:, -1]/np.max(EXYZ0.screen[:,:, 0])
+        
+        EXYZ = EXYZ0
+        
+        overall_field_at_screen = screen0
+        overall_field_at_screen.screen = EXYZ.screen/np.max(EXYZ.screen)
 
     elif propagation_methods_array[0]=="SASM": 
         EXYZ0 = SASM(field0, screen0, wavelength, pad_factor=4, crop=True)
@@ -1054,6 +1064,7 @@ def propagate_through_ensemble(ensemble,  wavelength , xar_plus_z=None, propagat
 
             overall_field_at_screen = screen
             overall_field_at_screen.screen = EXYZ.screen/np.max(EXYZ.screen)
+
 
         if propagation_methods_array[i]=="SASM":
             EXYZ1 = SASM(field, screen, wavelength, pad_factor=4, crop=True)
