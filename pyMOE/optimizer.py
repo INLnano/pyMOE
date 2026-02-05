@@ -1178,7 +1178,7 @@ def setup_optimizer_logger_batch(x_size, batch_size=1, log_dir="logs", name="opt
     iter_counter = {"k": 0}
     
     # Return info needed for optimizer
-    return logger, logfile_txt, logfile_bin, batch_list, iter_counter, batch_size
+    return logger, logfile_txt, logfile_bin, batch_list, iter_counter, batch_size, fh
 
 
 def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8, gtol=1e-12, bounds =(-np.inf, np.inf), \
@@ -1342,6 +1342,8 @@ def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8,
     
     if logger is not None: 
         logger.info("Optimization finished")
+        fh.close()
+        logger.removeHandler(fh)
     
     return solution
 
