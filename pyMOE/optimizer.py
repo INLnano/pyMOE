@@ -1262,43 +1262,69 @@ def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8,
 
         return loss(x, *args)
     
-    if optimizer_method in ["adam", "rmsprop"]:
+    if optimizer_method in ["adam", "rmsprop", "lbfgsoptax", "adamw"]:
+        def loss_jax(x, *args):
+            return loss(x, *args)  # must use jax.numpy internally
+    
+        import jax
+        import jax.tree_util
+
+        class _TreeShim:
+            map = staticmethod(jax.tree_util.tree_map)
+
+        jax.tree = _TreeShim
+        
         import optax
     
         # Select optimizer
-        optimizer = {"adam": optax.adam, "rmsprop": optax.rmsprop, "lf": optax.lbfgs}[optimizer_method](learning_rate)
+        optimizer = {"adam": optax.adam, "rmsprop": optax.rmsprop, "lbfgsoptax": optax.lbfgs, "adamw": optax.adamw}[optimizer_method](learning_rate)
+        loss_and_grad_fn = jax.value_and_grad(loss_jax)
 
-        # Initialization
         x = np.array(x0)
         opt_state = optimizer.init(x)
-
-        loss_fn = lambda x: loss_with_logging(x, *args11)
-        loss_and_grad_fn = (jax.value_and_grad(loss_fn))
-
-        loss_history = []
 
         prev_loss = onp.inf
 
         for i in range(max_iters):
-            loss_val, grads = loss_and_grad_fn(x)
+            loss_val, grads = loss_and_grad_fn(x, *args1)
 
-            logger.info("iter=%d | loss=%.6e | x=%s", k, float(loss_val), onp.array2string(onp.asarray(x), precision=6))
+            # SAFE: outside tracing
+            x_np = onp.asarray(x)
+            loss_f = float(loss_val)
 
-            x_iter_history.append(onp.asarray(x).copy())
+            if logger is not None:
+                logger.info(
+                    "iter=%d | loss=%.6e | x=%s",
+                    i,
+                    loss_f,
+                    onp.array2string(x_np, precision=6)
+                )
 
-            # Convergence check
-            if onp.abs(prev_loss - loss_val) < ftol:
+            x_iter_history.append(x_np.copy())
+            loss_history.append(loss_f)
+
+            if onp.abs(prev_loss - loss_f) < ftol:
                 if verbose:
-                    print(f"Stopping at iteration {i}, loss change below tolerance ({ftol})")
+                    print(f"Stopping at iteration {i}, loss change below tolerance")
                 break
 
             updates, opt_state = optimizer.update(grads, opt_state, x)
             x = optax.apply_updates(x, updates)
 
-            loss_history.append(float(loss_val))
-            prev_loss = loss_val
+            prev_loss = loss_f
 
-        solution = x
+        
+        from scipy.optimize import OptimizeResult
+
+        solution = OptimizeResult(
+            x=onp.asarray(x),
+            fun=loss_history[-1] if loss_history else None,
+            success=True,
+            nfev=len(loss_history),
+        )
+        
+        solution.loss_history = loss_history
+        solution.x_iter_history = onp.array(x_iter_history)
 
     elif optimizer_method=='leastsq-lm': 
         solution = leastsq(loss_with_logging, x0= x0,  args=args1 ,jac =cal_jac, ftol=ftol, xtol=xtol, gtol=gtol, verbose=v, max_nfev=max_nfev)
