@@ -69,7 +69,7 @@ def create_aperture_from_array(array, pixel_size, center=False):
     
     assert (isinstance(array, np.ndarray)) and (len(array.shape)==2), "Array must be 2D numpy array "
     #assert isinstance(pixel_size, (int, float)), "pixel_size must be a scalar"
-    shape = np.flip(array.shape)
+    shape = (array.shape)
     N_x, N_y = shape
     pixel_x, pixel_y = pixel_size
     max_x = N_x*pixel_x
