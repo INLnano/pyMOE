@@ -1183,7 +1183,7 @@ def setup_optimizer_logger_batch(x_size, batch_size=1, log_dir="logs", name="opt
 
 def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8, gtol=1e-12, bounds =(-np.inf, np.inf), \
                 niter =2, minimizer_kwargs=None, verbose=True, eps = None, learning_rate = 0.1, max_iters=100, max_nfev=1e6, \
-                jax=True, logger=None, logfile_bin=None, batch_list=None, batch_size=1, iter_counter=None, *args, **kwargs):
+                jax=True, logger=None, logfile_bin=None, batch_list=None, batch_size=1, iter_counter=None, fh=None, *args, **kwargs):
     """
     Optimize function using scipy optimizers, minizes the 'loss' function given as input 
     
