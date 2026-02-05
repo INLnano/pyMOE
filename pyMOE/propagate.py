@@ -27,7 +27,7 @@ from dask.diagnostics import ProgressBar
 from pyMOE.utils import progress_bar, Timer
 from pyMOE.field import Field, Screen, create_screen_XY, create_screen_YZ, modulate_field
 
-#from pyMOE.plotting import plot_field 
+from pyMOE.plotting import plot_field 
 
 import matplotlib.pyplot as plt 
 
@@ -954,7 +954,8 @@ def propagate_through_ensemble(ensemble,  wavelength , xar_plus_z=None, propagat
         :propagation_methods_array:  Propagation method 
     Returns:
         :overall_field_at_screen:    Returns a screen concatenating both 
-    """
+    """ 
+    
     #initial aperture (the rest will be inside a loop)
     
     fieldi = ensemble.input_light_field 
@@ -964,22 +965,8 @@ def propagate_through_ensemble(ensemble,  wavelength , xar_plus_z=None, propagat
                                       phase_mask=ensemble.aperture_array_phase[0])
 
     print("Surface #1")
-    fig, axes = plt.subplots(1, 2)
 
-    # Amplitude
-    im0 = axes[0].imshow(np.abs(field0.field))
-    axes[0].set_title("Amplitude")
-    axes[0].axis("off")
-    
-    # Phase
-    im1 = axes[1].imshow(np.angle(field0.field))
-    axes[1].set_title("Phase")
-    axes[1].axis("off")
-    
-    plt.tight_layout()
-    plt.show()
-
-
+    plot_field(field0)
     
     screen0 = ensemble.screen_array[0]
     #print(np.max(screen0.z))
@@ -1041,20 +1028,7 @@ def propagate_through_ensemble(ensemble,  wavelength , xar_plus_z=None, propagat
         field = modulate_field(field, amplitude_mask = aperture_amp, phase_mask=aperture_phase)
 
         print("Surface #"+str(i+1))
-        fig, axes = plt.subplots(1, 2)
-
-        # Amplitude
-        im0 = axes[0].imshow(np.abs(field.field))
-        axes[0].set_title("Amplitude")
-        axes[0].axis("off")
-        
-        # Phase
-        im1 = axes[1].imshow(np.angle(field.field))
-        axes[1].set_title("Phase")
-        axes[1].axis("off")
-        
-        plt.tight_layout()
-        plt.show()
+        plot_field(field)
 
     
         ensemble.field_array[i].field = field
@@ -1099,20 +1073,7 @@ def propagate_through_ensemble(ensemble,  wavelength , xar_plus_z=None, propagat
                                             #z=np.max(screen0.z) )
                                             x=0 )
 
-                fig, axes = plt.subplots(1, 2)
-
-                # Amplitude
-                im0 = axes[0].imshow(np.abs(field.field))
-                axes[0].set_title("Amplitude")
-                axes[0].axis("off")
-                
-                # Phase
-                im1 = axes[1].imshow(np.angle(field.field))
-                axes[1].set_title("Phase")
-                axes[1].axis("off")
-                
-                plt.tight_layout()
-                plt.show()
+                plot_field(field)
         
                 EXYZ0 = RS_integral(field, screen_YZ, wavelength, simp2d=True)
                 
