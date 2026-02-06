@@ -38,7 +38,7 @@ class Ensemble:
     """
     def __init__(self, aperture_array_amp, aperture_array_phase, screen_array,  wavelength_array, input_light_field, topographies_array=None, propagation_methods=None):
         #if topographies_array==None:
-            print("Assuming the Apertures to contain already the actual phases of the objects.")
+            #print("Assuming the Apertures to contain already the actual phases of the objects.")
             self.aperture_array_amp = aperture_array_amp
             self.aperture_array_phase = aperture_array_phase
             self.screen_array = screen_array 

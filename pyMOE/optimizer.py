@@ -138,7 +138,7 @@ def scalar_bluestein(field, screen, d, wavelength):
     
     
 
-def Bluestein_jax (field, screen, wavelength, n=None):
+def Bluestein_jax (field, screen, wavelength, n=None, use_timer=True):
     """
     Implements the Bluestein propagation 
     
@@ -159,7 +159,7 @@ def Bluestein_jax (field, screen, wavelength, n=None):
 
     xlen,ylen,zlen = screen.XX.shape
 
-    with Timer():
+    with Timer(enabled=use_timer):
         for z_i in range(zlen):
             z = screen.ZZ[:, :, z_i][-1][0]
 
@@ -425,7 +425,7 @@ def update_screen_slice(screen, g1, z_i):
         
 
 
-def SASM_jax(field, screen, wavelength, pad_factor = 2, crop =True ):
+def SASM_jax(field, screen, wavelength, pad_factor = 2, crop =True, use_timer=True ):
     """
     Implements the Scalale Angular Spectrum Method propagation (Heintzmann et al. )
     
@@ -457,7 +457,7 @@ def SASM_jax(field, screen, wavelength, pad_factor = 2, crop =True ):
     screen_field = jnp.zeros_like(g0, dtype=jnp.complex64)  # or screen.screen if initialized
     #newscreen = Screen(x1,y1,z1)
 
-    with Timer():
+    with Timer(enabled=use_timer):
         for z_i in range(zlen):
             z = screen.ZZ[:, :, z_i][-1][0]
 
@@ -750,7 +750,7 @@ def ASM_propagate_jax(field, screen, z, wavelength, pad_width, n = 1.0, mode = N
     return field_transform
 
 
-def ASM_jax(field, screen, wavelength, pad, n = 1.0, mode = None, bl = True, shift = None, kykx = (0.,0.) ):
+def ASM_jax(field, screen, wavelength, pad, n = 1.0, mode = None, bl = True, shift = None, kykx = (0.,0.), use_timer=True ):
     """
     Implements the Angular Spectrum Method (ASM), with czt and bandlimit options.
 
@@ -773,7 +773,7 @@ def ASM_jax(field, screen, wavelength, pad, n = 1.0, mode = None, bl = True, shi
 
     screen_field = jnp.zeros_like(screen.XX, dtype=jnp.complex64)  # or screen.screen if initialized
     
-    with Timer():
+    with Timer(enabled=use_timer):
         for z_i, z in enumerate(screen.z):
     
             g1 = ASM_propagate_jax(field, screen, z, wavelength, pad, n=n, mode=mode, bl=bl, shift=shift, kykx=kykx)
@@ -959,7 +959,7 @@ def propagate_through_ensemble_jax(ensemble,  wavelength , corr=1, propagation_m
     
 def propagate(xar, aperture, screen, wavelength, mask_amp=None, circ_radius=None, input_field="uniform", \
               input_field_amp=None, input_field_phase=None, E0=1, propagation_method="bluestein", \
-              pad_factor=2, modedef = "czt", ensemble_mode=False, corr=1 ): 
+              pad_factor=2, modedef = "czt", ensemble_mode=False, corr=1 , use_timer=True): 
     """
     This function is wrapper of propagate module functionalities, by default employing bluestein method
     to obtain the field at a 2D screen at the furthest z value (most common). 
@@ -1097,7 +1097,7 @@ def propagate(xar, aperture, screen, wavelength, mask_amp=None, circ_radius=None
     #Propagate field to screen 
     if propagation_method=="nojax": 
         # Bluestein, no jax, just for debugging purposes 
-        EXYZ = Bluestein(field, screen, wavelength)
+        EXYZ = Bluestein(field, screen, wavelength, use_timer=use_timer)
         
         #XY plane field -> In principle can be XYZ screen 
         EXY= (EXYZ.screen[:, :, -1])
@@ -1105,7 +1105,7 @@ def propagate(xar, aperture, screen, wavelength, mask_amp=None, circ_radius=None
     #Propagate field to screen 
     if propagation_method=="bluestein": 
         # Bluestein jax
-        EXYZ = Bluestein_jax(field, screen, wavelength)
+        EXYZ = Bluestein_jax(field, screen, wavelength, use_timer=use_timer)
         
         #XY plane field -> In principle can be XYZ screen 
         EXY= EXYZ[:, :, -1] 
@@ -1113,7 +1113,7 @@ def propagate(xar, aperture, screen, wavelength, mask_amp=None, circ_radius=None
     #Propagate field to screen 
     if propagation_method=="SASM": 
         # SASM
-        EXYZ = SASM_jax(field, screen, wavelength, pad_factor=pad_factor, crop =True)
+        EXYZ = SASM_jax(field, screen, wavelength, pad_factor=pad_factor, crop =True, use_timer=use_timer)
         
         #XY plane field -> In principle can be XYZ screen 
         EXY= EXYZ[:, :, -1] 
@@ -1122,7 +1122,7 @@ def propagate(xar, aperture, screen, wavelength, mask_amp=None, circ_radius=None
     #Propagate field to screen 
     if propagation_method=="ASM": 
         # ASM
-        EXYZ = ASM_jax(field, screen, wavelength, pad=pad_factor, n = 1.0, mode = modedef, bl = True, shift = None, kykx = (0.,0.) )
+        EXYZ = ASM_jax(field, screen, wavelength, pad=pad_factor, n = 1.0, mode = modedef, bl = True, shift = None, kykx = (0.,0.),  use_timer=use_timer)
         
         #XY plane field -> In principle can be XYZ screen 
         EXY= EXYZ[:, :, -1] 
@@ -1130,7 +1130,7 @@ def propagate(xar, aperture, screen, wavelength, mask_amp=None, circ_radius=None
         
     if propagation_method=="RS": 
         # RS TO FIX 
-        EXYZ = RS_integral_jax(field, screen, wavelength)
+        EXYZ = RS_integral_jax(field, screen, wavelength,  use_timer=use_timer)
         EXY= EXYZ[:, :, -1] 
  
     #del aperture1x, aperture3x
@@ -1183,9 +1183,10 @@ def setup_optimizer_logger_batch(x_size, batch_size=1, log_dir="logs", name="opt
 
 def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8, gtol=1e-12, bounds =(-np.inf, np.inf), \
                 niter =2, minimizer_kwargs=None, verbose=True, eps = None, learning_rate = 0.1, max_iters=100, max_nfev=1e6, \
-                jax=True, logger=None, logfile_bin=None, batch_list=None, batch_size=1, iter_counter=None, fh=None, *args, **kwargs):
+                jax=True, logger=None, logfile_bin=None, batch_list=None, batch_size=1, iter_counter=None, fh=None,\
+                 *args, **kwargs):
     """
-    Optimize function using scipy optimizers, minizes the 'loss' function given as input 
+    Optimize function using scipy optimizers, minizes the 'loss' function given as input - to complete 
     
     Args: 
         :loss:               Loss function, to be minimized, having arguments 'x' (an array of optimization params) \
@@ -1234,38 +1235,38 @@ def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8,
         x_np = onp.asarray(x)
         k = iter_counter["k"]
         
-        if last_x["val"] is None or not onp.allclose(x_np, last_x["val"]):
-            val = float(loss(x_np, *args))
+        val = float(loss(x_np, *args, ))
 
-            # Text log 
-            x_str = onp.array2string(x_np, precision=6, suppress_small=True, threshold=1000)
-            if logger is not None:
-                logger.info("iter=%d | loss=%.6e | x=%s", k, val, x_str)
+        # Text log 
+        x_str = onp.array2string(x_np, precision=6, suppress_small=True, threshold=1000)
+        if logger is not None:
+            logger.info("iter=%d | loss=%.6e | x=%s", k, val, x_str)
 
-            # Append to batch
-            batch_list.append(x_np.copy())
+        # Append to batch
+        batch_list.append(x_np.copy())
 
-            # Write batch to .npy file if full
-            if logfile_bin is not None and len(batch_list) >= batch_size:
-                arr = onp.array(batch_list, dtype=onp.float64)
-                with open(logfile_bin, "ab") as f:
-                    arr.tofile(f)
-                batch_list.clear()
+        # Write batch to .npy file if full
+        if logfile_bin is not None and len(batch_list) >= batch_size:
+            arr = onp.array(batch_list, dtype=onp.float64)
+            with open(logfile_bin, "ab") as f:
+                arr.tofile(f)
+            batch_list.clear()
 
-            # Save in-memory histories
-            x_iter_history.append(x_np.copy())
-            loss_history.append(val)
+        # Save histories
+        x_iter_history.append(x_np.copy())
+        loss_history.append(val)
 
-            iter_counter["k"] += 1
-            last_x["val"] = x_np.copy()
-            return val
+        iter_counter["k"] += 1
+        last_x["val"] = x_np.copy()
 
-        return loss(x, *args)
+
+        return loss(x, *args, )
     
     if optimizer_method in ["adam", "rmsprop", "lbfgsoptax", "adamw"]:
         def loss_jax(x, *args):
-            return loss(x, *args)  # must use jax.numpy internally
+            return loss(x, *args,)  # must use jax.numpy internally
     
+        # some fix for compatibility 
         import jax
         import jax.tree_util
 
@@ -1288,7 +1289,6 @@ def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8,
         for i in range(max_iters):
             loss_val, grads = loss_and_grad_fn(x, *args1)
 
-            # SAFE: outside tracing
             x_np = onp.asarray(x)
             loss_f = float(loss_val)
 

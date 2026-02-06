@@ -43,13 +43,19 @@ class Timer(object):
     """
     Timer helper class to calculated elapsed time of chunk of code, from https://stackoverflow.com/a/5849861/7996766
     """
-    def __init__(self, name=None):
+    def __init__(self, name=None, enabled=True):
         self.name = name
+        self.enabled = enabled
 
     def __enter__(self):
-        self.tstart = time.time()
+        if self.enabled: 
+            self.tstart = time.time()
+        return self 
 
     def __exit__(self, type, value, traceback):
+        if not self.enabled: 
+            return 
+            
         if self.name:
             print('[%s]' % self.name,)
         print('Elapsed: %s' % str(timedelta(seconds=(time.time() - self.tstart))))
