@@ -24,7 +24,9 @@ Mask design features:
 
 * Designing rudimentary metasurfaces masks 
 
-* Numerical scalar propagation methods (Rayleigh-Sommerfeld, Fresnel, Fraunhofer) of electric fields from (grayscale) masks 
+* Numerical scalar propagation methods (Rayleigh-Sommerfeld, Fresnel, Fraunhofer, Angular Spectrum Method, Bluestein) of electric fields from (grayscale) masks
+
+* Rudimentary optimization and inverse design based on gradient-descent methods
 
 Mask production features: 
 

@@ -20,10 +20,26 @@ pyMOE.dither module
    :undoc-members:
    :show-inheritance:
 
+pyMOE.ensemble module
+-------------------
+
+.. automodule:: pyMOE.ensemble
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   
 pyMOE.export module
 -------------------
 
 .. automodule:: pyMOE.export
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   
+pyMOE.field module
+-------------------
+
+.. automodule:: pyMOE.field
    :members:
    :undoc-members:
    :show-inheritance:
@@ -69,6 +85,22 @@ pyMOE.importing module
    :show-inheritance:
 
 pyMOE.metas module
+------------------
+
+.. automodule:: pyMOE.metas
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   
+pyMOE.metrics module
+------------------
+
+.. automodule:: pyMOE.metas
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   
+pyMOE.optimizer module
 ------------------
 
 .. automodule:: pyMOE.metas
