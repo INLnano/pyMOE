@@ -70,6 +70,7 @@ def algorithm_Gerchberg_Saxton(target_intensity, iterations=3, levels=None, inpu
         field_0.phase = input_phase
     else: 
         input_phase = np.random.random(shape)*2*np.pi
+        
     if source_beam is not None:
         source_beam = np.fft.fftshift(source_beam)
     else:

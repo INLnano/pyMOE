@@ -27,7 +27,7 @@ from dask.diagnostics import ProgressBar
 from pyMOE.utils import progress_bar, Timer
 from pyMOE.field import Field, Screen, create_screen_XY, create_screen_YZ, modulate_field
 
-#from pyMOE.plotting import plot_field 
+from pyMOE.plotting import plot_field 
 
 import matplotlib.pyplot as plt 
 
@@ -251,7 +251,7 @@ def kernel_RS(field, k, x,y,z, simp2d=False, method=False, sampler=None):
     elif method=="trap":
         Exyz = np.trapz(np.trapz(propE, x=field.x, axis=0), x=field.y, axis=0)
     else: 
-        Exyz = integrate.simpson(integrate.simpson(propE, field.x),field.y)/(2*np.pi) 
+        Exyz = integrate.simpson(integrate.simpson(propE, field.y),field.x)/(2*np.pi) 
 
     return Exyz
     
@@ -737,7 +737,7 @@ def ASM_propagate(field, screen, z, wavelength, pad_width, n = 1.0, mode = None,
         :mode:        ASM mode, options: None (default) = convetional ASM; "czt" = Chirp Z-Transform; "BLAS" = Band-Limited ASM
         :bl:          Boolean, default False, if True enforces band limit filters akin Matushima & Shimobaba
         :shift:       tuple (shift_y, shift_x) with shift at the output screen plane, default None = calculates the shift from screen limits. If mode="czt" shift is not used. 
-        :kykx:        tuple (ky,kx) angular input direction, default = (0.,0.) 
+        :kykx:        tuple (ky,kx) angular input direction, default = (0.,0.), required for "off-axis" for non-czt 
     Returns:
         :field:       Returns the calculated field
     """
@@ -760,7 +760,7 @@ def ASM_propagate(field, screen, z, wavelength, pad_width, n = 1.0, mode = None,
     axes = (-2, -1)  #define axes as last two dims for generalization, although with 2D does not make a difference
     spatial_shape = np.array(padded_field.shape)
     
-    input_dx = np.array([field.pixel_y, field.pixel_x])
+    input_dx = np.array([field.pixel_x, field.pixel_y])
     mask_field_extent = input_dx * spatial_shape 
     input_df = 1.0 / mask_field_extent 
     
@@ -774,7 +774,7 @@ def ASM_propagate(field, screen, z, wavelength, pad_width, n = 1.0, mode = None,
         shift_y = (ymax + ymin)/2
         shift_x = (xmax + xmin)/2
         
-        shift_yx_for_kernel = (shift_y, shift_x) 
+        shift_yx_for_kernel = (shift_x, shift_y) 
     
     elif (shift is None) & (mode == "czt"):
         shift_yx_for_kernel = (0.,0.) 
@@ -801,8 +801,9 @@ def ASM_propagate(field, screen, z, wavelength, pad_width, n = 1.0, mode = None,
         # Scaling factor: alpha = output_dx / input_df
         alpha = output_dx / input_df 
 
-        limits_min = [ymin, xmin]
-        limits_max = [ymax, xmax]
+        limits_min = [xmin, ymin]
+        limits_max = [xmax, ymax]
+        
         
         for d, axis in enumerate(axes):
             m = output_shape[d]
@@ -832,6 +833,7 @@ def ASM_propagate(field, screen, z, wavelength, pad_width, n = 1.0, mode = None,
         field_transform = field_transform * final_scaling
         
     elif (mode == "BLAS") & (bl==True):
+        #print("BLAS")
         fx_grid, fy_grid = padded_field.FX, padded_field.FY
         f_grid = np.stack((fx_grid, fy_grid), axis=-1)
             
@@ -842,7 +844,7 @@ def ASM_propagate(field, screen, z, wavelength, pad_width, n = 1.0, mode = None,
         output_dx_y = (ymax - ymin) / (output_shape[0] - 1)
         output_dx_x = (xmax - xmin) / (output_shape[1] - 1)
 
-        output_dx = np.array([output_dx_y, output_dx_x])
+        output_dx = np.array([output_dx_x, output_dx_y])
         
         # Scaling factor: alpha = output_dx / input_df (Eq 7)
         alpha = output_dx / input_df
@@ -867,6 +869,7 @@ def ASM_propagate(field, screen, z, wavelength, pad_width, n = 1.0, mode = None,
         field_transform = field_transform[x_slice, y_slice]
 
     else:   
+        #print("Conventional ")
         # just IFFT 
         propagated_field = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(field_transform, axes=axes), axes=axes), axes=axes)
 
@@ -880,7 +883,7 @@ def ASM_propagate(field, screen, z, wavelength, pad_width, n = 1.0, mode = None,
                         int(padded_field.Ny/2) - int(screen.Ny/2 *scaling_y) + int(screen.Ny*scaling_y) )
         x_slice = slice(int(padded_field.Nx/2) - int(screen.Ny/2 *scaling_y), \
                         int(padded_field.Nx/2) - int(screen.Ny/2 *scaling_y) + int(screen.Nx*scaling_x) )
-        field_transform = propagated_field[y_slice, x_slice]
+        field_transform = propagated_field[x_slice, y_slice]
 
         #fig = plt.figure() 
         #plt.imshow(np.abs(psi_final))
@@ -951,7 +954,8 @@ def propagate_through_ensemble(ensemble,  wavelength , xar_plus_z=None, propagat
         :propagation_methods_array:  Propagation method 
     Returns:
         :overall_field_at_screen:    Returns a screen concatenating both 
-    """
+    """ 
+    
     #initial aperture (the rest will be inside a loop)
     
     fieldi = ensemble.input_light_field 
@@ -961,22 +965,8 @@ def propagate_through_ensemble(ensemble,  wavelength , xar_plus_z=None, propagat
                                       phase_mask=ensemble.aperture_array_phase[0])
 
     print("Surface #1")
-    fig, axes = plt.subplots(1, 2)
 
-    # Amplitude
-    im0 = axes[0].imshow(np.abs(field0.field))
-    axes[0].set_title("Amplitude")
-    axes[0].axis("off")
-    
-    # Phase
-    im1 = axes[1].imshow(np.angle(field0.field))
-    axes[1].set_title("Phase")
-    axes[1].axis("off")
-    
-    plt.tight_layout()
-    plt.show()
-
-
+    plot_field(field0)
     
     screen0 = ensemble.screen_array[0]
     #print(np.max(screen0.z))
@@ -996,6 +986,16 @@ def propagate_through_ensemble(ensemble,  wavelength , xar_plus_z=None, propagat
 
     elif propagation_methods_array[0]=="ASM": 
         EXYZ0 = ASM(field0, screen0, wavelength, pad=int(len(field0.x)/2 ))
+        ensemble.field_array[1].field = EXYZ0.screen[:,:, -1]/np.max(EXYZ0.screen[:,:, 0])
+        
+        EXYZ = EXYZ0
+        
+        overall_field_at_screen = screen0
+        overall_field_at_screen.screen = EXYZ.screen/np.max(EXYZ.screen)
+        
+        
+    elif propagation_methods_array[0]=="ASM-CZT": 
+        EXYZ0 = ASM(field0, screen0, wavelength, pad=int(len(field0.x)/2 ), mode="czt")
         ensemble.field_array[1].field = EXYZ0.screen[:,:, -1]/np.max(EXYZ0.screen[:,:, 0])
         
         EXYZ = EXYZ0
@@ -1038,20 +1038,7 @@ def propagate_through_ensemble(ensemble,  wavelength , xar_plus_z=None, propagat
         field = modulate_field(field, amplitude_mask = aperture_amp, phase_mask=aperture_phase)
 
         print("Surface #"+str(i+1))
-        fig, axes = plt.subplots(1, 2)
-
-        # Amplitude
-        im0 = axes[0].imshow(np.abs(field.field))
-        axes[0].set_title("Amplitude")
-        axes[0].axis("off")
-        
-        # Phase
-        im1 = axes[1].imshow(np.angle(field.field))
-        axes[1].set_title("Phase")
-        axes[1].axis("off")
-        
-        plt.tight_layout()
-        plt.show()
+        plot_field(field)
 
     
         ensemble.field_array[i].field = field
@@ -1078,6 +1065,7 @@ def propagate_through_ensemble(ensemble,  wavelength , xar_plus_z=None, propagat
             overall_field_at_screen = screen
             overall_field_at_screen.screen = EXYZ.screen/np.max(EXYZ.screen)
 
+
         if propagation_methods_array[i]=="SASM":
             EXYZ1 = SASM(field, screen, wavelength, pad_factor=4, crop=True)
             if i<len(ensemble.aperture_array_phase)-1 : 
@@ -1096,20 +1084,7 @@ def propagate_through_ensemble(ensemble,  wavelength , xar_plus_z=None, propagat
                                             #z=np.max(screen0.z) )
                                             x=0 )
 
-                fig, axes = plt.subplots(1, 2)
-
-                # Amplitude
-                im0 = axes[0].imshow(np.abs(field.field))
-                axes[0].set_title("Amplitude")
-                axes[0].axis("off")
-                
-                # Phase
-                im1 = axes[1].imshow(np.angle(field.field))
-                axes[1].set_title("Phase")
-                axes[1].axis("off")
-                
-                plt.tight_layout()
-                plt.show()
+                plot_field(field)
         
                 EXYZ0 = RS_integral(field, screen_YZ, wavelength, simp2d=True)
                 

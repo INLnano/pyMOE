@@ -316,7 +316,7 @@ def inspect_gds2layersplt(filename, norm, rescale=0, verbose = False, **kwargs )
                 
                 
             pol_dict[(i,j)] = MultiPolygon(pol_dict[(i,j)])
-            polslayer = gdspy.PolygonSet(pol_dict[(i,j)], layer=i)
+            polslayer = gdspy.Polygon(pol_dict[(i,j)], layer=i)
             #if polslayer.is_valid ==False: 
             #    if verbose == True: 
             #        print(i/(norm-1))

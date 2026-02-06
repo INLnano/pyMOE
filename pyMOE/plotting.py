@@ -9,10 +9,9 @@ import matplotlib.pyplot as plt
 import cv2 
 import numpy as np
 
-from pyMOE import Aperture
-from pyMOE import Field
-from pyMOE import Screen
-from pyMOE import ApertureField
+from pyMOE.aperture import Aperture
+from pyMOE.field import Field
+from pyMOE.field import Screen
 
 
 def save_mask_plot(maskcir, xsize, ysize, filename):
@@ -91,6 +90,10 @@ def plot_aperture(aperture, scale=None, colorbar=True, only_plot=False, filename
         plt.close(fig1)
         img = cv2.imread("temp.png")
         cv2.imwrite(filename, img)
+        
+             
+    plt.tight_layout()
+
     plt.show()
 
 
@@ -169,6 +172,8 @@ def plot_field(field, which='both', scale=None, colorbar=True, only_plot=False, 
         plt.close(fig1)
         # img = cv2.imread("temp.png")
         # cv2.imwrite(filename, img)
+     
+    plt.tight_layout()
 
 
 
@@ -249,6 +254,10 @@ def plot_screen_XY(screen,z=0, which='both', scale=None, colorbar=True, only_plo
         plt.close(fig1)
         # img = cv2.imread("temp.png")
         # cv2.imwrite(filename, img)
+        
+         
+    plt.tight_layout()
+
 
 
 def plot_screen_YZ(screen, x=0, which='both', scale=None, colorbar=True, only_plot=False, filename=None, **kwargs):
@@ -328,6 +337,10 @@ def plot_screen_YZ(screen, x=0, which='both', scale=None, colorbar=True, only_pl
         plt.close(fig1)
         # img = cv2.imread("temp.png")
         # cv2.imwrite(filename, img)
+        
+         
+    plt.tight_layout()
+
 
 
 def plot_screen_XZ(screen, y=0, which='both', scale=None, colorbar=True, only_plot=False, filename=None, **kwargs):
@@ -406,7 +419,11 @@ def plot_screen_XZ(screen, y=0, which='both', scale=None, colorbar=True, only_pl
         plt.savefig("temp.png", bbox_inches='tight', pad_inches = 0)
         plt.close(fig1)
         # img = cv2.imread("temp.png")
-        # cv2.imwrite(filename, img)    
+        # cv2.imwrite(filename, img)   
+
+         
+    plt.tight_layout()
+
 
 def plot_screen_ZZ(screen, x=0, y=0, which='both', scale=None, only_plot=False, filename=None, **kwargs):
     """
@@ -475,6 +492,8 @@ def plot_screen_ZZ(screen, x=0, y=0, which='both', scale=None, only_plot=False, 
             ax2.get_yaxis().set_visible(False) 
             
 
+     
+    plt.tight_layout()
 
 
 
