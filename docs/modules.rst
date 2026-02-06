@@ -1,4 +1,4 @@
-pyMOE-v1.0
+pyMOE-v2.0.1
 ==========
 
 .. toctree::
