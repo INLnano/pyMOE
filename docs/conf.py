@@ -9,7 +9,7 @@
 project = 'pyMOE'
 copyright = '2023-now, J. Cunha, D. E. Aguiam'
 author = 'J. Cunha, D. E. Aguiam'
-release = 'v1.4.2'
+release = 'v2.0.1'
 import os               # line 13
 import sys              # line 14
 import sphinx_rtd_theme

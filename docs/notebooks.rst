@@ -12,4 +12,6 @@ Check the notebooks in the menu.
    notebooks/Import_export.ipynb
    notebooks/GDS_operations.ipynb
    notebooks/Hologram_masks.ipynb
-   notebooks/Propagate_masks.ipynb
+   notebooks/Propagate-masks.ipynb
+   notebooks/Optimizer-notebook.ipynb
+   notebooks/Metrics-example-notebook.ipynb
