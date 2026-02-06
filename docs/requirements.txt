@@ -13,3 +13,4 @@ numpy
 dask  
 zernike
 shapely==1.7.1
+jax
