@@ -789,7 +789,7 @@ def ASM_jax(field, screen, wavelength, pad, n = 1.0, mode = None, bl = True, shi
     return screen_field    
 
     
-    
+     
    
 def propagate_through_ensemble_jax(ensemble,  wavelength , corr=1, propagation_methods_array=None): 
     """
@@ -860,6 +860,7 @@ def propagate_through_ensemble_jax(ensemble,  wavelength , corr=1, propagation_m
         #print("RS only calculated correctly the XY at the end Z, the other values of the screen object (e.g. YZ plane) have been repeated")
     
     EXYZ = EXYZ0
+    overall_field_at_screen2 = EXYZ0
     
     #to the rest for all 
     for i in np.arange(1,len(ensemble.aperture_array_phase)): 
@@ -877,28 +878,37 @@ def propagate_through_ensemble_jax(ensemble,  wavelength , corr=1, propagation_m
         
         if propagation_methods_array[i]=="bluestein":
             EXYZ1 = Bluestein_jax(field, screen, wavelength)
-            if i<len(ensemble.aperture_array_phase)-1 : 
-                ensemble.field_array[i+1].field = EXYZ0[:,:, -1]/jnp.max(EXYZ0[:,:, -1])
-            
             EXYZ = EXYZ1
+            
+            if i<len(ensemble.aperture_array_phase)-1 : 
+                #ensemble.field_array[i+1].field = EXYZ0[:,:, -1]/jnp.max(EXYZ0[:,:, -1])
+                ensemble.field_array[i+1].field = EXYZ[:, :, -1] / corr
+            
+            
 
             overall_field_at_screen = screen
             overall_field_at_screen = EXYZ/jnp.max(EXYZ)
             
         if propagation_methods_array[i]=="ASM":
             EXYZ1 = ASM_jax(field, screen, wavelength, pad=int(len(field0.x)) )
-            if i<len(ensemble.aperture_array_phase)-1 : 
-                ensemble.field_array[i+1].field =EXYZ0[:,:, -1]/jnp.max(EXYZ0[:,:, -1])
-            
             EXYZ = EXYZ1
+            
+            if i<len(ensemble.aperture_array_phase)-1 : 
+                #ensemble.field_array[i+1].field =EXYZ0[:,:, -1]/jnp.max(EXYZ0[:,:, -1])
+                ensemble.field_array[i+1].field = EXYZ[:, :, -1] / corr
+            
+            
 
             overall_field_at_screen = screen
             overall_field_at_screen = EXYZ/jnp.max(EXYZ)
 
         if propagation_methods_array[i]=="SASM":
             EXYZ1 = SASM_jax(field, screen, wavelength, pad_factor=4, crop=True)
+            EXYZ = EXYZ1
+            
             if i<len(ensemble.aperture_array_phase)-1 : 
-                ensemble.field_array[i+1].field = EXYZ0[:,:, -1]/jnp.max(EXYZ0[:,:, -1])
+                #ensemble.field_array[i+1].field = EXYZ0[:,:, -1]/jnp.max(EXYZ0[:,:, -1])
+                ensemble.field_array[i+1].field = EXYZ[:, :, -1] / corr
             
             EXYZ = EXYZ1
 
@@ -947,14 +957,13 @@ def propagate_through_ensemble_jax(ensemble,  wavelength , corr=1, propagation_m
         #print(EXYZ.screen.shape)        
         #overall_field_at_screen = screen0
         #overall_field_at_screen.screen = EXYZ.screen
+            
+        overall_field_at_screen2 = jnp.concatenate((overall_field_at_screen2, EXYZ), axis=2)
         
-        if i==1: 
-            overall_field_at_screen = jnp.dstack(jnp.array([EXYZ0, EXYZ]) )
-        else: 
-            #print(np.shape(EXYZ.screen), np.shape(overall_field_at_screen))
-            overall_field_at_screen = jnp.dstack(jnp.array([overall_field_at_screen, EXYZ]) )
         
-    return overall_field_at_screen 
+    return overall_field_at_screen2 
+
+    
 
     
 def propagate(xar, aperture, screen, wavelength, mask_amp=None, circ_radius=None, input_field="uniform", \
@@ -1365,6 +1374,12 @@ def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8,
 
     solution.loss_history = loss_history 
     solution.x_iter_history = onp.array(x_iter_history)
+    
+    ##TODO 
+    # METHOD SPSA https://pypi.org/project/spsa/   https://www.jhuapl.edu/SPSA/ 
+    
+    ##TODO 
+    # METHOD CMA-ES https://github.com/CMA-ES/pycma 
     
     if logger is not None: 
         logger.info("Optimization finished")

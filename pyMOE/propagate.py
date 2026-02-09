@@ -8,7 +8,7 @@ This module had origin in the "propopt" repository module with same name
 Here, "propopt" code has been modified and extended for use with apertures and masks of "pyMOE"
 """
 
-import numpy as np
+import numpy as np 
 import scipy 
 import scipy.fft as sfft 
 from scipy import integrate
@@ -1047,20 +1047,22 @@ def propagate_through_ensemble(ensemble,  wavelength , xar_plus_z=None, propagat
         
         if propagation_methods_array[i]=="bluestein":
             EXYZ1 = Bluestein(field, screen, wavelength)
-            if i<len(ensemble.aperture_array_phase)-1 : 
-                ensemble.field_array[i+1].field = EXYZ0.screen[:,:, -1]/np.max(EXYZ0.screen[:,:, -1])
-            
             EXYZ = EXYZ1
+            
+            if i<len(ensemble.aperture_array_phase)-1 : 
+                ensemble.field_array[i+1].field = EXYZ.screen[:,:, -1]/np.max(EXYZ.screen[:,:, -1])
 
             overall_field_at_screen = screen
             overall_field_at_screen.screen = EXYZ.screen/np.max(EXYZ.screen)
             
         if propagation_methods_array[i]=="ASM":
             EXYZ1 = ASM(field, screen, wavelength, pad=int(len(field0.x)/2) )
-            if i<len(ensemble.aperture_array_phase)-1 : 
-                ensemble.field_array[i+1].field = EXYZ0.screen[:,:, -1]/np.max(EXYZ0.screen[:,:, -1])
-            
+                        
             EXYZ = EXYZ1
+            
+            if i<len(ensemble.aperture_array_phase)-1 : 
+                ensemble.field_array[i+1].field = EXYZ.screen[:,:, -1]/np.max(EXYZ.screen[:,:, -1])
+
 
             overall_field_at_screen = screen
             overall_field_at_screen.screen = EXYZ.screen/np.max(EXYZ.screen)
@@ -1068,14 +1070,17 @@ def propagate_through_ensemble(ensemble,  wavelength , xar_plus_z=None, propagat
 
         if propagation_methods_array[i]=="SASM":
             EXYZ1 = SASM(field, screen, wavelength, pad_factor=4, crop=True)
-            if i<len(ensemble.aperture_array_phase)-1 : 
-                ensemble.field_array[i+1].field = EXYZ0.screen[:,:, -1]/np.max(EXYZ0.screen[:,:, -1])
             
             EXYZ = EXYZ1
-
+            
+            if i<len(ensemble.aperture_array_phase)-1 : 
+                ensemble.field_array[i+1].field = EXYZ.screen[:,:, -1]/np.max(EXYZ.screen[:,:, -1])
+            
             overall_field_at_screen = screen
             overall_field_at_screen.screen = EXYZ.screen/np.max(EXYZ.screen)
         
+        
+        # NOT TESTED - TO REVIEW RS 
         elif propagation_methods_array[i]=="rayleigh-sommerfeld":
             if i==len(ensemble.aperture_array_phase)-1:
                 print("YZ")
@@ -1125,11 +1130,14 @@ def propagate_through_ensemble(ensemble,  wavelength , xar_plus_z=None, propagat
         #overall_field_at_screen = screen0
         #overall_field_at_screen.screen = EXYZ.screen
         
-        if i==1: 
-            overall_field_at_screen = np.dstack(np.array([EXYZ0.screen, EXYZ.screen]) )
-        else: 
-            print(np.shape(EXYZ.screen), np.shape(overall_field_at_screen))
-            overall_field_at_screen = np.dstack(np.array([overall_field_at_screen, EXYZ.screen]) )
+        if i == 1:
+            overall_field_at_screen2 = np.concatenate( (EXYZ0.screen, EXYZ.screen), axis=2)
+            #print(overall_field_at_screen2.shape)
+        else:
+            #print(EXYZ.screen.shape, overall_field_at_screen.shape)
+            overall_field_at_screen2 = np.concatenate((overall_field_at_screen2, EXYZ.screen), axis=2)
+            #print(overall_field_at_screen2.shape)
+            
         
     return overall_field_at_screen 
     
