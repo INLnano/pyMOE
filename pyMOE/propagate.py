@@ -479,6 +479,42 @@ def Bluestein(field, screen, wavelength, n=None):
     return screen
     
     
+def distortion_correction(intensity_array, x_range, y_range, z, wavelength):
+    """
+    Distortion correction for paraxial propagators (e.g. Fresnel, Bluestein)
+    
+    CAREFUL, this is NOT the exact solution, simply an interpolator, 
+    Hence, differences to real non-paraxial propagators (RS, ASM) might exist.  
+
+    Args: 
+        :intensity_array: 2D numpy array calculated from paraxial method
+        :x_range:         1D array of x-coordinates for the intensity_array pixels
+        :y_range:         1D array of y-coordinates for the intensity_array pixels
+        :z:               propagation distance
+
+    Returns: 
+        :corrected_field: 2D array with the distortion-corrected field 
+    """
+        
+    from scipy.interpolate import RegularGridInterpolator
+
+    interp = RegularGridInterpolator((x_range, y_range), intensity_array, bounds_error=False, fill_value=0)
+
+    x_prime, y_prime = np.meshgrid(x_range, y_range, indexing='ij')
+
+    denom = np.sqrt(1 + (x_prime/z)**2 + (y_prime/z)**2)
+    xfinal, yfinal = x_prime / denom, y_prime/denom
+
+    newpoints = np.stack([xfinal.ravel(), yfinal.ravel()], axis=-1)
+    corrected_position = interp(newpoints).reshape(intensity_array.shape)
+    
+    phase_corr =(2*np.pi)/wavelength * (np.sqrt(x_prime**2 + y_prime**2 + z**2) - (z + (x**2 + y**2 )/ (2 * z)))
+    Ci = 1/(1 + (x_prime**2 + y_prime**2)/z**2)
+    corrected_field = corrected_position*Ci* np.exp(1.0j* phase_corr)
+    
+    return corrected_field
+    
+    
 def zero_pad(arr, pad_factor=2):
     H, W = arr.shape
     H_new, W_new = pad_factor * H, pad_factor * W
