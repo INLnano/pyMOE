@@ -1139,7 +1139,7 @@ def propagate_through_ensemble(ensemble,  wavelength , xar_plus_z=None, propagat
             #print(overall_field_at_screen2.shape)
             
         
-    return overall_field_at_screen 
+    return overall_field_at_screen2 
     
     
 ##################################################
