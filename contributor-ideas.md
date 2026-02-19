@@ -1,6 +1,6 @@
-# Google Summer of Code – pyMOE Project Ideas
+# pyMOE Project Ideas
 
-This repository contains some proposed **Google Summer of Code (GSoC)** project ideas for **pyMOE**, a Python framework for physical optics simulations, numerical light propagation, and emerging optical AI architectures.
+This repository contains some proposed project ideas for **pyMOE**, a Python framework for physical optics simulations, numerical light propagation, and emerging optical AI architectures.
 
 The projects are grouped by **difficulty and expected workload** and span topics including visualization, documentation, testing, high-performance computing, lithography workflows, and optical machine learning.
 
@@ -247,4 +247,3 @@ Prospective students are encouraged to:
 
 - pyMOE GitHub: https://github.com/INLnano/pyMOE  
 - Documentation: https://pymoe-doc.readthedocs.io  
-- GSoC Program: https://summerofcode.withgoogle.com
