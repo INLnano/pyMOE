@@ -1279,6 +1279,8 @@ def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8,
     if batch_list is None:
         batch_list = []
     
+    ###########################################33
+    # Initiliazation of utils functions
     def loss_with_logging(x, *args):
         x_np = onp.asarray(x)
         k = iter_counter["k"]
@@ -1309,8 +1311,132 @@ def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8,
 
 
         return loss(x, *args, )
+        
+    def scipy_like_result(x, fun, success, nfev):
+        from scipy.optimize import OptimizeResult
+        
+        solution = OptimizeResult(x=x, fun=fun, success=success, nfev=nfev)
+        
+        return solution 
+        
+    ############################################## 
+    # Choose the optimizer 
     
-    if optimizer_method in ["adam", "rmsprop", "lbfgsoptax", "adamw"]:
+    # Stochastic optimizers 
+    if optimizer_method == "cma-es":
+        # METHOD CMA-ES https://pypi.org/project/cma/
+        
+        import cma
+        
+        opts = cma.CMAOptions() 
+        opts['tolfun'] = ftol
+        #opts['maxfevals'] = max_iters
+        opts['maxiter'] = max_iters
+        opts['bounds'] = [bounds[0], bounds[1]]
+
+        es = cma.CMAEvolutionStrategy(x0, sigma0=kwargs.get("sigma0", 0.8), )
+
+        while not es.stop():
+            xs = es.ask()
+            vals = [float(loss_with_logging(x, *args1)) for x in xs]
+            es.tell(xs, vals)
+
+            if verbose:
+                es.disp()
+                
+            if es.result.iterations > max_iters or es.sigma < 1e-1:
+                break
+
+        res = es.result
+
+        solution = scipy_like_result(x=res.xbest, fun=res.fbest, success=True, nfev=res.evaluations)
+        
+    elif optimizer_method == "spsa":
+        # METHOD SPSA   https://www.jhuapl.edu/SPSA/ 
+        # https://www.tutorialspoint.com/spsa-simultaneous-perturbation-stochastic-approximation-algorithm-using-python
+        
+        # SPSA parameters
+        a = 0.7  ## these have been found empirically 
+        c = 0.2
+
+        def loss_spsa(x):
+            return loss_with_logging(x, *args1)
+            
+        
+        def SPSA(loss_function, theta, a, c, num_iterations, ftol=1e-6, xtol=None, window=100,):
+            """
+            A method for minimizing a loss function via simultaneous perturbation     stochastic approximation (SPSA).
+            
+            Parameters:
+            loss_function (function): Loss function to be minimized.
+            theta (numpy array): The initial values of the parameters.
+            a (float): Size of the step when updating parameters.
+            c (float): The noise parameter for randomly generating perturbations.
+            num_iterations (int): Number of iterations in the algorithm.
+            
+            Returns:
+            tuple: A tuple containing the best parameter values found and the 
+            corresponding loss value.
+            """
+
+            import numpy as np
+
+            theta = theta.copy()
+            best_theta = theta.copy()
+            best_loss = loss_function(theta)
+
+            loss_history = [best_loss]
+            stable_iters = 0
+
+            for i in range(1, num_iterations + 1):
+
+                delta = np.random.choice([-1, 1], size=theta.shape)
+
+                loss_plus  = loss_function(theta + c * delta)
+                loss_minus = loss_function(theta - c * delta)
+
+                gradient = (loss_plus - loss_minus) / (2.0 * c * delta)
+
+                theta_prev = theta.copy()
+                theta = theta - a * gradient
+
+                loss_curr = loss_function(theta)
+                loss_history.append(loss_curr)
+
+                # Track best
+                if loss_curr < best_loss:
+                    best_loss = loss_curr
+                    best_theta = theta.copy()
+
+                # ---- ftol: loss-based stopping (smoothed) ----
+                if len(loss_history) >= window:
+                    recent = np.mean(loss_history[-window:])
+                    previous = np.mean(loss_history[-2*window:-window])
+
+                    if abs(previous - recent) < ftol:
+                        stable_iters += 1
+                    else:
+                        stable_iters = 0
+
+                    if stable_iters >= window:
+                        print(f"SPSA stopped by ftol at iteration {i}")
+                        break
+
+                # ---- xtol: parameter change ----
+                if xtol is not None:
+                    if np.linalg.norm(theta - theta_prev) < xtol:
+                        print(f"SPSA stopped by xtol at iteration {i}")
+                        break
+
+            return best_theta, best_loss
+            
+
+        x_opt, lossopt = SPSA(loss_spsa, onp.asarray(x0, dtype=onp.float64), a, c, max_iters, ftol=ftol, xtol=xtol ) 
+        
+        solution = scipy_like_result(x=x_opt, fun=loss_spsa(x_opt), success=True, nfev=len(loss_history),)
+
+    # JAX optimizers     
+    elif optimizer_method in ["adam", "rmsprop", "lbfgsoptax", "adamw"]:
         def loss_jax(x, *args):
             return loss(x, *args,)  # must use jax.numpy internally
     
@@ -1340,12 +1466,7 @@ def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8,
             loss_f = float(loss_val)
 
             if logger is not None:
-                logger.info(
-                    "iter=%d | loss=%.6e | x=%s",
-                    i,
-                    loss_f,
-                    onp.array2string(x_np, precision=6)
-                )
+                logger.info("iter=%d | loss=%.6e | x=%s", i, loss_f, onp.array2string(x_np, precision=6))
 
             x_iter_history.append(x_np.copy())
             loss_history.append(loss_f)
@@ -1360,29 +1481,25 @@ def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8,
 
             prev_loss = loss_f
 
-        
-        from scipy.optimize import OptimizeResult
-
-        solution = OptimizeResult(
-            x=onp.asarray(x),
-            fun=loss_history[-1] if loss_history else None,
-            success=True,
-            nfev=len(loss_history),
-        )
+        solution = scipy_like_result(x=onp.asarray(x), fun=loss_history[-1] if loss_history else None, success=True, nfev=len(loss_history),)
         
         solution.loss_history = loss_history
         solution.x_iter_history = onp.array(x_iter_history)
-
+    
+    # Scipy optimizers 
+    #### Least squares optimizers 
     elif optimizer_method=='leastsq-lm': 
         solution = leastsq(loss_with_logging, x0= x0,  args=args1 ,jac =cal_jac, ftol=ftol, xtol=xtol, gtol=gtol, verbose=v, max_nfev=max_nfev)
     elif (optimizer_method=='trf') or (optimizer_method=='dogbox'):  
         solution = least_squares(loss_with_logging, x0=x0, args=args1 , jac =cal_jac,  ftol=ftol, xtol=xtol, gtol=gtol, method=optimizer_method, bounds=bounds, verbose=v, max_nfev=max_nfev, **kwargs)
+    
     elif optimizer_method=='differential_evolution': 
         solution = differential_evolution(loss_with_logging, x0=x0, jac =cal_jac, bounds = bounds, args =args1, verbose=v)
     elif optimizer_method=='dual_annealing': 
         solution = dual_annealing(loss_with_logging, x0=x0, args =args1,jac =cal_jac,  bounds = bounds, verbose=v)
     elif optimizer_method=='basinhopping': 
         solution = basinhopping(loss_with_logging, x0=x0,minimizer_kwargs=minimizer_kwargs, niter=max_iters)
+
     elif optimizer_method in ['Nelder-Mead', 'Powell','CG', 'BFGS', 'Newton-CG','L-BFGS-B', \
     'TNC', 'COBYLA', 'COBYQA', 'SLSQP', 'trust-constr', 'dogleg', 'trust-ncg', 'trust-exact','trust-krylov']:
         def minimize_callback(xk):
@@ -1407,6 +1524,7 @@ def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8,
         
         argas = args1
         solution = minimize(loss_with_logging, x0, argas, jac =cal_jac, callback = minimize_callback, options={'ftol': ftol, 'disp': True, 'maxiter':50000},bounds=bounds)
+      
     else: 
         print("Option optimizer_method= '"+str(optimizer_method)+"' not recognized")
 
