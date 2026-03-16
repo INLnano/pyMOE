@@ -647,6 +647,8 @@ def SASM(field, screen, wavelength, pad_factor = 2, crop = False):
         :crop:          boolean, if True, crops the size to the non zero pixels 
     Returns:
         :screen:    Returns the screen populated with the result
+        
+    Note: it works on square masks 
     """
     
     xlen,ylen,zlen = screen.XX.shape
