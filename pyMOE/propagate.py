@@ -845,6 +845,7 @@ def ASM_propagate(field, screen, z, wavelength, pad_width, n = 1.0, mode = None,
         
         for d, axis in enumerate(axes):
             m = output_shape[d]
+            n = spatial_shape[d]
             
             # czt parameters, 
             # a: starting point on the circle (related to the min limit) w: angular step/ratio (related to the span/range)
@@ -857,10 +858,11 @@ def ASM_propagate(field, screen, z, wavelength, pad_width, n = 1.0, mode = None,
             # Ensure complex type just to be sure
             field_transform = field_czt.astype(field_transform.dtype)
             
-            center = (m - 1) // 2 
-            
+            center = n // 2
+            k = np.arange(m)
+
             # phase compensation/modulation factor after the czt
-            compensation = w_czt ** (-center * np.arange(m)) * (a_czt**center)
+            compensation = (a_czt ** -center) * (w_czt ** (center * k))
             
             field_transform = np.moveaxis(field_transform, axis, -1)
             field_transform = field_transform * compensation 
