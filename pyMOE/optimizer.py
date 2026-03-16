@@ -472,7 +472,45 @@ def SASM_jax(field, screen, wavelength, pad_factor = 2, crop =True, use_timer=Tr
             
     return screen_field
     
+def zero_pad_jax(arr, pad_factor=2):
+    import jax.numpy as jnp 
+    
+    H, W = arr.shape
+    H_new, W_new = int(pad_factor * H), int(pad_factor * W)
+    out = jnp.zeros((H_new, W_new), dtype=arr.dtype)
+    start_H = (H_new - H) // 2
+    start_W = (W_new - W) // 2
+    #out[start_H:start_H + H, start_W:start_W + W] = arr
+    out = out.at[start_H:start_H + H, start_W:start_W + W].set(arr)
+    return out
 
+def crop_to_physical_size_jax(arr, dx_out, desired_size_metersx, dy_out, desired_size_metersy):
+    """
+    Center crop an array based on physical size and pixel spacing.
+    """
+    N_totalx, N_totaly = arr.shape
+    crop_sizex, crop_sizey = int(desired_size_metersx / dx_out), int(desired_size_metersy / dy_out)
+    startx = (N_totalx - crop_sizex) // 2
+    starty = (N_totaly - crop_sizey) // 2
+    #out = arr.at[start:start+crop_size, start:start+crop_size]
+    return arr[startx:startx+crop_sizex, starty:starty+crop_sizey]
+    
+def resize_field_to_shape_jax(field, output_shape, method="linear"):
+    """
+    Resize a 2D complex array to the desired output shape by
+    resizing real and imaginary parts separately.
+    """
+    import jax.numpy as jnp
+    from jax import image as jimage
+    
+    amplitude = jnp.abs(field)
+    phase = jnp.angle(field)
+
+    amp_resized = jimage.resize(amplitude, output_shape, method=method)
+
+    phase_resized = jimage.resize(phase, output_shape, method=method)
+
+    return amp_resized * jnp.exp(1j * phase_resized)
         
 
 def ASM_kernel_jax(field, z, wavelength, input_extent, input_df, n = 1.0,  bandlimit = True, shift_yx = (0.0, 0.0),  kykx = (0.0, 0.0)):
@@ -1171,6 +1209,7 @@ def setup_optimizer_logger_batch(x_size, batch_size=1, log_dir="logs", name="opt
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     
     logfile_txt = os.path.join(log_dir, f"{name}_{timestamp}.txt")
+    
     logfile_bin = os.path.join(log_dir, f"{name}_{timestamp}_x.npy")
     
     # Text logger
@@ -1286,7 +1325,6 @@ def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8,
         
         import optax
     
-        # Select optimizer
         optimizer = {"adam": optax.adam, "rmsprop": optax.rmsprop, "lbfgsoptax": optax.lbfgs, "adamw": optax.adamw}[optimizer_method](learning_rate)
         loss_and_grad_fn = jax.value_and_grad(loss_jax)
 
