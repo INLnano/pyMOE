@@ -167,9 +167,7 @@ def theoretical_ideal_OTF(screen, D, wavelength, z, optimize=False):
     
     return OTF
  
-
-
-def strehl_ratio(field, screen, D, wavelength, z , strehl_from_mtf=False, plot_MTF=False, plot_OTF=False, optimize=False): 
+def strehl_ratio(intensity, screen, D, wavelength, z , strehl_from_mtf=False, plot_MTF=False, plot_OTF=False, optimize=False): 
     """ 
     Calculates the Strehl ratio, based on the OTF volumes (Goodman prob. 6-9)
     Assumes Circular Aperture as theoretical. 
@@ -188,28 +186,31 @@ def strehl_ratio(field, screen, D, wavelength, z , strehl_from_mtf=False, plot_M
     Returns: 
         :strehl:          Strehl ratio (value)
     """
+
     if optimize==True: 
         import jax.numpy as np
+        from jax.scipy.integrate import trapezoid 
     else: 
         import numpy as np 
+        from scipy.integrate import trapezoid 
         
-    OTF_exp = calculate_OTF(field, optimize=optimize)
+    OTF_exp = calculate_OTF(intensity, optimize=optimize)
     MTFexp, MTFexpx, MTFexpy = MTF_from_OTF(OTF_exp, optimize=optimize)
 
     fx, fy = screen.fx, screen.fy
     
     if strehl_from_mtf==True: 
-        volume_exp = simpson2d(np.abs(OTF_exp),fx[0], fx[-1], fy[0], fy[-1])
+        volume_exp = trapezoid(trapezoid(np.abs(OTF_exp), fy, axis=1), fx)
     else: 
-        volume_exp = simpson2d(OTF_exp,fx[0], fx[-1], fy[0], fy[-1])
+        volume_exp = trapezoid(trapezoid(OTF_exp, fy, axis=1), fx)
     
     OTF_ideal = theoretical_ideal_OTF(screen, D, wavelength, z , optimize=optimize)
     MTFid, MTFidx, MTFidy = MTF_from_OTF(OTF_ideal, optimize=optimize)
     
     if strehl_from_mtf==True: 
-        volume_ideal = simpson2d(np.abs(OTF_ideal),fx[0], fx[-1], fy[0], fy[-1])
+        volume_ideal = trapezoid(trapezoid(np.abs(OTF_ideal), fy, axis=1), fx)
     else: 
-        volume_ideal = simpson2d(OTF_ideal,fx[0], fx[-1], fy[0], fy[-1])
+        volume_ideal = trapezoid(trapezoid((OTF_ideal), fy, axis=1), fx)
 
     strehl = np.abs(volume_exp)/np.abs(volume_ideal)
         
@@ -258,8 +259,7 @@ def strehl_ratio(field, screen, D, wavelength, z , strehl_from_mtf=False, plot_M
         fig.savefig("OTFs.png") 
 
     return strehl
-    
-    
+
 
 def intensity_theo_Airy(screen, D, wavelength, z = 1):
     """
