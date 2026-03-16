@@ -16,7 +16,7 @@ from scipy.special import j0, j1
 from pyMOE.utils import simpson2d, qmc_2d
 
 
-def calculate_OTF(intensity, plot_OTF=False, optimize=False ):    
+def calculate_OTF(intensity, plot_OTF=False, optimize=False):    
     """
     Calculates the OTF at an observation screen 
     
@@ -37,7 +37,7 @@ def calculate_OTF(intensity, plot_OTF=False, optimize=False ):
         import scipy.fftpack as sfft
     
     #intensity = np.abs(Escreen)**2
-    norm_intensity = intensity/np.max(intensity)  # normalize intensity, not field
+    norm_intensity = intensity/np.sum(intensity)  # normalize intensity, not field
 
     otf = sfft.fftshift(sfft.fft2(sfft.ifftshift(norm_intensity)))
 
@@ -81,6 +81,7 @@ def MTF_from_OTF(OTF, optimize=False):
     MTF_y = MTF[int(m/2), int(n/2):]
     
     return MTF, MTF_x, MTF_y
+
 
 
 def PTF_from_OTF(OTF, optimize=False):
