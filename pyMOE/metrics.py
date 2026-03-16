@@ -516,3 +516,270 @@ def Engelberg_EOPM(screen, p, input_energy, transmission , wavelength, center=(0
 
    
     return 
+    
+    
+    
+def ISOuniformity(intensity, mask, optimize = False):
+    """
+    This is the beam uniformity metric from ISO  13694:2018 
+    As available in https://doi.org/10.1117/1.OE.60.6.060801 
+    
+    Args: 
+        :intensity:     2D array with the intensity of the field 
+        :mask:          Aperture to calculate the uniformity on, which should be a mask of ones and zeros, ones where the uniformity should be calculated 
+        
+    Returns: 
+        :uniformity:
+    """    
+    if optimize==True: 
+        import jax.numpy as np
+        from jax.scipy.integrate import trapezoid 
+    else: 
+        import numpy as np 
+        from scipy.integrate import trapezoid 
+    
+    masked_intensity = intensity * mask.aperture 
+    masked_intensity = masked_intensity[np.where(masked_intensity)] 
+    
+    Iavg = np.mean(masked_intensity)
+    
+    area = np.sum(mask.aperture)
+    
+    uniformity = (1/Iavg)*np.sqrt((1/area) * np.sum( (masked_intensity - Iavg)**2 ) )
+        
+    return uniformity 
+
+
+def ISOsteepness(intensity, optimize = True): 
+    """
+    This is the beam uniformity metric from ISO  13694:2018 
+    As available in https://doi.org/10.1117/1.OE.60.6.060801 
+    
+    Args: 
+        :intensity:     2D array with the intensity of the field 
+        :mask:          Aperture to calculate the uniformity on, which should be a mask of ones and zeros, ones where the uniformity should be calculated 
+        
+    Returns: 
+        :steepness:
+    """    
+    if optimize==True: 
+        import jax.numpy as np
+    else: 
+        import numpy as np 
+        
+    Imax = np.max(intensity)
+
+    I10 = 0.1 * Imax 
+    I90 = 0.9 * Imax 
+    
+    id10 = np.argmin( np.abs(intensity - I10) )[0]
+    id90 = np.argmin( np.abs(intensity - I90) )[0]
+    
+    I10 = I10[id10]
+    I90 = I90[id90]
+    
+    steepness = (I10 - I90) / I10
+        
+    return steepness
+    
+
+def ISOflatness(intensity, mask, eta=0.8, optimize = True): 
+    """
+    This is the beam uniformity metric from ISO  13694:2018 
+    As available in https://doi.org/10.1117/1.OE.60.6.060801 
+    
+    Args: 
+        :intensity:     2D array with the intensity of the field 
+        :mask:          Aperture to calculate the uniformity on, which should be a mask of ones and zeros, ones where the uniformity should be calculated 
+        :eta:           Clip level, default 0.8 
+        
+    Returns: 
+        :steepness:
+    """    
+    if optimize==True: 
+        import jax.numpy as np
+    else: 
+        import numpy as np 
+    
+    masked_intensity = intensity * mask.aperture 
+    
+    Imax = np.max(masked_intensity)
+    threshold = eta * Imax
+
+    # Select region above clip level
+    clipped_region = masked_intensity[intensity >= threshold]
+
+    Iavg = np.mean(clipped_region)
+
+    flatness = Iavg / Imax
+
+    return flatness
+    
+    
+def uniformityv1(intensity, mask, optimize = False ): 
+    """
+    This is the uniformity metric from 2024 Mi AO https://doi.org/10.1364/AO.543093   
+    
+    Args: 
+        :intensity:     2D array with the intensity of the field 
+        :mask:          Aperture to calculate the uniformity on, which should be a mask of ones and zeros, ones where the uniformity should be calculated 
+        
+    Returns: 
+        :uniformity:
+    """    
+    if optimize==True: 
+        import jax.numpy as np
+    else: 
+        import numpy as np 
+    
+    masked_intensity = intensity * mask.aperture 
+    masked_intensity = masked_intensity[np.where(masked_intensity)] 
+    
+    Imax = np.max(masked_intensity)
+    Imin = np.min(masked_intensity)
+    
+    uniformity = 1 - (Imax - Imin) / (Imax + Imin)
+    
+    return uniformity 
+    
+    
+def uniformityv2(intensity, mask, optimize = False ): 
+    """
+    This is the uniformity metric simply from std and avg 
+    
+    Args: 
+        :intensity:     2D array with the intensity of the field 
+        :mask:          Aperture to calculate the uniformity on, which should be a mask of ones and zeros, ones where the uniformity should be calculated 
+        
+    Returns: 
+        :uniformity:
+    """    
+    if optimize==True: 
+        import jax.numpy as np
+    else: 
+        import numpy as np 
+    
+    masked_intensity = intensity * mask.aperture 
+    masked_intensity = masked_intensity[np.where(masked_intensity)] 
+    
+    Iavg = np.mean(intensity)
+    Istd = np.std(intensity)
+    
+    uniformity = Istd/Iavg 
+    
+    return uniformity 
+    
+    
+
+def speckle_contrast(intensity, mask, optimize = False ): 
+    """
+    This is the speckle contrast metric from 2024 Mi AO https://doi.org/10.1364/AO.543093 
+    
+    Args: 
+        :intensity:     2D array with the intensity of the field 
+        :mask:          Aperture to calculate the uniformity on, which should be a mask of ones and zeros, ones where the uniformity should be calculated 
+        
+    Returns: 
+        :contrast:
+    """
+    
+    if optimize==True: 
+        import jax.numpy as np
+    else: 
+        import numpy as np 
+    
+    masked_intensity = intensity * mask.aperture 
+    masked_intensity = masked_intensity[np.where(masked_intensity)] 
+    
+    Iavg = np.mean(masked_intensity)
+    
+    sigma = 100 * np.sqrt(np.mean(masked_intensity - Iavg)**2 / np.mean(masked_intensity)) 
+    
+    return sigma 
+    
+
+
+def energy_eff(intensity, mask, optimize = False ): 
+    """
+    Efficiency defined as power in the area of interest 
+    
+    Args: 
+        :intensity:     2D array with the intensity of the field 
+        :mask:          Aperture to calculate the efficiency on, which should be a mask of ones and zeros, ones where the efficiency should be calculated 
+        
+    Returns: 
+        :efficiency:
+    """
+    
+    if optimize==True: 
+        import jax.numpy as np
+    else: 
+        import numpy as np 
+    
+    masked_intensity = intensity * mask.aperture 
+    masked_intensity = masked_intensity[np.where(masked_intensity)] 
+    
+    power_in_mask = np.sum(masked_intensity)
+    power_tot = np.sum(intensity)
+    
+    eff = power_in_mask / power_tot
+    
+    return eff 
+    
+    
+def snr(intensity, mask, optimize = False ): 
+    """
+    Approximation for the signal to noise ratio, considered as mean of intensity in the area of interest vs rest 
+    
+    Args: 
+        :intensity:     2D array with the intensity of the field 
+        :mask:          Aperture of the area of interest to calculate the SNR on, which should be a mask of ones and zeros 
+        
+    Returns: 
+        :snr:
+    """
+    
+    if optimize==True: 
+        import jax.numpy as np
+    else: 
+        import numpy as np 
+    
+    masked_intensity = intensity * mask.aperture 
+    not_masked = intensity * np.abs(1-mask.aperture) 
+    
+    noise_floor = not_masked[np.where(not_masked)] 
+    
+    signal_intensity = masked_intensity[np.where(masked_intensity)] 
+    
+    snr = 20 * np.log10(np.mean(signal_intensity) / np.mean(noise_floor) )
+    
+    return snr 
+    
+    
+def npcc(intensity, target, optimize = False ): 
+    """
+    Negative Pearson Correlation Coefficient (npcc) between two images.
+    
+    Args: 
+        :intensity:     2D array with the intensity of the field 
+        :target:        2D array with the intensity of the Target 
+        
+    Returns: 
+        :npcc:
+    """
+
+    if optimize:
+        import jax.numpy as np
+    else:
+        import numpy as np
+
+    image_mean = np.mean(intensity)
+    target_mean = np.mean(target)
+
+    numerator = np.sum((intensity - image_mean) * (target - target_mean))
+
+    denominator = np.sqrt( np.sum((intensity - image_mean)**2) * np.sum((target - target_mean)**2))
+    
+    npcc = numerator / denominator
+
+    return npcc 
