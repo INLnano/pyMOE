@@ -274,15 +274,12 @@ def intensity_theo_Airy(screen, D, wavelength, z = 1):
     Returns: 
         :I:          Intensity (2D array)
     """
-    if len(screen.z) !=1: 
-        XX, YY = screen.XX[:,:,-1], screen.YY[:,:,-1]
-        r = np.sqrt(XX**2 + YY**2)
-        z = screen.z[-1]
-        print("Picking up the last z propagated assumed to be the screen position")
-    else: 
-        XX, YY = screen.XX, screen.YY
-        r = np.sqrt(XX**2 + YY**2)
-        z = screen.z
+    #if len(screen.z) !=1: 
+    XX, YY = screen.XX[:,:,-1], screen.YY[:,:,-1]
+    r = np.sqrt(XX**2 + YY**2)
+    z = screen.z[-1]
+    #print("Picking up the last z propagated assumed to be the screen position")
+        
     
     u = np.pi*D*r/(wavelength*z)
     
