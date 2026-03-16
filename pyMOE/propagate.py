@@ -508,7 +508,7 @@ def distortion_correction(intensity_array, x_range, y_range, z, wavelength):
     newpoints = np.stack([xfinal.ravel(), yfinal.ravel()], axis=-1)
     corrected_position = interp(newpoints).reshape(intensity_array.shape)
     
-    phase_corr =(2*np.pi)/wavelength * (np.sqrt(x_prime**2 + y_prime**2 + z**2) - (z + (x**2 + y**2 )/ (2 * z)))
+    phase_corr =(2*np.pi)/wavelength * (np.sqrt(x_prime**2 + y_prime**2 + z**2) - (z + (x_prime**2 + y_prime**2 )/ (2 * z)))
     Ci = 1/(1 + (x_prime**2 + y_prime**2)/z**2)
     corrected_field = corrected_position*Ci* np.exp(1.0j* phase_corr)
     
