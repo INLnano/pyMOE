@@ -289,7 +289,7 @@ def intensity_theo_Airy(screen, D, wavelength, z = 1):
     
 
 
-def encircled_energy(screen, p, center=(0,0)):
+def encircled_energy(screen, p, center=(0,0), optimize=False):
     """
     Calculate the encircled energy 
     
@@ -301,6 +301,11 @@ def encircled_energy(screen, p, center=(0,0)):
     Returns: 
         :energy:   Encircled energy 
     """
+    if optimize==True: 
+        import jax.numpy as np
+    else: 
+        import numpy as np
+        
     #Intensity (ideally in W/m2) 
     intensity = np.abs(screen.screen)**2 
     
@@ -337,7 +342,7 @@ def theoretical_encircled_energy(screen, p):
     return res
     
 
-def ensquared_energy(screen, px, py, center=(0,0)): 
+def ensquared_energy(screen, px, py, center=(0,0), optimize=False): 
     """
     Calculate the ensquared energy 
     
@@ -349,6 +354,11 @@ def ensquared_energy(screen, px, py, center=(0,0)):
     Returns: 
         :energy:   Encircled energy 
     """
+    if optimize==True: 
+        import jax.numpy as np
+    else: 
+        import numpy as np
+        
     #Intensity (~W/m2) 
     intensity = np.abs(screen.screen)**2 
     
@@ -368,7 +378,7 @@ def ensquared_energy(screen, px, py, center=(0,0)):
     return energy
     
     
-def focus_efficiency(screen, p, input_energy, center=(0,0), ): 
+def focus_efficiency(screen, p, input_energy, center=(0,0), optimize=False): 
     """
     Focus efficiency 
     
@@ -388,7 +398,7 @@ def focus_efficiency(screen, p, input_energy, center=(0,0), ):
     For Meem et al. (https://doi.org/10.1364/OPTICA.388697) this happens at 10*FWHM. 
     """
     
-    encircled_energy_screen = encircled_energy(screen, p, center=(0,0))
+    encircled_energy_screen = encircled_energy(screen, p, center=(0,0), optimize=optimize)
     result = encircled_energy_screen/input_energy
     
     return result 
@@ -439,7 +449,7 @@ def find_FWHM_2d(XY, prominence=0.5):
 
 
 
-def Engelberg_OPM(screen, p, input_energy, transmission , wavelength, center=(0,0), intensity = None, z = None, D = None ):
+def Engelberg_OPM(screen, p, input_energy, transmission , wavelength, center=(0,0), intensity = None, z = None, D = None, optimize=False ):
     """
     Overall performance metric (OPM) from eq (2) defined at Engelberg et al. https://doi.org/10.1515/nanoph-2022-0196 
     
@@ -458,7 +468,11 @@ def Engelberg_OPM(screen, p, input_energy, transmission , wavelength, center=(0,
         :OPM:          Calculated OPM
     
     """
-    
+    if optimize==True: 
+        import jax.numpy as np
+    else: 
+        import numpy as np
+        
     if intensity is None: 
         intensity = np.abs(screen.screen[:,:,-1])**2
     if z is None: 
@@ -468,10 +482,10 @@ def Engelberg_OPM(screen, p, input_energy, transmission , wavelength, center=(0,
     
     #print(D,z, transmission, wavelength)
     
-    eta = focus_efficiency(screen, p, input_energy)
+    eta = focus_efficiency(screen, p, input_energy, optimize=optimize)
     #print(eta)
     T = transmission
-    strehl = strehl_ratio(intensity, screen, D, wavelength, z) 
+    strehl = strehl_ratio(intensity, screen, D, wavelength, z, optimize=optimize) 
     #print(strehl)
     
     OPM = eta*strehl/np.sqrt(transmission)
