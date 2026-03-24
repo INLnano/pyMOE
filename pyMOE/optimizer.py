@@ -761,29 +761,26 @@ def ASM_propagate_jax(field, screen, z, wavelength, pad_width, n = 1.0, mode = N
         x_slice = slice(int(padded_field.Nx/2) - int(screen.Nx/2),  int(padded_field.Nx/2) - int(screen.Nx/2) + screen.Nx)
         field_transform = field_transform[x_slice, y_slice]
 
+   
     else:   
-        # just IFFT 
         propagated_field = sfft.fftshift(sfft.ifft2(sfft.ifftshift(field_transform, axes=axes), axes=axes), axes=axes)
 
-        #fig = plt.figure() 
-        #plt.imshow(np.abs(propagated_field))
-
-        scaling_x = screen.pixel_x / padded_field.pixel_x
-        scaling_y = screen.pixel_y / padded_field.pixel_y
-
-        y_slice = slice(int(padded_field.Ny/2) - int(screen.Ny/2 *scaling_y),  \
-                        int(padded_field.Ny/2) - int(screen.Ny/2 *scaling_y) + int(screen.Ny*scaling_y) )
-        x_slice = slice(int(padded_field.Nx/2) - int(screen.Ny/2 *scaling_y), \
-                        int(padded_field.Nx/2) - int(screen.Ny/2 *scaling_y) + int(screen.Nx*scaling_x) )
-        field_transform = propagated_field[x_slice, y_slice]
-
-        #fig = plt.figure() 
-        #plt.imshow(np.abs(psi_final))
+        # Calculate how many pixels of the "padded_field" we need to cover the "screen"
+        num_pixels_to_crop_x = int((screen.Nx * screen.pixel_x) / field.pixel_x)
+        num_pixels_to_crop_y = int((screen.Ny * screen.pixel_y) / field.pixel_y)
         
-        if (screen.Nx != field.Nx) or (screen.Ny != field.Ny):
-            field_transform = resize_field_to_shape_jax(field_transform, (screen.Nx,screen.Ny) )
-        else: 
-            field_transform = resize_field_to_shape_jax(field_transform, (field.Nx,field.Ny) )
+        c_y, c_x = padded_field.Ny // 2, padded_field.Nx // 2
+        
+        y_slice = slice(c_y - num_pixels_to_crop_y // 2, c_y + (num_pixels_to_crop_y - num_pixels_to_crop_y // 2))
+        x_slice = slice(c_x - num_pixels_to_crop_x // 2, c_x + (num_pixels_to_crop_x - num_pixels_to_crop_x // 2))
+        
+        field_cropped = propagated_field[y_slice, x_slice]
+
+        if field_cropped.shape != (screen.Ny, screen.Nx):
+            field_transform = resize_field_to_shape_jax(field_cropped, (screen.Ny, screen.Nx))
+        else:
+            field_transform = field_cropped
+            
         
     #print(field_transform.shape)
         
