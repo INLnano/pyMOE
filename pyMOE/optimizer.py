@@ -1137,12 +1137,13 @@ def propagate(xar, aperture, screen, wavelength, mask_amp=None, circ_radius=None
         
         del aperture3x 
     
-    elif input_field=="gaussian": 
+    elif (input_field=="gaussian") and (ensemble_mode==False): 
         ##TO CORRECT 
         field = generate_uniform_field(field, E0=E0)
             
-    else: 
-        field = input_field
+    elif ( type(input_field) is Field) and (ensemble_mode==False): 
+        field = modulate_field(input_field, amplitude_mask=None, phase_mask=aperture3x, autograd=True )
+        
     
     #Propagate field to screen 
     if propagation_method=="nojax": 
