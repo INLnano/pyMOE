@@ -13,6 +13,7 @@ from pyMOE.field import Field, Screen, create_empty_field_from_aperture, create_
 from pyMOE.plotting import plot_field 
 from pyMOE.propagate import Bluestein
 from pyMOE.ensemble import Ensemble 
+from pyMOE.plotting import plot_field
 
 import numpy as np
 import matplotlib.pyplot as plt 
@@ -1160,6 +1161,7 @@ def propagate(xar, aperture, screen, wavelength, mask_amp=None, circ_radius=None
         
         #XY plane field -> In principle can be XYZ screen 
         EXY= EXYZ[:, :, -1] 
+
         
     #Propagate field to screen 
     if propagation_method=="SASM": 
@@ -1213,7 +1215,6 @@ def setup_optimizer_logger_batch(x_size, batch_size=1, log_dir="logs", name="opt
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     
     logfile_txt = os.path.join(log_dir, f"{name}_{timestamp}.txt")
-    
     logfile_bin = os.path.join(log_dir, f"{name}_{timestamp}_x.npy")
     
     # Text logger
@@ -1231,6 +1232,8 @@ def setup_optimizer_logger_batch(x_size, batch_size=1, log_dir="logs", name="opt
     
     # Return info needed for optimizer
     return logger, logfile_txt, logfile_bin, batch_list, iter_counter, batch_size, fh
+
+
 
 
 def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8, gtol=1e-12, bounds =(-np.inf, np.inf), \
@@ -1315,7 +1318,8 @@ def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8,
 
 
         return loss(x, *args, )
-        
+    
+            
     def scipy_like_result(x, fun, success, nfev):
         from scipy.optimize import OptimizeResult
         
@@ -1440,7 +1444,7 @@ def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8,
         solution = scipy_like_result(x=x_opt, fun=loss_spsa(x_opt), success=True, nfev=len(loss_history),)
 
     # JAX optimizers     
-    elif optimizer_method in ["adam", "rmsprop", "lbfgsoptax", "adamw"]:
+    if optimizer_method in ["adam", "rmsprop", "lbfgsoptax", "adamw"]:
         def loss_jax(x, *args):
             return loss(x, *args,)  # must use jax.numpy internally
     
@@ -1455,6 +1459,7 @@ def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8,
         
         import optax
     
+        # Select optimizer
         optimizer = {"adam": optax.adam, "rmsprop": optax.rmsprop, "lbfgsoptax": optax.lbfgs, "adamw": optax.adamw}[optimizer_method](learning_rate)
         loss_and_grad_fn = jax.value_and_grad(loss_jax)
 
