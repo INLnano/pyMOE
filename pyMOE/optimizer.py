@@ -1473,14 +1473,26 @@ def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8,
 
             x_np = onp.asarray(x)
             loss_f = float(loss_val)
+            loss_history.append(loss_f)
 
             if logger is not None:
                 logger.info("iter=%d | loss=%.6e | x=%s", i, loss_f, onp.array2string(x_np, precision=6))
 
-            x_iter_history.append(x_np.copy())
-            loss_history.append(loss_f)
+                x_iter_history.append(x_np.copy())
+                
 
-            if onp.abs(prev_loss - loss_f) < ftol:
+                # Append to batch
+                batch_list.append(x_np.copy())
+
+                # Write batch to .npy file if full
+                if logfile_bin is not None and len(batch_list) >= batch_size:
+                    arr = onp.array(batch_list, dtype=onp.float64)
+                    with open(logfile_bin, "ab") as f:
+                        arr.tofile(f)
+                    batch_list.clear()
+
+
+            if onp.abs((prev_loss - loss_f)/prev_loss) < ftol:
                 if verbose:
                     print(f"Stopping at iteration {i}, loss change below tolerance")
                 break
