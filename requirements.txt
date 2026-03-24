@@ -4,6 +4,7 @@ numpy
 dask  
 zernike
 jax
+optax 
 ipykernel
 pytest
 klayout
