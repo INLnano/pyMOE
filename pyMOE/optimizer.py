@@ -216,7 +216,7 @@ def kernel_RS(field, k, x,y,z, simp2d=False, method=False, sampler=None):
     return Exyz
     
 
-def RS_integral_jax(field, screen, wavelength, n=None, simp2d=False, sampler=None, method=None, parallel_computing=False):
+def RS_integral_jax(field, screen, wavelength, n=None, simp2d=False, sampler=None, method=None, parallel_computing=False, use_timer=False):
     """
     JAX-compatible Rayleigh-Sommerfeld integral propagation.
     
@@ -828,7 +828,7 @@ def ASM_jax(field, screen, wavelength, pad, n = 1.0, mode = None, bl = True, shi
     
      
    
-def propagate_through_ensemble_jax(ensemble,  wavelength , corr=1, propagation_methods_array=None): 
+def propagate_through_ensemble_jax(ensemble,  wavelength , corr=1, propagation_methods_array=None, use_timer=True): 
     """
     Propagates though Ensemble object (various MOE surfaces)  
     
@@ -856,7 +856,7 @@ def propagate_through_ensemble_jax(ensemble,  wavelength , corr=1, propagation_m
     
     
     if propagation_methods_array[0]=="bluestein":
-        EXYZ0 = Bluestein_jax(field0, screen0, wavelength)
+        EXYZ0 = Bluestein_jax(field0, screen0, wavelength, use_timer=use_timer)
     
         ensemble.field_array[1].field = EXYZ0[:,:, -1]/corr
         
@@ -866,7 +866,7 @@ def propagate_through_ensemble_jax(ensemble,  wavelength , corr=1, propagation_m
         overall_field_at_screen = EXYZ/jnp.max(EXYZ)
 
     elif propagation_methods_array[0]=="ASM": 
-        EXYZ0 = ASM_jax(field0, screen0, wavelength, pad=int(len(field0.x) ))
+        EXYZ0 = ASM_jax(field0, screen0, wavelength, pad=int(len(field0.x) ), use_timer=use_timer)
         ensemble.field_array[1].field = EXYZ0[:,:, -1]/corr
         
         EXYZ = EXYZ0
@@ -875,7 +875,7 @@ def propagate_through_ensemble_jax(ensemble,  wavelength , corr=1, propagation_m
         overall_field_at_screen = EXYZ/jnp.max(EXYZ)
 
     elif propagation_methods_array[0]=="SASM": 
-        EXYZ0 = SASM_jax(field0, screen0, wavelength, pad_factor=4, crop=True)
+        EXYZ0 = SASM_jax(field0, screen0, wavelength, pad_factor=4, crop=True, use_timer=use_timer)
         ensemble.field_array[1].field = EXYZ0[:,:, -1]/jnp.max(EXYZ0[:,:, 0])
         
         EXYZ = EXYZ0
@@ -888,7 +888,7 @@ def propagate_through_ensemble_jax(ensemble,  wavelength , corr=1, propagation_m
                                         np.min(screen0.y), np.max(screen0.y), len(screen0.y), 
                                         z=np.max(screen0.z) )
 
-        EXYZ0 = RS_integral_jax(field0, screen_XY, wavelength, simp2d=True)
+        EXYZ0 = RS_integral_jax(field0, screen_XY, wavelength, simp2d=True, use_timer=use_timer)
         ensemble.field_array[1].field = EXYZ0[:,:, -1]/jnp.max(EXYZ0[:,:, 0])
     
         overall_field_at_screen = screen0
@@ -914,7 +914,7 @@ def propagate_through_ensemble_jax(ensemble,  wavelength , corr=1, propagation_m
         screen = ensemble.screen_array[i]
         
         if propagation_methods_array[i]=="bluestein":
-            EXYZ1 = Bluestein_jax(field, screen, wavelength)
+            EXYZ1 = Bluestein_jax(field, screen, wavelength, use_timer=use_timer)
             EXYZ = EXYZ1
             
             if i<len(ensemble.aperture_array_phase)-1 : 
@@ -927,7 +927,7 @@ def propagate_through_ensemble_jax(ensemble,  wavelength , corr=1, propagation_m
             overall_field_at_screen = EXYZ/jnp.max(EXYZ)
             
         if propagation_methods_array[i]=="ASM":
-            EXYZ1 = ASM_jax(field, screen, wavelength, pad=int(len(field0.x)) )
+            EXYZ1 = ASM_jax(field, screen, wavelength, pad=int(len(field0.x)) ,use_timer=use_timer)
             EXYZ = EXYZ1
             
             if i<len(ensemble.aperture_array_phase)-1 : 
@@ -940,7 +940,7 @@ def propagate_through_ensemble_jax(ensemble,  wavelength , corr=1, propagation_m
             overall_field_at_screen = EXYZ/jnp.max(EXYZ)
 
         if propagation_methods_array[i]=="SASM":
-            EXYZ1 = SASM_jax(field, screen, wavelength, pad_factor=4, crop=True)
+            EXYZ1 = SASM_jax(field, screen, wavelength, pad_factor=4, crop=True,use_timer=use_timer)
             EXYZ = EXYZ1
             
             if i<len(ensemble.aperture_array_phase)-1 : 
@@ -975,7 +975,7 @@ def propagate_through_ensemble_jax(ensemble,  wavelength , corr=1, propagation_m
                                                 np.min(screen0.y), np.max(screen0.y), len(screen0.y), 
                                                 z=np.max(screen0.z) )
                                                 
-                EXYZ0 = RS_integral_jax(field, screen_XY, wavelength, simp2d=True)
+                EXYZ0 = RS_integral_jax(field, screen_XY, wavelength, simp2d=True,use_timer=use_timer)
 
                 if i<len(ensemble.aperture_array_phase)-1 :
                     ensemble.field_array[i+1].field = EXYZ0.screen[:,:,0]/jnp.max(EXYZ0.screen[:,:, -1])
