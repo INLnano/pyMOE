@@ -1095,10 +1095,14 @@ def propagate(xar, aperture, screen, wavelength, mask_amp=None, circ_radius=None
         ensemble = Ensemble(aperture_array_amp, aperture_array_phase, screen_array,  wavelength_array, input_light_field)
         #print(ensemble.screen_array)
         
-        EXY_array = [propagate_through_ensemble_jax(ensemble, wavelength, propagation_methods_array=prop_methods, corr=corr) for wavelength in wavelength_array]
+        EXY_array = [propagate_through_ensemble_jax(ensemble, wavelength, propagation_methods_array=prop_methods, corr=corr, use_timer=use_timer) for wavelength in wavelength_array]
         #print(ensemble.screen_array)
         
         EXY = EXY_array[-1][:, :, -1] 
+        
+        return EXY
+        
+        
 
     ###If ensemble mode is false, do simple 
     else:     
