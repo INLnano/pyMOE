@@ -1,0 +1,35 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: pyMOE
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Joao
+    family-names: Cunha
+    email: joao.cunha@inl.int
+    affiliation: >-
+      International Iberian Nanotechnology Laboratory (INL),
+      Braga 4715-330, Portugal
+    orcid: 'https://orcid.org/0000-0002-5770-9390'
+  - given-names: Diogo E.
+    family-names: Aguiam
+    email: diogo.aguiam@inl.int
+    name-particle: Diogo
+    affiliation: >-
+      International Iberian Nanotechnology Laboratory (INL),
+      Braga 4715-330, Portugal
+    orcid: 'https://orcid.org/0000-0001-6318-9021'
+identifiers:
+  - type: doi
+    value: 10.1016/j.cpc.2024.109331
+    description: Publication in Computer Physics Communications
+  - type: doi
+    value: 10.5281/zenodo.19209832
+    description: 'Zenodo Repository '
+repository-code: 'https://github.com/INLnano/pyMOE'
+url: 'https://pymoe-doc.readthedocs.io/'
+license: CECILL-B
