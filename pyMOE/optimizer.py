@@ -1260,7 +1260,7 @@ def setup_optimizer_logger_batch(x_size, batch_size=1, log_dir="logs", name="opt
 
 def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8, gtol=1e-12, bounds =(-np.inf, np.inf), \
                 niter =2, minimizer_kwargs=None, verbose=True, eps = None, learning_rate = 0.1, max_iters=100, max_nfev=1e6, \
-                jax=True, logger=None, logfile_bin=None, batch_list=None, batch_size=1, iter_counter=None, fh=None,\
+                jax=True, logger=None, logfile_bin=None, batch_list=None, batch_size=1, iter_counter=None, fh=None, gradient=None,\
                  *args, **kwargs):
     """
     Optimize function using scipy optimizers, minizes the 'loss' function given as input - to complete 
@@ -1280,7 +1280,10 @@ def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8,
     """
     import numpy as onp
         
-    if jax:
+    if gradient is not None:
+        #print("ext grad")
+        cal_jac = gradient
+    elif jax:
         import jax
         import jax.numpy as np
         from jax import jacrev
@@ -1482,7 +1485,7 @@ def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8,
         import optax
     
         # Select optimizer
-        optimizer = {"adam": optax.adam, "rmsprop": optax.rmsprop, "lbfgsoptax": optax.lbfgs, "adamw": optax.adamw}[optimizer_method](learning_rate)
+        optimizer = {"adam": optax.adam, "rmsprop": optax.rmsprop, "adamw": optax.adamw}[optimizer_method](learning_rate)
         loss_and_grad_fn = jax.value_and_grad(loss_jax)
 
         x = np.array(x0)
@@ -1524,13 +1527,12 @@ def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8,
 
             prev_loss = loss_f
 
+        
         solution = scipy_like_result(x=onp.asarray(x), fun=loss_history[-1] if loss_history else None, success=True, nfev=len(loss_history),)
         
         solution.loss_history = loss_history
         solution.x_iter_history = onp.array(x_iter_history)
-    
-    # Scipy optimizers 
-    #### Least squares optimizers 
+
     elif optimizer_method=='leastsq-lm': 
         solution = leastsq(loss_with_logging, x0= x0,  args=args1 ,jac =cal_jac, ftol=ftol, xtol=xtol, gtol=gtol, verbose=v, max_nfev=max_nfev)
     elif (optimizer_method=='trf') or (optimizer_method=='dogbox'):  
@@ -1542,7 +1544,7 @@ def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8,
         solution = dual_annealing(loss_with_logging, x0=x0, args =args1,jac =cal_jac,  bounds = bounds, verbose=v)
     elif optimizer_method=='basinhopping': 
         solution = basinhopping(loss_with_logging, x0=x0,minimizer_kwargs=minimizer_kwargs, niter=max_iters)
-
+    
     elif optimizer_method in ['Nelder-Mead', 'Powell','CG', 'BFGS', 'Newton-CG','L-BFGS-B', \
     'TNC', 'COBYLA', 'COBYQA', 'SLSQP', 'trust-constr', 'dogleg', 'trust-ncg', 'trust-exact','trust-krylov']:
         def minimize_callback(xk):
@@ -1566,19 +1568,12 @@ def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8,
                 batch_list.clear()
         
         argas = args1
-        solution = minimize(loss_with_logging, x0, argas, jac =cal_jac, callback = minimize_callback, options={'ftol': ftol, 'disp': True, 'maxiter':50000},bounds=bounds)
-      
+        solution = minimize(loss_with_logging, x0, argas, jac =cal_jac, callback = minimize_callback, options={'ftol': ftol, 'disp': True, 'maxiter':max_iters},bounds=bounds)
     else: 
         print("Option optimizer_method= '"+str(optimizer_method)+"' not recognized")
 
     solution.loss_history = loss_history 
     solution.x_iter_history = onp.array(x_iter_history)
-    
-    ##TODO 
-    # METHOD SPSA https://pypi.org/project/spsa/   https://www.jhuapl.edu/SPSA/ 
-    
-    ##TODO 
-    # METHOD CMA-ES https://github.com/CMA-ES/pycma 
     
     if logger is not None: 
         logger.info("Optimization finished")
@@ -1586,6 +1581,7 @@ def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8,
         logger.removeHandler(fh)
     
     return solution
+
 
 def generate_loss_function(metric): 
     """
