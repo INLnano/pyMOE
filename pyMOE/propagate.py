@@ -680,6 +680,7 @@ def SASM(field, screen, wavelength, pad_factor = 2, crop = False):
 
     return newscreen
     
+   
 
 def ASM_kernel(field, z, wavelength, input_extent, input_df, n = 1.0,  bandlimit = False, shift_yx = (0.0, 0.0),  kykx = (0.0, 0.0)):
     """
@@ -700,7 +701,7 @@ def ASM_kernel(field, z, wavelength, input_extent, input_df, n = 1.0,  bandlimit
     """
     axes = (-2, -1) 
     
-    Ny, Nx = field.Nx, field.Ny
+    Ny, Nx = field.Ny, field.Nx
     dy, dx = field.pixel_y, field.pixel_x
     fx, fy = field.fx, field.fy 
     
@@ -759,8 +760,6 @@ def ASM_kernel(field, z, wavelength, input_extent, input_df, n = 1.0,  bandlimit
     return np.fft.ifftshift(propagator_field, axes=axes)
 
 
-
-
 def ASM_propagate(field, screen, z, wavelength, pad_width, n = 1.0, mode = None, bl = True, shift = None, kykx = (0.0, 0.0)):
     """
     Angular Spectrum Method (ASM) propagation computation.
@@ -779,6 +778,7 @@ def ASM_propagate(field, screen, z, wavelength, pad_width, n = 1.0, mode = None,
     Returns:
         :field:       Returns the calculated field
     """
+
     # zero pad the field  --- asssumes symmetric padding!
     padding = ((pad_width, pad_width), (pad_width, pad_width))
     padded_vals = np.pad(field.field, padding, mode='constant', constant_values=0)
@@ -830,11 +830,12 @@ def ASM_propagate(field, screen, z, wavelength, pad_width, n = 1.0, mode = None,
 
     # INVERSE TRANSFORM
     if mode=="czt":
-        output_shape = np.array(screen.shape)
-        ymin, ymax = screen.y.min(), screen.y.max()
-        xmin, xmax = screen.x.min(), screen.x.max()
         
-        output_dx = (ymax - ymin) / (output_shape[0] - 1), (xmax - xmin) / (output_shape[1] - 1)
+        output_shape = np.array(screen.shape)
+        ymin, ymax = np.min(screen.y), np.max(screen.y)
+        xmin, xmax = np.min(screen.x), np.max(screen.x)
+        
+        output_dx = (xmax - xmin) / (output_shape[0] - 1), (ymax - ymin) / (output_shape[1] - 1)
         
         # Scaling factor: alpha = output_dx / input_df
         alpha = output_dx / input_df 
@@ -842,14 +843,15 @@ def ASM_propagate(field, screen, z, wavelength, pad_width, n = 1.0, mode = None,
         limits_min = [xmin, ymin]
         limits_max = [xmax, ymax]
         
-        
+
         for d, axis in enumerate(axes):
             m = output_shape[d]
             n = spatial_shape[d]
             
             # czt parameters, 
             # a: starting point on the circle (related to the min limit) w: angular step/ratio (related to the span/range)
-            a_czt = np.exp(-1j * 2 * np.pi / mask_field_extent[d] * limits_min[d])
+            a_czt = np.exp(-1j * (2 * np.pi / mask_field_extent[d]) * limits_min[d])
+            #a_czt = 1 
             w_czt = np.exp(1j * (2 * np.pi / mask_field_extent[d]) * (limits_max[d] - limits_min[d]) / (m - 1))
 
             # apply the czt
@@ -862,16 +864,18 @@ def ASM_propagate(field, screen, z, wavelength, pad_width, n = 1.0, mode = None,
             k = np.arange(m)
 
             # phase compensation/modulation factor after the czt
-            compensation = (a_czt ** -center) * (w_czt ** (center * k))
+            compensation = (a_czt ** center) * (w_czt ** (-center * k))
+            #compensation = 1 
             
             field_transform = np.moveaxis(field_transform, axis, -1)
             field_transform = field_transform * compensation 
             field_transform = np.moveaxis(field_transform, -1, axis)
+            
         
         # Apply the final scaling factor
         final_scaling = np.prod(1.0 / alpha)
         field_transform = field_transform * final_scaling
-        
+
     elif (mode == "BLAS") & (bl==True):
         #print("BLAS")
         fx_grid, fy_grid = padded_field.FX, padded_field.FY
@@ -982,7 +986,7 @@ def ASM(field, screen, wavelength, pad, n = 1.0, mode = None, bl = False, shift 
 
     return screen
 
-    
+  
 def propagate_through_ensemble(ensemble,  wavelength , xar_plus_z=None, propagation_methods_array=None): 
     """
     Propagates though Ensemble object (various MOE surfaces)  
