@@ -1142,6 +1142,27 @@ def propagate(xar, aperture, screen, wavelength, mask_amp=None, circ_radius=None
     elif (input_field=="gaussian") and (ensemble_mode==False): 
         ##TO CORRECT 
         field = generate_uniform_field(field, E0=E0)
+        
+    elif (input_field=="custom") and (ensemble_mode==False):
+        field = generate_uniform_field(field, E0=1.0)
+        
+        aperture_amp = None
+        if input_field_amp is not None:
+            aperture_amp = create_empty_aperture_from_aperture(aperture)
+            aperture_amp.aperture = input_field_amp
+            
+        aperture_phase = None
+        if input_field_phase is not None:
+            aperture_phase = create_empty_aperture_from_aperture(aperture)
+            aperture_phase.aperture = input_field_phase
+
+        field = modulate_field(field, amplitude_mask=aperture_amp, phase_mask=aperture_phase, autograd=True)
+        
+        field = modulate_field(field, amplitude_mask=None, phase_mask=aperture3x, autograd=True)
+        
+        del aperture3x
+        if aperture_amp is not None: del aperture_amp
+        if aperture_phase is not None: del aperture_phase
             
     elif ( type(input_field) is Field) and (ensemble_mode==False): 
         field = modulate_field(input_field, amplitude_mask=None, phase_mask=aperture3x, autograd=True )
