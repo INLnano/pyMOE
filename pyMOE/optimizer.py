@@ -536,7 +536,7 @@ def ASM_kernel_jax(field, z, wavelength, input_extent, input_df, n = 1.0,  bandl
     
     axes = (-2, -1) 
     
-    Ny, Nx = field.Nx, field.Ny
+    Ny, Nx = field.Ny, field.Nx
     dy, dx = field.pixel_y, field.pixel_x
     fx, fy = field.fx, field.fy 
     
@@ -690,7 +690,7 @@ def ASM_propagate_jax(field, screen, z, wavelength, pad_width, n = 1.0, mode = N
         ymin, ymax = screen.y.min(), screen.y.max()
         xmin, xmax = screen.x.min(), screen.x.max()
         
-        output_dx = jnp.array([ (ymax - ymin) / (output_shape[0] - 1), (xmax - xmin) / (output_shape[1] - 1) ])
+        output_dx = jnp.array([(xmax - xmin) / (output_shape[0] - 1), (ymax - ymin) / (output_shape[1] - 1) ])
                 
         # Scaling factor: alpha = output_dx / input_df
         alpha = output_dx / input_df 
@@ -704,7 +704,7 @@ def ASM_propagate_jax(field, screen, z, wavelength, pad_width, n = 1.0, mode = N
             
             # czt parameters, 
             # a: starting point on the circle (related to the min limit) w: angular step/ratio (related to the span/range)
-            a_czt = jnp.exp(-1j * 2 * jnp.pi / mask_field_extent[d] * limits_min[d])
+            a_czt = jnp.exp(-1j * (2 * jnp.pi / mask_field_extent[d]) * limits_min[d])
             w_czt = jnp.exp(1j * (2 * jnp.pi / mask_field_extent[d]) * (limits_max[d] - limits_min[d]) / (m - 1))
 
             # apply the czt
@@ -714,10 +714,10 @@ def ASM_propagate_jax(field, screen, z, wavelength, pad_width, n = 1.0, mode = N
             field_transform = field_czt.astype(field_transform.dtype)
             
             center = n // 2
-            k = np.arange(m)
+            k = jnp.arange(m)
             
             # phase compensation/modulation factor after the czt
-            compensation = (a_czt ** -center) * (w_czt ** (center * k))
+            compensation = (a_czt ** center) * (w_czt ** (-center * k))
             
             field_transform = jnp.moveaxis(field_transform, axis, -1)
             field_transform = field_transform * compensation 
@@ -827,6 +827,7 @@ def ASM_jax(field, screen, wavelength, pad, n = 1.0, mode = None, bl = True, shi
     return screen_field    
 
     
+     
      
    
 def propagate_through_ensemble_jax(ensemble,  wavelength , corr=1, propagation_methods_array=None, use_timer=True): 
@@ -1003,7 +1004,7 @@ def propagate_through_ensemble_jax(ensemble,  wavelength , corr=1, propagation_m
 
     
 
-    
+   
 def propagate(xar, aperture, screen, wavelength, mask_amp=None, circ_radius=None, input_field="uniform", \
               input_field_amp=None, input_field_phase=None, E0=1, propagation_method="bluestein", \
               pad_factor=2, modedef = "czt", ensemble_mode=False, corr=1 , use_timer=True): 
