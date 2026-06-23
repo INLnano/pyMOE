@@ -1055,6 +1055,8 @@ def propagate(xar, aperture, screen, wavelength, mask_amp=None, circ_radius=None
             
             aperture_array_phase[ip] = aperturein  
             
+        # TODO: correct create field from aperture to capture the FIRST aperture in the Ensemble.
+        # do not assume apertures ahve the same shape.
         if input_field =="uniform": 
             field_input = create_empty_field_from_aperture(aperturex)
             field_input = generate_uniform_field(field_input, E0=1)
@@ -1469,7 +1471,7 @@ def optimize(loss, x0, args1=None, optimizer_method="trf", ftol=1e-2, xtol=1e-8,
         solution = scipy_like_result(x=x_opt, fun=loss_spsa(x_opt), success=True, nfev=len(loss_history),)
 
     # JAX optimizers     
-    if optimizer_method in ["adam", "rmsprop", "lbfgsoptax", "adamw"]:
+    elif optimizer_method in ["adam", "rmsprop", "lbfgsoptax", "adamw"]:
         def loss_jax(x, *args):
             return loss(x, *args,)  # must use jax.numpy internally
     
