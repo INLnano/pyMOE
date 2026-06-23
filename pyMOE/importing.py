@@ -7,8 +7,8 @@ Module containing functions to import gds files, inspect them in matplotlib and 
 
 import numpy as np 
 import matplotlib.pyplot as plt 
-import gdspy as gdspy
-from gdspy import FlexPath
+# import gdspy as gdspy
+# from gdspy import FlexPath
 #from shapely.geometry import MultiPolygon, Polygon
 import pickle 
 import cv2 
@@ -37,6 +37,8 @@ def inspect_gds2(filename, colors, rescale=0, **kwargs):
         :rescale:    int rescaling factor for all points in mask, by default is 0 
     
     """
+    import gdspy as gdspy
+    from gdspy import FlexPath
     from shapely.geometry import MultiPolygon, Polygon
     
     lib = gdspy.GdsLibrary(infile=filename)
@@ -118,6 +120,8 @@ def inspect_gds2layers(filename, norm, rescale=0,verbose = False, **kwargs ):
         for **kwargs, add 'axes = subplot', where subplot has been previously defined as subplot = fig.add_subplot(111) 
         with 'import matplotlib.pyplot as plt' and 'fig = plt.figure()'
     """
+    import gdspy as gdspy
+    from gdspy import FlexPath
     from shapely.geometry import MultiPolygon, Polygon
     
     #create cell to store the layers 
@@ -232,6 +236,8 @@ def inspect_gds2layersplt(filename, norm, rescale=0, verbose = False, **kwargs )
         for **kwargs, add 'axes = subplot', where subplot has been previously defined as subplot = fig.add_subplot(111) 
         with 'import matplotlib.pyplot as plt' and 'fig = plt.figure()'
     """
+    import gdspy as gdspy
+    from gdspy import FlexPath
     from shapely.geometry import MultiPolygon, Polygon
     
     #create cell to store the layers 

@@ -6,7 +6,6 @@ Module containing several functions to export masks to gds.
 import cv2
 # import gdspy 
 import numpy as np 
-import gdspy
 
     
 
@@ -34,6 +33,7 @@ def grayim2gds(infile, outfile, pixelx, pixely, cellname, level, layer=0, dataty
     pixely = 1 #um 
     grayim2gds(infilxe, outfilxe, pixelx, pixely,"TOP", 0)
     """
+    import gdspy
     img = cv2.imread(infile, cv2.IMREAD_GRAYSCALE)
     
     h,w = img.shape 
@@ -99,6 +99,7 @@ def grayim2gds_writer_frac(infile, outfile, pixelx, pixely, cellname, level, nm=
     grayim2gds_writer_frac(infilxe, outfilxe, pixelx, pixely, cellname, graycolor, frac, verbose=True) 
     """
 
+    import gdspy
     img = cv2.imread(infile, cv2.IMREAD_GRAYSCALE)
     
     if img is not None: 
@@ -190,6 +191,7 @@ def grayim2gds_writer(infile, outfile, pixelx, pixely, cellname, level, layer=0,
     grayim2gds_writer(infilxe, outfilxe, pixelx, pixely,cellname, graycolor, verbose=True)"""
 
 
+    import gdspy
     img = cv2.imread(infile, cv2.IMREAD_GRAYSCALE)
     
     if img is not None: 
@@ -264,6 +266,7 @@ def grayim2gds_writer_klops(infile,  output_filename , pixelx, pixely, cellname,
 
     """
     
+    import gdspy
     img = cv2.imread(infile, cv2.IMREAD_GRAYSCALE)
     
     if img is not None: 

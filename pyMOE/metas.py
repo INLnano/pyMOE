@@ -6,7 +6,7 @@ Module containing functions to create metasurfaces from phase masks
 """
 
 import cv2
-import gdspy 
+# import gdspy 
 import numpy as np 
 from pyMOE.utils import progress_bar, Timer
 from pyMOE.gds_klops import rescale_layout, rotate_layout
@@ -41,6 +41,8 @@ def metasurface_from_phase(xsiz, ysiz, pixelx, pixely, p, aperture_vals, topcell
     Returns:
         None
     """  
+    import gdspy as gdspy
+    from gdspy import FlexPath
     from gdspy import Polygon, PolygonSet 
     from pyMOE.utils import Timer, progress_bar
     
@@ -236,6 +238,8 @@ def metasurface_from_phase_instances (xsiz, ysiz, pixelx, pixely, p, aperture_va
     Returns:
         None
     """   
+    import gdspy as gdspy
+    from gdspy import FlexPath
     from gdspy import Polygon, PolygonSet 
     from pyMOE.utils import Timer, progress_bar
     
