@@ -45,7 +45,7 @@ journal = {Computer Physics Communications},\
 pages = {109331},\
 year = {2024},\
 issn = {0010-4655},\
-doi = {https://doi.org/10.1016/j.cpc.2024.109331}}
+doi = {https://doi.org/10.1016/j.cpc.2024.109331 }}
 
 And/or the proceedings paper dedicated to inverse design and optimization using pyMOE (https://doi.org/10.1117/12.3099849), bibtex entry:
 
@@ -59,7 +59,7 @@ organization = {International Society for Optics and Photonics},\
 publisher = {SPIE},\
 pages = {140880B},\
 year = {2026},\
-doi = {https://doi.org/10.1117/12.3099849}}
+doi = {https://doi.org/10.1117/12.3099849 }}
 
 
 # Zenodo repository 
