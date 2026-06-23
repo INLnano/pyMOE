@@ -36,9 +36,8 @@ A list of dependencies (with versions) is at https://github.com/INLnano/pyMOE/bl
 
 # Citing pyMOE  
 
-If pyMOE was useful for you, please cite the companion paper published in Computer Physics Communications (https://doi.org/10.1016/j.cpc.2024.109331).
+If pyMOE was useful for you, please cite the companion paper published in Computer Physics Communications (https://doi.org/10.1016/j.cpc.2024.109331), bibtex entry:
 
-Bibtex entries: \
 @article{CUNHA2024109331,\
 author = {Joao Cunha and José Queiroz and Carlos Silva and Fabio Gentile and Diogo E. Aguiam},\
 title = {pyMOE: Mask Design and Modelling for Micro Optical Elements and Flat Optics},\
@@ -49,7 +48,8 @@ issn = {0010-4655},\
 doi = {https://doi.org/10.1016/j.cpc.2024.109331}\
 }
 
-And/or the proceedings paper dedicated to inverse design and optimization using pyMOE:\ 
+And/or the proceedings paper dedicated to inverse design and optimization using pyMOE (https://doi.org/10.1117/12.3099849), bibtex entry:
+
 @inproceedings{10.1117/12.3099849,\
 author = {Joao Cunha and Filipe Camarneiro and Diogo E. Aguiam},\
 title = {{Inverse design framework for large-area micro-optical elements enabling beam shaping and beam steering applications}},\
