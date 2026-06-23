@@ -9,5 +9,5 @@ ipykernel
 pytest
 klayout
 opencv-python
-gdspy==1.6.3
-shapely==1.7.1
+#gdspy==1.6.3
+#shapely==1.7.1
