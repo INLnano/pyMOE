@@ -38,28 +38,37 @@ A list of dependencies (with versions) is at https://github.com/INLnano/pyMOE/bl
 
 If pyMOE was useful for you, please cite the companion paper published in Computer Physics Communications (https://doi.org/10.1016/j.cpc.2024.109331), bibtex entry:
 
-@article{CUNHA2024109331,\
-author = {Joao Cunha and José Queiroz and Carlos Silva and Fabio Gentile and Diogo E. Aguiam},\
-title = {pyMOE: Mask Design and Modelling for Micro Optical Elements and Flat Optics},\
-journal = {Computer Physics Communications},\
-pages = {109331},\
-year = {2024},\
-issn = {0010-4655},\
-doi = {https://doi.org/10.1016/j.cpc.2024.109331 }}
+.. code:: 
+
+	@article{CUNHA2024109331,\
+	author = {Joao Cunha and José Queiroz and Carlos Silva and Fabio Gentile and Diogo E. Aguiam},\
+	title = {pyMOE: Mask Design and Modelling for Micro Optical Elements and Flat Optics},\
+	journal = {Computer Physics Communications},\
+	pages = {109331},\
+	year = {2024},\
+	issn = {0010-4655},\
+	doi = {https://doi.org/10.1016/j.cpc.2024.109331}
+	}
 
 And/or the proceedings paper dedicated to inverse design and optimization using pyMOE (https://doi.org/10.1117/12.3099849), bibtex entry:
 
-@inproceedings{10.1117/12.3099849,\
-author = {Joao Cunha and Filipe Camarneiro and Diogo E. Aguiam},\
-title = {{Inverse design framework for large-area micro-optical elements enabling beam shaping and beam steering applications}},\
-volume = {14088},\
-booktitle = {Optical and Photonic Microsystems: Technology and Applications},\
-editor = {Hans Zappe and Niels Quack},\
-organization = {International Society for Optics and Photonics},\
-publisher = {SPIE},\
-pages = {140880B},\
-year = {2026},\
-doi = {https://doi.org/10.1117/12.3099849 }}
+.. code:: 
+
+	@inproceedings{10.1117/12.3099849,\
+	author = {Joao Cunha and Filipe Camarneiro and Diogo E. Aguiam},\
+	title = {{Inverse design framework for large-area micro-optical elements enabling beam shaping and beam steering applications}},\
+	volume = {14088},\
+	booktitle = {Optical and Photonic Microsystems: Technology and Applications},\
+	editor = {Hans Zappe and Niels Quack},\
+	organization = {International Society for Optics and Photonics},\
+	publisher = {SPIE},\
+	pages = {140880B},\
+	year = {2026},\
+	doi = {https://doi.org/10.1117/12.3099849}
+	}
+
+
+There is also a cff file (CITATION.cff) for this repository. 
 
 
 # Zenodo repository 
