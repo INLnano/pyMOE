@@ -12,6 +12,7 @@ import numpy as np
 import scipy 
 import scipy.fft as sfft 
 from scipy import integrate
+import jax
 
 import decimal
 
@@ -699,7 +700,11 @@ def ASM_kernel(field, z, wavelength, input_extent, input_df, n = 1.0,  bandlimit
         :H field kernel:        Returns the kernel 
         
     """
+    import jax.numpy.fft as sfft
+    import jax.numpy as np
     axes = (-2, -1) 
+
+    # print("with jax")
     
     Ny, Nx = field.Ny, field.Nx
     dy, dx = field.pixel_y, field.pixel_x

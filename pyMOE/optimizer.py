@@ -820,11 +820,11 @@ def ASM_jax(field, screen, wavelength, pad, n = 1.0, mode = None, bl = True, shi
                 screen.screen = np.reshape(update_screen_slice(screen.screen, g1, z_i), (screen.Ny, screen.Nx))
             else:
                 screen_field = update_screen_slice(screen.screen, g1, z_i)
-            
-            #progress_bar((z_i) / (zlen))
-        #progress_bar(1)
+                screen.screen = screen_field
+            progress_bar((z_i) / (zlen))
+        progress_bar(1)
 
-    return screen_field    
+    return screen.screen    
 
     
      
